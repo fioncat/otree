@@ -1,5 +1,6 @@
 mod parse_json;
 mod parse_toml;
+mod parse_yaml;
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -26,6 +27,7 @@ pub struct Detail {
 pub enum ContentType {
     Json,
     Toml,
+    Yaml,
 }
 
 struct TreeItemValue<'a> {
@@ -119,6 +121,7 @@ impl ContentType {
         match self {
             Self::Json => parse_json::parse(data),
             Self::Toml => parse_toml::parse(data),
+            Self::Yaml => parse_yaml::parse(data),
         }
     }
 
@@ -126,6 +129,7 @@ impl ContentType {
         match self {
             Self::Json => parse_json::to_string(value),
             Self::Toml => parse_toml::to_string(value),
+            Self::Yaml => parse_yaml::to_string(value),
         }
     }
 }

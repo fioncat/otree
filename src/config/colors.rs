@@ -20,16 +20,52 @@ pub struct Colors {
 
     #[serde(default = "ItemColors::default")]
     pub item: ItemColors,
+
+    #[serde(default = "DataColors::default")]
+    pub data: DataColors,
+
+    #[serde(default = "Colors::default_focus_boder")]
+    pub focus_border: Color,
 }
 
-generate_colors_parse!(Colors, tree, item);
+generate_colors_parse!(Colors, tree, item, data, focus_border);
 
 impl Colors {
     pub fn default() -> Self {
         Self {
             tree: TreeColors::default(),
             item: ItemColors::default(),
+            data: DataColors::default(),
+            focus_border: Self::default_focus_boder(),
         }
+    }
+
+    fn default_focus_boder() -> Color {
+        Color::new("magenta", "", true, false)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DataColors {
+    #[serde(default = "Color::default")]
+    pub text: Color,
+
+    #[serde(default = "DataColors::default_border")]
+    pub border: Color,
+}
+
+generate_colors_parse!(DataColors, text, border);
+
+impl DataColors {
+    fn default() -> Self {
+        Self {
+            text: Color::default(),
+            border: Self::default_border(),
+        }
+    }
+
+    fn default_border() -> Color {
+        Color::new("blue", "", false, false)
     }
 }
 
@@ -38,21 +74,21 @@ pub struct TreeColors {
     #[serde(default = "Color::default")]
     pub border: Color,
 
-    #[serde(default = "TreeColors::default_focus")]
-    pub focus: Color,
+    #[serde(default = "TreeColors::default_selected")]
+    pub selected: Color,
 }
 
-generate_colors_parse!(TreeColors, border, focus);
+generate_colors_parse!(TreeColors, border, selected);
 
 impl TreeColors {
     fn default() -> Self {
         Self {
             border: Color::default(),
-            focus: Self::default_focus(),
+            selected: Self::default_selected(),
         }
     }
 
-    fn default_focus() -> Color {
+    fn default_selected() -> Color {
         Color::new("black", "light_green", false, false)
     }
 }

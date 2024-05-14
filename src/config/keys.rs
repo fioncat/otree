@@ -93,6 +93,11 @@ pub struct Keys {
     #[serde(default = "Keys::default_move_down")]
     pub move_down: Vec<String>,
 
+    #[serde(default = "Keys::default_move_left")]
+    pub move_left: Vec<String>,
+    #[serde(default = "Keys::default_move_right")]
+    pub move_right: Vec<String>,
+
     #[serde(default = "Keys::default_select_focus")]
     pub select_focus: Vec<String>,
     #[serde(default = "Keys::default_select_parent")]
@@ -107,6 +112,9 @@ pub struct Keys {
     #[serde(default = "Keys::default_page_down")]
     pub page_down: Vec<String>,
 
+    #[serde(default = "Keys::default_switch")]
+    pub switch: Vec<String>,
+
     #[serde(default = "Keys::default_quit")]
     pub quit: Vec<String>,
 
@@ -117,24 +125,30 @@ pub struct Keys {
 generate_keys_default!(
     move_up => ["k", "<up>"],
     move_down => ["j", "<down>"],
+    move_left => ["h", "<left>"],
+    move_right => ["l", "<right>"],
     select_focus => ["<enter>"],
     select_parent => ["p"],
     select_first => ["g"],
     select_last => ["G"],
-    page_up => ["<page-up>"],
-    page_down => ["<page-down>"],
+    page_up => ["<page-up>", "u"],
+    page_down => ["<page-down>", "d"],
+    switch => ["<tab>"],
     quit => ["<esc>", "q"]
 );
 
 generate_actions!(
     move_up => MoveUp,
     move_down => MoveDown,
+    move_left => MoveLeft,
+    move_right => MoveRight,
     select_focus => SelectFocus,
     select_parent => SelectParent,
     select_first => SelectFirst,
     select_last => SelectLast,
     page_up => PageUp,
     page_down => PageDown,
+    switch => Switch,
     quit => Quit
 );
 
