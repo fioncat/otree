@@ -17,12 +17,16 @@ use crate::config::LayoutDirection;
 use crate::interactive::app::App;
 use crate::tree::{ContentType, Tree};
 
+// Forbid large data size to ensure TUI performance
+const MAX_DATA_SIZE: usize = 5 * 1024 * 1024;
+
 fn run() -> Result<()> {
     let args = match CommandArgs::try_parse() {
         Ok(args) => args,
         Err(err) => {
             err.use_stderr();
             err.print().unwrap();
+            eprintln!();
             if matches!(
                 err.kind(),
                 ArgsErrorKind::DisplayHelp
@@ -73,6 +77,10 @@ fn run() -> Result<()> {
     };
 
     let data = fs::read(path).context("read file")?;
+    if data.len() > MAX_DATA_SIZE {
+        bail!("the file size is too large, we limit the maximum size to 5 MiB to ensure TUI performance, you should try to reduce the read size");
+    }
+
     let data = String::from_utf8(data).context("parse file utf8")?;
 
     let tree = Tree::parse(&cfg, &data, content_type).context("parse file")?;
