@@ -19,6 +19,7 @@ pub struct Tree<'a> {
     pub details: HashMap<String, Detail>,
 }
 
+#[derive(Debug, Clone)]
 pub struct Detail {
     pub value: String,
 }
@@ -107,7 +108,6 @@ impl<'a> Tree<'a> {
             Span::styled(description.to_string(), cfg.colors.item.description.style),
         ]);
 
-        let name = format!("{}", path.display());
         let item = match children {
             Some(children) => TreeItem::new(name, line, children).unwrap(),
             None => TreeItem::new_leaf(name, line),

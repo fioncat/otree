@@ -2,9 +2,7 @@ use anyhow::Result;
 use crossterm::event::{
     DisableMouseCapture, EnableMouseCapture, Event, KeyEvent, MouseButton, MouseEventKind,
 };
-use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
-};
+use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout, Position, Rect};
 use ratatui::{Frame, Terminal};
@@ -67,7 +65,7 @@ impl<'a> App<'a> {
     }
 
     pub fn show(&mut self) -> Result<()> {
-        enable_raw_mode()?;
+        terminal::enable_raw_mode()?;
         let mut stdout = std::io::stdout();
         crossterm::execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
 
@@ -97,7 +95,7 @@ impl<'a> App<'a> {
                 Refresh::Skip => continue,
                 Refresh::Quit => {
                     // restore terminal
-                    disable_raw_mode()?;
+                    terminal::disable_raw_mode()?;
                     crossterm::execute!(
                         terminal.backend_mut(),
                         LeaveAlternateScreen,
@@ -117,8 +115,9 @@ impl<'a> App<'a> {
         let selected = self.tree_overview.get_selected();
         if let Some(id) = selected {
             if let Some(data) = self.tree_overview.get_data(id.as_str()) {
-                self.data_block.update_data(data);
+                self.data_block.update_data(data, self.data_block_area);
             }
+            // TODO: When we cannot find data, should warn user (maybe message in data block?)
         }
 
         let tree_focus = matches!(self.focus, ElementInFocus::TreeOverview);
@@ -138,11 +137,9 @@ impl<'a> App<'a> {
                 [self.tree_overview_area, self.data_block_area] = vertical.areas(frame.size());
             }
             LayoutDirection::Horizontal => {
-                let chunks =
-                    Layout::vertical([Constraint::Percentage(50), Constraint::Percentage(50)])
-                        .split(frame.size());
-                self.tree_overview_area = chunks[0];
-                self.data_block_area = chunks[1];
+                let horizontal =
+                    Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]);
+                [self.tree_overview_area, self.data_block_area] = horizontal.areas(frame.size());
             }
         }
     }
