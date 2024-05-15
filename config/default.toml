@@ -1,0 +1,43 @@
+[keys]
+move_up = ["k", "<up>"]
+move_down = ["j", "<down>"]
+move_left = ["h", "<left>"]
+move_right = ["l", "<right>"]
+select_focus = ["<enter>"],
+select_parent = ["p"],
+select_first = ["g"],
+select_last = ["G"],
+page_up = ["<page-up>", "u"],
+page_down = ["<page-down>", "d"],
+switch = ["<tab>"],
+quit = ["<esc>", "q"]
+
+[colors]
+focus_border = {fg = "magenta", bold = true}
+
+[colors.tree]
+border = {}
+selected = {fg = "black", bg = "light-green"}
+
+[colors.item]
+name = {}
+type_str = {fg = "cyan", bold = true, italic = true}
+type_null = {fg = "cyan", bold = true, italic = true}
+type_bool = {fg = "cyan", bold = true, italic = true}
+type_num = {fg = "cyan", bold = true, italic = true}
+type_arr = {fg = "cyan", bold = true, italic = true}
+type_obj = {fg = "cyan", bold = true, italic = true}
+description =  {fg = "dark-gray"}
+null = {fg = "dark-gray", italic = true}
+
+[colors.data]
+text = {}
+border = {fg = "blue"}
+
+[types]
+str = "str"
+null = "null"
+bool = "bool"
+num = "num"
+arr = "arr"
+obj = "obj"
