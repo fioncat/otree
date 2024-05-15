@@ -4,7 +4,6 @@ mod parse_yaml;
 
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use ratatui::style::Style;
@@ -50,23 +49,30 @@ impl<'a> Tree<'a> {
         let items: Vec<TreeItem<String>> = if let Value::Array(arr) = value {
             let mut items = Vec::with_capacity(arr.len());
             for (idx, value) in arr.into_iter().enumerate() {
-                let path = PathBuf::from(idx.to_string());
-                let item = Self::parse_value(cfg, path, value, &mut details, content_type)?;
+                let item = Self::parse_value(
+                    cfg,
+                    vec![],
+                    idx.to_string(),
+                    value,
+                    &mut details,
+                    content_type,
+                )?;
                 items.push(item);
             }
             items
         } else if let Value::Object(obj) = value {
             let mut items = Vec::with_capacity(obj.len());
             for (field, value) in obj {
-                let path = PathBuf::from(field);
-                let item = Self::parse_value(cfg, path, value, &mut details, content_type)?;
+                let item =
+                    Self::parse_value(cfg, vec![], field, value, &mut details, content_type)?;
                 items.push(item);
             }
             items
         } else {
             vec![Self::parse_value(
                 cfg,
-                PathBuf::from("root"),
+                vec![],
+                String::from("root"),
                 value,
                 &mut details,
                 content_type,
@@ -78,12 +84,13 @@ impl<'a> Tree<'a> {
 
     fn parse_value(
         cfg: &'a Config,
-        path: PathBuf,
+        parent: Vec<String>,
+        name: String,
         value: Value,
         details: &mut HashMap<String, Detail>,
         content_type: ContentType,
     ) -> Result<TreeItem<'a, String>> {
-        let value = TreeItemValue::parse(cfg, &path, value, details, content_type)?;
+        let value = TreeItemValue::parse(cfg, &parent, &name, value, details, content_type)?;
 
         let TreeItemValue {
             type_text,
@@ -93,12 +100,12 @@ impl<'a> Tree<'a> {
             children,
         } = value;
 
-        details.insert(format!("{}", path.display()), detail);
-
-        let name = path
-            .file_name()
-            .map(|name| name.to_str().unwrap().to_string())
-            .unwrap();
+        let path = if parent.is_empty() {
+            name.clone()
+        } else {
+            format!("{}/{name}", parent.join("/"))
+        };
+        details.insert(path, detail);
 
         let line = Line::from(vec![
             Span::styled(name.clone(), cfg.colors.item.name.style),
@@ -137,7 +144,8 @@ impl ContentType {
 impl<'a> TreeItemValue<'a> {
     fn parse(
         cfg: &'a Config,
-        path: &Path,
+        parent: &[String],
+        name: &String,
         value: Value,
         details: &mut HashMap<String, Detail>,
         content_type: ContentType,
@@ -180,14 +188,25 @@ impl<'a> TreeItemValue<'a> {
             Value::Array(arr) => {
                 let detail = content_type
                     .serialize(&Value::Array(arr.clone()))
-                    .with_context(|| format!("serialize for array item '{}'", path.display()))?;
+                    .with_context(|| {
+                        format!("serialize for array item '{}/{name}'", parent.join("/"))
+                    })?;
 
                 let word = if arr.len() > 1 { "items" } else { "item" };
                 let description = Cow::Owned(format!("[ {} {word} ]", arr.len()));
                 let mut children = Vec::with_capacity(arr.len());
                 for (idx, item) in arr.into_iter().enumerate() {
-                    let child_path = path.join(idx.to_string());
-                    let child = Tree::parse_value(cfg, child_path, item, details, content_type)?;
+                    let mut child_parent = parent.to_vec();
+                    child_parent.push(name.clone());
+
+                    let child = Tree::parse_value(
+                        cfg,
+                        child_parent,
+                        idx.to_string(),
+                        item,
+                        details,
+                        content_type,
+                    )?;
                     children.push(child);
                 }
                 Ok(Self {
@@ -201,15 +220,20 @@ impl<'a> TreeItemValue<'a> {
             Value::Object(obj) => {
                 let detail = content_type
                     .serialize(&Value::Object(obj.clone()))
-                    .with_context(|| format!("serialize for object item '{}'", path.display()))?;
+                    .with_context(|| {
+                        format!("serialize for object item '{}/{name}'", parent.join("/"))
+                    })?;
 
                 let word = if obj.len() > 1 { "fields" } else { "field" };
                 let description = Cow::Owned(format!("{{ {} {word} }}", obj.len()));
 
                 let mut children = Vec::with_capacity(obj.len());
                 for (field, item) in obj {
-                    let child_path = path.join(field);
-                    let child = Tree::parse_value(cfg, child_path, item, details, content_type)?;
+                    let mut child_parent = parent.to_vec();
+                    child_parent.push(name.clone());
+
+                    let child =
+                        Tree::parse_value(cfg, child_parent, field, item, details, content_type)?;
                     children.push(child);
                 }
                 Ok(Self {
