@@ -8,7 +8,7 @@ use ratatui::layout::{Constraint, Layout, Position, Rect};
 use ratatui::{Frame, Terminal};
 
 use crate::config::keys::Action;
-use crate::config::Config;
+use crate::config::{Config, LayoutDirection};
 use crate::interactive::data_block::DataBlock;
 use crate::interactive::tree_overview::TreeOverview;
 use crate::tree::Tree;
@@ -25,11 +25,6 @@ enum Refresh {
 enum ElementInFocus {
     TreeOverview,
     DataBlock,
-}
-
-pub enum LayoutDirection {
-    Vertical,
-    Horizontal,
 }
 
 pub enum ScrollDirection {
@@ -52,7 +47,7 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new(cfg: &'a Config, tree: Tree<'a>, layout_direction: LayoutDirection) -> Self {
+    pub fn new(cfg: &'a Config, tree: Tree<'a>) -> Self {
         Self {
             cfg,
             focus: ElementInFocus::TreeOverview,
@@ -60,7 +55,7 @@ impl<'a> App<'a> {
             tree_overview_area: Rect::default(),
             data_block: DataBlock::new(cfg),
             data_block_area: Rect::default(),
-            layout_direction,
+            layout_direction: cfg.layout,
         }
     }
 

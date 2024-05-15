@@ -3,13 +3,13 @@ move_up = ["k", "<up>"]
 move_down = ["j", "<down>"]
 move_left = ["h", "<left>"]
 move_right = ["l", "<right>"]
-select_focus = ["<enter>"],
-select_parent = ["p"],
-select_first = ["g"],
-select_last = ["G"],
-page_up = ["<page-up>", "u"],
-page_down = ["<page-down>", "d"],
-switch = ["<tab>"],
+select_focus = ["<enter>"]
+select_parent = ["p"]
+select_first = ["g"]
+select_last = ["G"]
+page_up = ["<page-up>", "u"]
+page_down = ["<page-down>", "d"]
+switch = ["<tab>"]
 quit = ["<esc>", "q"]
 
 [colors]

@@ -6,6 +6,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
+use clap::ValueEnum;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use serde_json::Value;
@@ -23,7 +24,7 @@ pub struct Detail {
     pub value: String,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum ContentType {
     Json,
     Toml,

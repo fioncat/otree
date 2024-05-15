@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use ratatui::layout::{Alignment, Rect};
 use ratatui::widgets::{Block, BorderType, Borders, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
@@ -9,7 +7,7 @@ use tui_tree_widget::TreeState;
 use crate::config::keys::Action;
 use crate::config::Config;
 use crate::interactive::app::ScrollDirection;
-use crate::tree::{Detail, Tree};
+use crate::tree::Tree;
 
 pub struct TreeOverview<'a> {
     cfg: &'a Config,
@@ -37,10 +35,6 @@ impl<'a> TreeOverview<'a> {
 
     pub fn get_data(&self, id: &str) -> Option<String> {
         self.tree.details.get(id).map(|d| d.value.clone())
-    }
-
-    pub fn get_details(&self) -> HashMap<String, Detail> {
-        self.tree.details.clone()
     }
 
     pub fn on_key(&mut self, action: Action) -> bool {
