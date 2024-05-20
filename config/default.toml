@@ -1,5 +1,5 @@
 [layout]
-direction = "hotizontal"
+direction = "horizontal"
 tree_size = 40
 
 [keys]
