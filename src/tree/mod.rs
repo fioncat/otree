@@ -47,6 +47,8 @@ impl<'a> Tree<'a> {
         let value = content_type.parse(data)?;
         let mut details: HashMap<String, Detail> = HashMap::new();
 
+        // The root value needs to be expanded directly, since we donot want to see a
+        // `root` item in the tree.
         let items: Vec<TreeItem<String>> = if let Value::Array(arr) = value {
             let mut items = Vec::with_capacity(arr.len());
             for (idx, value) in arr.into_iter().enumerate() {

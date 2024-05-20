@@ -4,6 +4,8 @@ mod interactive;
 mod tree;
 
 use std::fs;
+use std::io;
+use std::io::Read;
 use std::path::PathBuf;
 use std::process;
 
@@ -26,7 +28,6 @@ fn run() -> Result<()> {
         Err(err) => {
             err.use_stderr();
             err.print().unwrap();
-            eprintln!();
             if matches!(
                 err.kind(),
                 ArgsErrorKind::DisplayHelp
@@ -36,6 +37,7 @@ fn run() -> Result<()> {
                 return Ok(());
             }
 
+            eprintln!();
             bail!("parse command line args failed");
         }
     };
@@ -53,11 +55,18 @@ fn run() -> Result<()> {
         cfg.layout = LayoutDirection::Horizontal;
     }
 
-    let path = PathBuf::from(&args.path);
-
+    // The user can specify the content type manually, or we can determine it based on the
+    // file extension. Another approach is to use file content (for exmaple, if the file
+    // content starts with '{', we can assume it is json). But this approach is not reliable
+    // since the yaml is the superset of json, and the toml is not easy to determine.
     let content_type = match args.content_type {
         Some(content_type) => content_type,
         None => {
+            if args.path.is_none() {
+                bail!("you must specify content type when reading data from stdin");
+            }
+            let path = PathBuf::from(args.path.as_ref().unwrap());
+
             let ext = path.extension();
             if ext.is_none() {
                 bail!("cannot determine content type, missing extension in file path, you can specify it manually");
@@ -76,11 +85,27 @@ fn run() -> Result<()> {
         }
     };
 
-    let data = fs::read(path).context("read file")?;
+    let data = match args.path.as_ref() {
+        Some(path) => {
+            let path = PathBuf::from(path);
+            fs::read(path).context("read file")?
+        }
+        None => {
+            let mut data = Vec::new();
+            io::stdin().read_to_end(&mut data).context("read stdin")?;
+            data
+        }
+    };
+
     if data.len() > MAX_DATA_SIZE {
-        bail!("the file size is too large, we limit the maximum size to 5 MiB to ensure TUI performance, you should try to reduce the read size");
+        // Now the items need to be cloned every time the tree is rendered, which is a
+        // performance bottleneck. So we add this limit to ensure the performance of the TUI.
+        // After <https://github.com/EdJoPaTo/tui-rs-tree-widget/issues/35> is resolved, the
+        // limit here can be removed or increased.
+        bail!("the data size is too large, we limit the maximum size to 5 MiB to ensure TUI performance, you should try to reduce the read size");
     }
 
+    // To make sure the data is utf8 encoded.
     let data = String::from_utf8(data).context("parse file utf8")?;
 
     let tree = Tree::parse(&cfg, &data, content_type).context("parse file")?;
