@@ -1,13 +1,13 @@
 use ratatui::layout::{Alignment, Rect};
-use ratatui::widgets::{Block, BorderType, Borders, Scrollbar, ScrollbarOrientation};
+use ratatui::widgets::{Block, Borders, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use tui_tree_widget::Tree as TreeWidget;
 use tui_tree_widget::TreeState;
 
 use crate::config::keys::Action;
 use crate::config::Config;
-use crate::interactive::app::ScrollDirection;
 use crate::tree::Tree;
+use crate::ui::app::ScrollDirection;
 
 pub struct TreeOverview<'a> {
     cfg: &'a Config,
@@ -39,44 +39,48 @@ impl<'a> TreeOverview<'a> {
 
     pub fn on_key(&mut self, action: Action) -> bool {
         match action {
-            Action::MoveUp => self.move_up(),
-            Action::MoveDown => self.move_down(),
-            Action::SelectFocus => self.toggle_selected(),
-            Action::PageUp => self.scroll_up(3),
-            Action::PageDown => self.scroll_down(3),
-            Action::SelectFirst => self.select_first(),
-            Action::SelectLast => self.select_last(),
-            Action::SelectParent => false,
+            Action::MoveUp => self.state.key_up(&self.tree.items),
+            Action::MoveDown => self.state.key_down(&self.tree.items),
+            Action::SelectFocus => self.state.toggle_selected(),
+            Action::SelectParent => self.select_parent(),
+            Action::CloseParent => self.close_parent(),
+            Action::PageUp => self.state.scroll_up(3),
+            Action::PageDown => self.state.scroll_down(3),
+            Action::SelectFirst => self.state.select_first(&self.tree.items),
+            Action::SelectLast => self.state.select_last(&self.tree.items),
             _ => false,
         }
     }
 
-    pub fn move_up(&mut self) -> bool {
-        self.state.key_up(&self.tree.items)
-    }
+    fn close_parent(&mut self) -> bool {
+        if !self.select_parent() {
+            return false;
+        }
 
-    pub fn move_down(&mut self) -> bool {
-        self.state.key_down(&self.tree.items)
-    }
-
-    pub fn toggle_selected(&mut self) -> bool {
         self.state.toggle_selected()
     }
 
-    pub fn scroll_up(&mut self, lines: usize) -> bool {
-        self.state.scroll_up(lines)
+    fn select_parent(&mut self) -> bool {
+        if let Some(parent) = self.get_selected_parent() {
+            self.state.select(parent);
+            return true;
+        }
+        false
     }
 
-    pub fn scroll_down(&mut self, lines: usize) -> bool {
-        self.state.scroll_down(lines)
-    }
+    fn get_selected_parent(&self) -> Option<Vec<String>> {
+        let selected = self.state.selected();
+        if selected.len() <= 1 {
+            return None;
+        }
+        // The parent is the selected path without the last element
+        let parent: Vec<_> = selected
+            .clone()
+            .into_iter()
+            .take(selected.len() - 1)
+            .collect();
 
-    pub fn select_first(&mut self) -> bool {
-        self.state.select_first(&self.tree.items)
-    }
-
-    pub fn select_last(&mut self) -> bool {
-        self.state.select_last(&self.tree.items)
+        Some(parent)
     }
 
     pub fn on_click(&mut self, index: u16) {
@@ -85,30 +89,30 @@ impl<'a> TreeOverview<'a> {
 
         let changed = self.state.select_visible_index(&self.tree.items, index);
         if !changed {
-            self.toggle_selected();
+            self.state.toggle_selected();
         }
     }
 
     pub fn on_scroll(&mut self, direction: ScrollDirection) -> bool {
         match direction {
-            ScrollDirection::Up => self.scroll_up(1),
-            ScrollDirection::Down => self.scroll_down(1),
+            ScrollDirection::Up => self.state.scroll_up(1),
+            ScrollDirection::Down => self.state.scroll_down(1),
         }
     }
 
     pub fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {
-        let border_style = if focus {
-            self.cfg.colors.focus_border.style
-        } else {
-            self.cfg.colors.tree.border.style
-        };
+        let (border_style, border_type) = super::get_border_style(
+            &self.cfg.colors.focus_border,
+            &self.cfg.colors.tree.border,
+            focus,
+        );
 
         let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
             .begin_symbol(None)
             .end_symbol(None)
             .track_symbol(None);
         let block = Block::new()
-            .border_type(BorderType::Rounded)
+            .border_type(border_type)
             .borders(Borders::ALL)
             .border_style(border_style)
             .title_alignment(Alignment::Center)
