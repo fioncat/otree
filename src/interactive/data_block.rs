@@ -22,6 +22,8 @@ pub struct DataBlock<'a> {
     horizontal_scroll: usize,
     horizontal_scroll_last: usize,
     horizontal_scroll_state: ScrollbarState,
+
+    last_area: Rect,
 }
 
 impl<'a> DataBlock<'a> {
@@ -39,6 +41,7 @@ impl<'a> DataBlock<'a> {
             horizontal_scroll: 0,
             horizontal_scroll_last: 0,
             horizontal_scroll_state: ScrollbarState::default(),
+            last_area: Rect::default(),
         }
     }
 
@@ -134,7 +137,7 @@ impl<'a> DataBlock<'a> {
     }
 
     pub fn update_data(&mut self, data: String, area: Rect) {
-        if self.data == data.as_str() {
+        if self.data == data.as_str() && self.last_area == area {
             // No need to update data and scroll state.
             return;
         }
@@ -175,6 +178,7 @@ impl<'a> DataBlock<'a> {
         }
 
         self.data = data;
+        self.last_area = area;
     }
 
     pub fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {

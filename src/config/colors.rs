@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use ratatui::style::{Style, Stylize};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 macro_rules! generate_colors_parse {
     ($StructName:ident, $($field:ident),+) => {
@@ -13,7 +13,7 @@ macro_rules! generate_colors_parse {
     };
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Colors {
     #[serde(default = "TreeColors::default")]
     pub tree: TreeColors,
@@ -45,7 +45,7 @@ impl Colors {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataColors {
     #[serde(default = "Color::default")]
     pub text: Color,
@@ -69,9 +69,9 @@ impl DataColors {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TreeColors {
-    #[serde(default = "Color::default")]
+    #[serde(default = "TreeColors::default_border")]
     pub border: Color,
 
     #[serde(default = "TreeColors::default_selected")]
@@ -83,9 +83,13 @@ generate_colors_parse!(TreeColors, border, selected);
 impl TreeColors {
     fn default() -> Self {
         Self {
-            border: Color::default(),
+            border: Self::default_border(),
             selected: Self::default_selected(),
         }
+    }
+
+    fn default_border() -> Color {
+        Color::new("blue", "", false, false)
     }
 
     fn default_selected() -> Color {
@@ -93,7 +97,7 @@ impl TreeColors {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ItemColors {
     #[serde(default = "Color::default")]
     pub name: Color,
@@ -164,7 +168,7 @@ impl ItemColors {
     }
 }
 
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Color {
     pub fg: Option<String>,
     pub bg: Option<String>,

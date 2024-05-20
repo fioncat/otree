@@ -40,8 +40,6 @@ New actions:
 - `ChangeRoot`: Set current selected item as root, use `Reset` to recover.
 - `SearchItems`: Search items.
 - `SearchContent`: Search contents.
-- `Resize`: Resize widgets.
-- `ChangeLayout`: Change widgets layout.
 
 New features:
 

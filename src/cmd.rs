@@ -16,7 +16,7 @@ pub struct CommandArgs {
     pub config: Option<String>,
 
     /// The data content type. If not provided, we will try to determine it based on the file
-    /// extension. If reading data from stdin, or the file extension is not standard, this
+    /// extension. If reading data from stdin or the file extension is not standard, this
     /// option must be set.
     #[clap(short, long)]
     pub content_type: Option<ContentType>,
@@ -28,6 +28,18 @@ pub struct CommandArgs {
     /// Force to use horizontal layout.
     #[clap(short = 'H', long)]
     pub horizontal: bool,
+
+    /// Force to use the specified tree size.
+    #[clap(short, long)]
+    pub size: Option<u16>,
+
+    /// Show loaded config (in toml) and exit.
+    #[clap(long)]
+    pub show_config: bool,
+
+    /// Force to use the default config.
+    #[clap(long)]
+    pub ignore_config: bool,
 
     /// Print the version and exit.
     #[clap(short, long)]

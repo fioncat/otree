@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 macro_rules! generate_types_default {
     ($StructName:ident, $($field:ident),+) => {
@@ -24,7 +24,7 @@ macro_rules! generate_types_default {
     };
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Types {
     #[serde(default = "Types::default_str")]
     pub str: String,

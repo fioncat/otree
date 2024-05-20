@@ -5,17 +5,17 @@ pub mod types;
 use std::path::PathBuf;
 use std::{env, fs, io};
 
-use anyhow::{Context, Result};
-use serde::Deserialize;
+use anyhow::{bail, Context, Result};
+use serde::{Deserialize, Serialize};
 
 use self::colors::Colors;
 use self::keys::Keys;
 use self::types::Types;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-    #[serde(default = "Config::default_layout")]
-    pub layout: LayoutDirection,
+    #[serde(default = "Layout::default")]
+    pub layout: Layout,
 
     #[serde(default = "Colors::default")]
     pub colors: Colors,
@@ -27,7 +27,16 @@ pub struct Config {
     pub keys: Keys,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Layout {
+    #[serde(default = "Layout::default_direction")]
+    pub direction: LayoutDirection,
+
+    #[serde(default = "Layout::default_tree_size")]
+    pub tree_size: u16,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum LayoutDirection {
     #[serde(rename = "vertical")]
     Vertical,
@@ -36,13 +45,10 @@ pub enum LayoutDirection {
 }
 
 impl Config {
-    pub fn load(path: Option<String>) -> Result<Self> {
-        let mut cfg = Self::read(path)?;
-        cfg.parse().context("parse config")?;
-        Ok(cfg)
-    }
+    pub const MIN_LAYOUT_TREE_SIZE: u16 = 10;
+    pub const MAX_LAYOUT_TREE_SIZE: u16 = 80;
 
-    fn read(path: Option<String>) -> Result<Self> {
+    pub fn load(path: Option<String>) -> Result<Self> {
         let path = Self::get_path(path).context("get config path")?;
         if path.is_none() {
             return Ok(Self::default());
@@ -55,7 +61,17 @@ impl Config {
         toml::from_str(&data).context("parse config toml")
     }
 
-    fn parse(&mut self) -> Result<()> {
+    pub fn parse(&mut self) -> Result<()> {
+        if self.layout.tree_size < Self::MIN_LAYOUT_TREE_SIZE
+            || self.layout.tree_size > Self::MAX_LAYOUT_TREE_SIZE
+        {
+            bail!(
+                "invalid layout tree size, should be between {} and {}",
+                Self::MIN_LAYOUT_TREE_SIZE,
+                Self::MAX_LAYOUT_TREE_SIZE
+            );
+        }
+
         self.colors.parse()?;
         self.keys.parse()?;
         Ok(())
@@ -86,16 +102,35 @@ impl Config {
         }
     }
 
-    fn default() -> Self {
+    pub fn default() -> Self {
         Self {
-            layout: Self::default_layout(),
+            layout: Layout::default(),
             colors: Colors::default(),
             types: Types::default(),
             keys: Keys::default(),
         }
     }
 
-    fn default_layout() -> LayoutDirection {
-        LayoutDirection::Vertical
+    pub fn show(&self) -> Result<()> {
+        let toml = toml::to_string(self).context("serialize config to toml")?;
+        println!("{toml}");
+        Ok(())
+    }
+}
+
+impl Layout {
+    fn default() -> Self {
+        Self {
+            direction: Self::default_direction(),
+            tree_size: Self::default_tree_size(),
+        }
+    }
+
+    fn default_direction() -> LayoutDirection {
+        LayoutDirection::Horizontal
+    }
+
+    fn default_tree_size() -> u16 {
+        40
     }
 }

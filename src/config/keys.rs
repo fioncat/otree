@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use anyhow::{bail, Context, Result};
 use crossterm::event::KeyCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 macro_rules! generate_keys_default {
     ($($field:ident => $value:expr),+) => {
@@ -86,7 +86,7 @@ fn parse_keys(keys: &[String], unique: &mut HashSet<String>) -> Result<Vec<KeyCo
     Ok(codes)
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Keys {
     #[serde(default = "Keys::default_move_up")]
     pub move_up: Vec<String>,
@@ -112,6 +112,15 @@ pub struct Keys {
     #[serde(default = "Keys::default_page_down")]
     pub page_down: Vec<String>,
 
+    #[serde(default = "Keys::default_change_layout")]
+    pub change_layout: Vec<String>,
+
+    #[serde(default = "Keys::default_tree_scale_up")]
+    pub tree_scale_up: Vec<String>,
+
+    #[serde(default = "Keys::default_tree_scale_down")]
+    pub tree_scale_down: Vec<String>,
+
     #[serde(default = "Keys::default_switch")]
     pub switch: Vec<String>,
 
@@ -133,6 +142,9 @@ generate_keys_default!(
     select_last => ["G"],
     page_up => ["<page-up>", "u"],
     page_down => ["<page-down>", "d"],
+    change_layout => ["v"],
+    tree_scale_up => ["["],
+    tree_scale_down => ["]"],
     switch => ["<tab>"],
     quit => ["<esc>", "q"]
 );
@@ -148,6 +160,9 @@ generate_actions!(
     select_last => SelectLast,
     page_up => PageUp,
     page_down => PageDown,
+    change_layout => ChangeLayout,
+    tree_scale_up => TreeScaleUp,
+    tree_scale_down => TreeScaleDown,
     switch => Switch,
     quit => Quit
 );

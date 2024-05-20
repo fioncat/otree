@@ -2,6 +2,7 @@ mod cmd;
 mod config;
 mod interactive;
 mod tree;
+mod version;
 
 use std::fs;
 use std::io;
@@ -41,18 +42,36 @@ fn run() -> Result<()> {
             bail!("parse command line args failed");
         }
     };
+    if args.version {
+        version::show();
+        return Ok(());
+    }
 
-    let config_path = args.config.clone();
-    let mut cfg = Config::load(config_path)?;
+    let mut cfg = if args.ignore_config {
+        Config::default()
+    } else {
+        let config_path = args.config.clone();
+        Config::load(config_path)?
+    };
 
     if args.vertical && args.horizontal {
         bail!("invalid command line args, the vertical and horizontal cannot be used together");
     }
     if args.vertical {
-        cfg.layout = LayoutDirection::Vertical;
+        cfg.layout.direction = LayoutDirection::Vertical;
     }
     if args.horizontal {
-        cfg.layout = LayoutDirection::Horizontal;
+        cfg.layout.direction = LayoutDirection::Horizontal;
+    }
+
+    if let Some(size) = args.size {
+        cfg.layout.tree_size = size;
+    }
+
+    cfg.parse().context("parse config")?;
+
+    if args.show_config {
+        return cfg.show();
     }
 
     // The user can specify the content type manually, or we can determine it based on the

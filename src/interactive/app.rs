@@ -44,6 +44,7 @@ pub struct App<'a> {
     data_block_area: Rect,
 
     layout_direction: LayoutDirection,
+    layout_tree_size: u16,
 }
 
 impl<'a> App<'a> {
@@ -55,7 +56,8 @@ impl<'a> App<'a> {
             tree_overview_area: Rect::default(),
             data_block: DataBlock::new(cfg),
             data_block_area: Rect::default(),
-            layout_direction: cfg.layout,
+            layout_direction: cfg.layout.direction,
+            layout_tree_size: cfg.layout.tree_size,
         }
     }
 
@@ -125,15 +127,22 @@ impl<'a> App<'a> {
     }
 
     fn refresh_area(&mut self, frame: &Frame) {
+        let tree_size = self.layout_tree_size;
+        let data_size = 100 - tree_size;
+
         match self.layout_direction {
             LayoutDirection::Vertical => {
-                let vertical =
-                    Layout::vertical([Constraint::Percentage(50), Constraint::Percentage(50)]);
+                let vertical = Layout::vertical([
+                    Constraint::Percentage(tree_size),
+                    Constraint::Percentage(data_size),
+                ]);
                 [self.tree_overview_area, self.data_block_area] = vertical.areas(frame.size());
             }
             LayoutDirection::Horizontal => {
-                let horizontal =
-                    Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]);
+                let horizontal = Layout::horizontal([
+                    Constraint::Percentage(tree_size),
+                    Constraint::Percentage(data_size),
+                ]);
                 [self.tree_overview_area, self.data_block_area] = horizontal.areas(frame.size());
             }
         }
@@ -169,6 +178,40 @@ impl<'a> App<'a> {
                 }
                 _ => return Refresh::Skip,
             }
+        }
+
+        if let Action::ChangeLayout = action {
+            match self.layout_direction {
+                LayoutDirection::Vertical => self.layout_direction = LayoutDirection::Horizontal,
+                LayoutDirection::Horizontal => self.layout_direction = LayoutDirection::Vertical,
+            }
+            return Refresh::Update;
+        }
+
+        if let Action::TreeScaleUp = action {
+            if self.layout_tree_size == Config::MAX_LAYOUT_TREE_SIZE {
+                return Refresh::Skip;
+            }
+
+            self.layout_tree_size += 2;
+            if self.layout_tree_size > Config::MAX_LAYOUT_TREE_SIZE {
+                self.layout_tree_size = Config::MAX_LAYOUT_TREE_SIZE;
+            }
+
+            return Refresh::Update;
+        }
+
+        if let Action::TreeScaleDown = action {
+            if self.layout_tree_size < Config::MIN_LAYOUT_TREE_SIZE {
+                return Refresh::Skip;
+            }
+
+            self.layout_tree_size = self.layout_tree_size.saturating_sub(2);
+            if self.layout_tree_size < Config::MIN_LAYOUT_TREE_SIZE {
+                self.layout_tree_size = Config::MIN_LAYOUT_TREE_SIZE;
+            }
+
+            return Refresh::Update;
         }
 
         let update = match self.focus {
