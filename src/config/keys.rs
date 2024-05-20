@@ -68,6 +68,8 @@ fn parse_keys(keys: &[String], unique: &mut HashSet<String>) -> Result<Vec<KeyCo
             continue;
         }
 
+        let key = key.replace(['-', '_'], "");
+
         let code = match key.as_str() {
             "<backspace>" => KeyCode::Backspace,
             "<enter>" => KeyCode::Enter,
@@ -75,8 +77,8 @@ fn parse_keys(keys: &[String], unique: &mut HashSet<String>) -> Result<Vec<KeyCo
             "<right>" => KeyCode::Right,
             "<up>" => KeyCode::Up,
             "<down>" => KeyCode::Down,
-            "<page-up>" => KeyCode::PageUp,
-            "<page-down>" => KeyCode::PageDown,
+            "<pageup>" => KeyCode::PageUp,
+            "<pagedown>" => KeyCode::PageDown,
             "<tab>" => KeyCode::Tab,
             "<esc>" => KeyCode::Esc,
             _ => bail!("unsupported key: '{}'", key),

@@ -36,7 +36,6 @@ New actions:
 
 - `ShowHelp`: Popup a widget to show available keys.
 - `Reset`: Reset the state of all items.
-- `SelectParent`: Select parent item and close all its children.
 - `ChangeRoot`: Set current selected item as root, use `Reset` to recover.
 - `SearchItems`: Search items.
 - `SearchContent`: Search contents.
