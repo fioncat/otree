@@ -66,9 +66,9 @@ impl<'a> DataBlock<'a> {
 
     pub fn scroll_first(&mut self) -> bool {
         let can_scroll = self.can_vertical_scroll || self.can_horizontal_scroll;
-        let scoll_first = self.vertical_scroll == 0 && self.horizontal_scroll == 0;
+        let scroll_first = self.vertical_scroll == 0 && self.horizontal_scroll == 0;
 
-        if !can_scroll || scoll_first {
+        if !can_scroll || scroll_first {
             return false;
         }
 
