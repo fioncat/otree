@@ -9,9 +9,9 @@ use ratatui::{Frame, Terminal};
 
 use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
-use crate::interactive::data_block::DataBlock;
-use crate::interactive::tree_overview::TreeOverview;
 use crate::tree::Tree;
+use crate::ui::data_block::DataBlock;
+use crate::ui::tree_overview::TreeOverview;
 
 enum Refresh {
     /// Update the TUI
@@ -22,9 +22,11 @@ enum Refresh {
     Quit,
 }
 
+#[derive(Debug, Clone, Copy)]
 enum ElementInFocus {
     TreeOverview,
     DataBlock,
+    None,
 }
 
 pub enum ScrollDirection {
@@ -36,6 +38,7 @@ pub struct App<'a> {
     cfg: &'a Config,
 
     focus: ElementInFocus,
+    last_focus: Option<ElementInFocus>,
 
     tree_overview: TreeOverview<'a>,
     tree_overview_area: Rect,
@@ -52,6 +55,7 @@ impl<'a> App<'a> {
         Self {
             cfg,
             focus: ElementInFocus::TreeOverview,
+            last_focus: None,
             tree_overview: TreeOverview::new(cfg, tree),
             tree_overview_area: Rect::default(),
             data_block: DataBlock::new(cfg),
@@ -84,6 +88,10 @@ impl<'a> App<'a> {
                     }
                     _ => Refresh::Skip,
                 },
+                // When resize happens, we need to redraw the widgets to fit the new size
+                Event::Resize(_, _) => Refresh::Update,
+                Event::FocusGained => self.on_focus_changed(true),
+                Event::FocusLost => self.on_focus_changed(false),
                 _ => Refresh::Skip,
             };
 
@@ -151,6 +159,7 @@ impl<'a> App<'a> {
     fn can_switch_to_data_block(&self) -> bool {
         match self.focus {
             ElementInFocus::TreeOverview => self.tree_overview.get_selected().is_some(),
+            ElementInFocus::None => true,
             ElementInFocus::DataBlock => false,
         }
     }
@@ -217,6 +226,7 @@ impl<'a> App<'a> {
         let update = match self.focus {
             ElementInFocus::TreeOverview => self.tree_overview.on_key(action),
             ElementInFocus::DataBlock => self.data_block.on_key(action),
+            ElementInFocus::None => return Refresh::Skip,
         };
 
         if update {
@@ -259,6 +269,34 @@ impl<'a> App<'a> {
         } else {
             Refresh::Skip
         }
+    }
+
+    fn on_focus_changed(&mut self, focus: bool) -> Refresh {
+        if focus {
+            if !matches!(self.focus, ElementInFocus::None) {
+                // We are already focused, no need to update
+                return Refresh::Skip;
+            }
+
+            // This implements the functionality to refocus on the last focused widget when
+            // we return after losing focus.
+            let last_focus = self
+                .last_focus
+                .take()
+                .unwrap_or(ElementInFocus::TreeOverview);
+            self.focus = last_focus;
+            return Refresh::Update;
+        }
+
+        if matches!(self.focus, ElementInFocus::None) {
+            // We are already not focused, no need to update
+            return Refresh::Skip;
+        }
+
+        self.last_focus = Some(self.focus);
+        self.focus = ElementInFocus::None;
+
+        Refresh::Update
     }
 
     fn get_row_inside(column: u16, row: u16, area: Rect) -> Option<u16> {

@@ -1,7 +1,7 @@
 mod cmd;
 mod config;
-mod interactive;
 mod tree;
+mod ui;
 mod version;
 
 use std::fs;
@@ -17,8 +17,8 @@ use clap::Parser;
 use crate::cmd::CommandArgs;
 use crate::config::Config;
 use crate::config::LayoutDirection;
-use crate::interactive::app::App;
 use crate::tree::{ContentType, Tree};
+use crate::ui::app::App;
 
 // Forbid large data size to ensure TUI performance
 const MAX_DATA_SIZE: usize = 5 * 1024 * 1024;

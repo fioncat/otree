@@ -1,13 +1,13 @@
 use ratatui::layout::{Alignment, Margin, Rect};
 use ratatui::symbols::scrollbar;
 use ratatui::widgets::{
-    Block, BorderType, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
+    Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
 };
 use ratatui::Frame;
 
 use crate::config::keys::Action;
 use crate::config::Config;
-use crate::interactive::app::ScrollDirection;
+use crate::ui::app::ScrollDirection;
 
 pub struct DataBlock<'a> {
     cfg: &'a Config,
@@ -65,12 +65,18 @@ impl<'a> DataBlock<'a> {
     }
 
     pub fn scroll_first(&mut self) -> bool {
-        if !self.can_vertical_scroll || self.vertical_scroll == 0 {
+        let can_scroll = self.can_vertical_scroll || self.can_horizontal_scroll;
+        let scoll_first = self.vertical_scroll == 0 && self.horizontal_scroll == 0;
+
+        if !can_scroll || scoll_first {
             return false;
         }
 
         self.vertical_scroll = 0;
         self.vertical_scroll_state = self.vertical_scroll_state.position(0);
+
+        self.horizontal_scroll = 0;
+        self.horizontal_scroll_state = self.horizontal_scroll_state.position(0);
 
         true
     }
@@ -182,14 +188,14 @@ impl<'a> DataBlock<'a> {
     }
 
     pub fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {
-        let border_style = if focus {
-            self.cfg.colors.focus_border.style
-        } else {
-            self.cfg.colors.data.border.style
-        };
+        let (border_style, border_type) = super::get_border_style(
+            &self.cfg.colors.focus_border,
+            &self.cfg.colors.data.border,
+            focus,
+        );
 
         let block = Block::new()
-            .border_type(BorderType::Rounded)
+            .border_type(border_type)
             .borders(Borders::ALL)
             .border_style(border_style)
             .title_alignment(Alignment::Center)
