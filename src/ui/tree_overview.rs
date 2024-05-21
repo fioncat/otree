@@ -77,7 +77,7 @@ impl<'a> TreeOverview<'a> {
         };
 
         let new_tree = Tree::from_value(self.cfg, value, self.tree().content_type)
-            .expect("build tree from change_root must sucess");
+            .expect("build tree from change_root must success");
 
         let current_tree = self.tree.take().unwrap();
         if self.root_tree.is_none() {
