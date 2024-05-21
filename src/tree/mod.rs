@@ -17,11 +17,13 @@ use crate::config::Config;
 pub struct Tree<'a> {
     pub items: Vec<TreeItem<'a, String>>,
     pub details: HashMap<String, Detail>,
+    pub content_type: ContentType,
 }
 
 #[derive(Debug, Clone)]
 pub struct Detail {
     pub value: String,
+    pub raw_value: Value,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -43,8 +45,7 @@ struct TreeItemValue<'a> {
 }
 
 impl<'a> Tree<'a> {
-    pub fn parse(cfg: &'a Config, data: &str, content_type: ContentType) -> Result<Self> {
-        let value = content_type.parse(data)?;
+    pub fn from_value(cfg: &'a Config, value: Value, content_type: ContentType) -> Result<Self> {
         let mut details: HashMap<String, Detail> = HashMap::new();
 
         // The root value needs to be expanded directly, since we donot want to see a
@@ -82,7 +83,16 @@ impl<'a> Tree<'a> {
             )?]
         };
 
-        Ok(Self { items, details })
+        Ok(Self {
+            items,
+            details,
+            content_type,
+        })
+    }
+
+    pub fn parse(cfg: &'a Config, data: &str, content_type: ContentType) -> Result<Self> {
+        let value = content_type.parse(data)?;
+        Self::from_value(cfg, value, content_type)
     }
 
     fn parse_value(
@@ -153,6 +163,7 @@ impl<'a> TreeItemValue<'a> {
         details: &mut HashMap<String, Detail>,
         content_type: ContentType,
     ) -> Result<Self> {
+        let raw_value = value.clone();
         match value {
             Value::Null => Ok(Self {
                 type_text: cfg.types.null.as_str(),
@@ -160,6 +171,7 @@ impl<'a> TreeItemValue<'a> {
                 description: Cow::Borrowed("null"),
                 detail: Detail {
                     value: String::new(),
+                    raw_value,
                 },
                 children: None,
             }),
@@ -167,7 +179,10 @@ impl<'a> TreeItemValue<'a> {
                 type_text: cfg.types.str.as_str(),
                 type_style: cfg.colors.item.type_str.style,
                 description: Cow::Owned(format!("= {s:?}")),
-                detail: Detail { value: s },
+                detail: Detail {
+                    value: s,
+                    raw_value,
+                },
                 children: None,
             }),
             Value::Number(num) => Ok(Self {
@@ -176,6 +191,7 @@ impl<'a> TreeItemValue<'a> {
                 description: Cow::Owned(format!("= {num}")),
                 detail: Detail {
                     value: num.to_string(),
+                    raw_value,
                 },
                 children: None,
             }),
@@ -185,6 +201,7 @@ impl<'a> TreeItemValue<'a> {
                 description: Cow::Owned(format!("= {b}")),
                 detail: Detail {
                     value: b.to_string(),
+                    raw_value,
                 },
                 children: None,
             }),
@@ -216,7 +233,10 @@ impl<'a> TreeItemValue<'a> {
                     type_text: cfg.types.arr.as_str(),
                     type_style: cfg.colors.item.type_arr.style,
                     description,
-                    detail: Detail { value: detail },
+                    detail: Detail {
+                        value: detail,
+                        raw_value,
+                    },
                     children: Some(children),
                 })
             }
@@ -243,7 +263,10 @@ impl<'a> TreeItemValue<'a> {
                     type_text: cfg.types.obj.as_str(),
                     type_style: cfg.colors.item.type_obj.style,
                     description,
-                    detail: Detail { value: detail },
+                    detail: Detail {
+                        value: detail,
+                        raw_value,
+                    },
                     children: Some(children),
                 })
             }

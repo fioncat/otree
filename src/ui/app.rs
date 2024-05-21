@@ -211,7 +211,7 @@ impl<'a> App<'a> {
         }
 
         if let Action::TreeScaleDown = action {
-            if self.layout_tree_size < Config::MIN_LAYOUT_TREE_SIZE {
+            if self.layout_tree_size == Config::MIN_LAYOUT_TREE_SIZE {
                 return Refresh::Skip;
             }
 

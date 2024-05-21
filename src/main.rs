@@ -21,7 +21,7 @@ use crate::tree::{ContentType, Tree};
 use crate::ui::app::App;
 
 // Forbid large data size to ensure TUI performance
-const MAX_DATA_SIZE: usize = 5 * 1024 * 1024;
+const MAX_DATA_SIZE: usize = 10 * 1024 * 1024;
 
 fn run() -> Result<()> {
     let args = match CommandArgs::try_parse() {
@@ -117,11 +117,7 @@ fn run() -> Result<()> {
     };
 
     if data.len() > MAX_DATA_SIZE {
-        // Now the items need to be cloned every time the tree is rendered, which is a
-        // performance bottleneck. So we add this limit to ensure the performance of the TUI.
-        // After <https://github.com/EdJoPaTo/tui-rs-tree-widget/issues/35> is resolved, the
-        // limit here can be removed or increased.
-        bail!("the data size is too large, we limit the maximum size to 5 MiB to ensure TUI performance, you should try to reduce the read size");
+        bail!("the data size is too large, we limit the maximum size to 10 MiB to ensure TUI performance, you should try to reduce the read size");
     }
 
     // To make sure the data is utf8 encoded.

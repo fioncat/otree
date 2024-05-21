@@ -21,7 +21,7 @@ serde = { version = "1.0.202", features = ["derive"] }
 serde_json = { version = "1.0.117", features = ["preserve_order"] }
 serde_yml = "0.0.7"
 toml = { version = "0.8.13", features = ["preserve_order"] }
-tui-tree-widget = "0.19.0"
+tui-tree-widget = { git = "https://github.com/EdJoPaTo/tui-rs-tree-widget.git", rev = "b07b537067e22dcf684342ccef1a52ff9d637da0" }
 
 [build-dependencies]
 simple-error = "0.3.0"

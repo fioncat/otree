@@ -35,8 +35,6 @@ For how to configure TUI colors, please refer to: [Colors Document](docs/colors.
 New actions:
 
 - `ShowHelp`: Popup a widget to show available keys.
-- `Reset`: Reset the state of all items.
-- `ChangeRoot`: Set current selected item as root, use `Reset` to recover.
 - `SearchItems`: Search items.
 - `SearchContent`: Search contents.
 
