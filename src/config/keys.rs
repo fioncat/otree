@@ -112,6 +112,12 @@ pub struct Keys {
     #[serde(default = "Keys::default_close_parent")]
     pub close_parent: Vec<String>,
 
+    #[serde(default = "Keys::default_change_root")]
+    pub change_root: Vec<String>,
+
+    #[serde(default = "Keys::default_reset")]
+    pub reset: Vec<String>,
+
     #[serde(default = "Keys::default_page_up")]
     pub page_up: Vec<String>,
     #[serde(default = "Keys::default_page_down")]
@@ -146,13 +152,15 @@ generate_keys_default!(
     select_first => ["g"],
     select_last => ["G"],
     close_parent => ["<backspace>"],
+    change_root => ["r"],
+    reset => ["<esc>"],
     page_up => ["<page-up>", "u"],
     page_down => ["<page-down>", "d"],
     change_layout => ["v"],
     tree_scale_up => ["["],
     tree_scale_down => ["]"],
     switch => ["<tab>"],
-    quit => ["<esc>", "q"]
+    quit => ["q"]
 );
 
 generate_actions!(
@@ -165,6 +173,8 @@ generate_actions!(
     select_first => SelectFirst,
     select_last => SelectLast,
     close_parent => CloseParent,
+    change_root => ChangeRoot,
+    reset => Reset,
     page_up => PageUp,
     page_down => PageDown,
     change_layout => ChangeLayout,
