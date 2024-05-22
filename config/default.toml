@@ -2,6 +2,10 @@
 direction = "horizontal"
 tree_size = 40
 
+[header]
+disable = false
+format = "{version} - {data_source} ({content_type}) - {data_size}"
+
 [keys]
 move_up = ["k", "<up>"]
 move_down = ["j", "<down>"]
@@ -14,15 +18,16 @@ select_last = ["G"]
 close_parent = ["<backspace>"]
 change_root = ["r"]
 reset = ["<esc>"]
-page_up = ["<page-up>", "u"]
-page_down = ["<page-down>", "d"]
+page_up = ["<page-up>", "<ctrl-y>"]
+page_down = ["<page-down>", "<ctrl-e>"]
 change_layout = ["v"]
 tree_scale_up = ["["]
 tree_scale_down = ["]"]
 switch = ["<tab>"]
-quit = ["q"]
+quit = ["<ctrl-c>", "q"]
 
 [colors]
+header = {bold = true}
 focus_border = {fg = "magenta", bold = true}
 
 [colors.tree]

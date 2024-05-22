@@ -1,8 +1,7 @@
+use std::io::Stdout;
+
 use anyhow::Result;
-use crossterm::event::{
-    DisableMouseCapture, EnableMouseCapture, Event, KeyEvent, MouseButton, MouseEventKind,
-};
-use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
+use crossterm::event::{Event, KeyEvent, MouseButton, MouseEventKind};
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout, Position, Rect};
 use ratatui::{Frame, Terminal};
@@ -75,12 +74,7 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn show(&mut self) -> Result<()> {
-        terminal::enable_raw_mode()?;
-        let mut stdout = std::io::stdout();
-        crossterm::execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-
-        let mut terminal = Terminal::new(CrosstermBackend::new(stdout))?;
+    pub fn show(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
         terminal.draw(|frame| self.draw(frame))?;
 
         loop {
@@ -108,17 +102,7 @@ impl<'a> App<'a> {
             match refresh {
                 Refresh::Update => {}
                 Refresh::Skip => continue,
-                Refresh::Quit => {
-                    // restore terminal
-                    terminal::disable_raw_mode()?;
-                    crossterm::execute!(
-                        terminal.backend_mut(),
-                        LeaveAlternateScreen,
-                        DisableMouseCapture
-                    )?;
-                    terminal.show_cursor()?;
-                    return Ok(());
-                }
+                Refresh::Quit => return Ok(()),
             }
             terminal.draw(|frame| self.draw(frame))?;
         }
@@ -215,7 +199,7 @@ impl<'a> App<'a> {
     }
 
     fn on_key(&mut self, key: KeyEvent) -> Refresh {
-        let action = self.cfg.keys.get_key_action(key.code);
+        let action = self.cfg.keys.get_key_action(key);
         if action.is_none() {
             return Refresh::Skip;
         }

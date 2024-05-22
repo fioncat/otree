@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use anyhow::{bail, Context, Result};
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use serde::{Deserialize, Serialize};
 
 macro_rules! generate_keys_default {
@@ -41,7 +41,7 @@ macro_rules! generate_actions {
                 let mut unique = HashSet::new();
                 self.actions = vec![
                     $(
-                        (parse_keys(&self.$field, &mut unique).with_context(|| format!("parse key {}", stringify!($field)))?, Action::$value),
+                        (Key::parse_keys(&self.$field, &mut unique).with_context(|| format!("parse keys for action {}", stringify!($field)))?, Action::$value),
                     )+
                 ];
                 Ok(())
@@ -50,42 +50,147 @@ macro_rules! generate_actions {
     };
 }
 
-fn parse_keys(keys: &[String], unique: &mut HashSet<String>) -> Result<Vec<KeyCode>> {
-    let mut codes = Vec::with_capacity(keys.len());
-    for key in keys {
-        if unique.contains(key) {
-            bail!("the key '{key}' is used by another action, cannot be used twice");
-        }
-        unique.insert(key.clone());
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Key {
+    Char(char),
 
+    Ctrl(char),
+    Alt(char),
+
+    F(u8),
+
+    Backspace,
+    Enter,
+    Left,
+    Right,
+    Up,
+    Down,
+    PageUp,
+    PageDown,
+    Tab,
+    Esc,
+}
+
+impl Key {
+    fn from_event(event: KeyEvent) -> Option<Self> {
+        if event.modifiers == KeyModifiers::CONTROL {
+            if let KeyCode::Char(char) = event.code {
+                return Some(Self::Ctrl(char));
+            }
+
+            return None;
+        }
+
+        if event.modifiers == KeyModifiers::ALT {
+            if let KeyCode::Char(char) = event.code {
+                return Some(Self::Alt(char));
+            }
+
+            return None;
+        }
+
+        if event.modifiers == KeyModifiers::SHIFT {
+            if let KeyCode::Char(char) = event.code {
+                return Some(Self::Char(char));
+            }
+
+            return None;
+        }
+
+        if event.modifiers != KeyModifiers::NONE {
+            return None;
+        }
+
+        match event.code {
+            KeyCode::Char(char) => Some(Self::Char(char)),
+            KeyCode::Backspace => Some(Self::Backspace),
+            KeyCode::Enter => Some(Self::Enter),
+            KeyCode::Left => Some(Self::Left),
+            KeyCode::Right => Some(Self::Right),
+            KeyCode::Up => Some(Self::Up),
+            KeyCode::Down => Some(Self::Down),
+            KeyCode::PageUp => Some(Self::PageUp),
+            KeyCode::PageDown => Some(Self::PageDown),
+            KeyCode::Tab => Some(Self::Tab),
+            KeyCode::Esc => Some(Self::Esc),
+            KeyCode::F(n) => Some(Self::F(n)),
+            _ => None,
+        }
+    }
+
+    fn parse(key: &str) -> Result<Self> {
         if !key.starts_with('<') {
             if key.len() != 1 {
-                bail!("key length should be equal to 1");
+                bail!("invalid key '{key}', length should be equal to 1");
             }
             let char = key.chars().next().unwrap();
-            let code = KeyCode::Char(char);
-            codes.push(code);
-            continue;
+            return Ok(Self::Char(char));
+        }
+
+        let raw_key = key;
+
+        let key = key.strip_prefix('<').unwrap();
+        let key = match key.strip_suffix('>') {
+            Some(key) => key,
+            None => bail!("invalid key '{raw_key}', should be ends with '>'"),
+        };
+
+        if let Some(key) = key.strip_prefix("ctrl-") {
+            if key.len() != 1 {
+                bail!("invalid key '{raw_key}', should be '<ctrl-x>'");
+            }
+            let char = key.chars().next().unwrap();
+            return Ok(Self::Ctrl(char));
+        }
+
+        if let Some(key) = key.strip_prefix("alt-") {
+            if key.len() != 1 {
+                bail!("invalid key '{raw_key}', should be '<alt-x>'");
+            }
+            let char = key.chars().next().unwrap();
+            return Ok(Self::Alt(char));
+        }
+
+        if let Some(key) = key.strip_prefix('f') {
+            let n = match key.parse::<u8>() {
+                Ok(n) => n,
+                Err(_) => bail!("invalid key '{raw_key}', should be '<fN>'"),
+            };
+
+            if n == 0 || n > 12 {
+                bail!("invalid key '{raw_key}', fN should be in range [1, 12]");
+            }
+
+            return Ok(Self::F(n));
         }
 
         let key = key.replace(['-', '_'], "");
-
-        let code = match key.as_str() {
-            "<backspace>" => KeyCode::Backspace,
-            "<enter>" => KeyCode::Enter,
-            "<left>" => KeyCode::Left,
-            "<right>" => KeyCode::Right,
-            "<up>" => KeyCode::Up,
-            "<down>" => KeyCode::Down,
-            "<pageup>" => KeyCode::PageUp,
-            "<pagedown>" => KeyCode::PageDown,
-            "<tab>" => KeyCode::Tab,
-            "<esc>" => KeyCode::Esc,
-            _ => bail!("unsupported key: '{}'", key),
-        };
-        codes.push(code);
+        Ok(match key.as_str() {
+            "backspace" => Self::Backspace,
+            "enter" => Self::Enter,
+            "left" => Self::Left,
+            "right" => Self::Right,
+            "up" => Self::Up,
+            "down" => Self::Down,
+            "pageup" => Self::PageUp,
+            "pagedown" => Self::PageDown,
+            "tab" => Self::Tab,
+            "esc" => Self::Esc,
+            _ => bail!("unsupported key '{raw_key}'"),
+        })
     }
-    Ok(codes)
+
+    fn parse_keys(raw_keys: &[String], unique: &mut HashSet<String>) -> Result<Vec<Self>> {
+        let mut keys = Vec::with_capacity(raw_keys.len());
+        for raw_key in raw_keys {
+            if unique.contains(raw_key) {
+                bail!("the key '{raw_key}' is used by another action, cannot be used twice");
+            }
+            unique.insert(raw_key.clone());
+            keys.push(Self::parse(raw_key)?);
+        }
+        Ok(keys)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -139,7 +244,7 @@ pub struct Keys {
     pub quit: Vec<String>,
 
     #[serde(skip)]
-    pub actions: Vec<(Vec<KeyCode>, Action)>,
+    actions: Vec<(Vec<Key>, Action)>,
 }
 
 generate_keys_default!(
@@ -154,13 +259,13 @@ generate_keys_default!(
     close_parent => ["<backspace>"],
     change_root => ["r"],
     reset => ["<esc>"],
-    page_up => ["<page-up>", "u"],
-    page_down => ["<page-down>", "d"],
+    page_up => ["<page-up>", "<ctrl-y>"],
+    page_down => ["<page-down>", "<ctrl-e>"],
     change_layout => ["v"],
     tree_scale_up => ["["],
     tree_scale_down => ["]"],
     switch => ["<tab>"],
-    quit => ["q"]
+    quit => ["<ctrl-c>", "q"]
 );
 
 generate_actions!(
@@ -185,10 +290,11 @@ generate_actions!(
 );
 
 impl Keys {
-    pub fn get_key_action(&self, key_code: KeyCode) -> Option<Action> {
-        for (codes, action) in self.actions.iter() {
-            for code in codes {
-                if *code == key_code {
+    pub fn get_key_action(&self, event: KeyEvent) -> Option<Action> {
+        let event_key = Key::from_event(event)?;
+        for (keys, action) in self.actions.iter() {
+            for key in keys {
+                if *key == event_key {
                     return Some(*action);
                 }
             }
