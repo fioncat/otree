@@ -11,6 +11,7 @@ use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
+use crate::ui::header::{Header, HeaderContext};
 use crate::ui::tree_overview::TreeOverview;
 
 enum Refresh {
@@ -48,9 +49,15 @@ pub struct App<'a> {
 
     layout_direction: LayoutDirection,
     layout_tree_size: u16,
+
+    header: Option<Header<'a>>,
+    header_area: Rect,
+    skip_header: bool,
 }
 
 impl<'a> App<'a> {
+    const HEADER_HEIGHT: u16 = 1;
+
     pub fn new(cfg: &'a Config, tree: Tree<'a>) -> Self {
         Self {
             cfg,
@@ -62,6 +69,9 @@ impl<'a> App<'a> {
             data_block_area: Rect::default(),
             layout_direction: cfg.layout.direction,
             layout_tree_size: cfg.layout.tree_size,
+            header: None,
+            header_area: Rect::default(),
+            skip_header: false,
         }
     }
 
@@ -114,6 +124,10 @@ impl<'a> App<'a> {
         }
     }
 
+    pub fn set_header(&mut self, ctx: HeaderContext) {
+        self.header = Some(Header::new(self.cfg, ctx));
+    }
+
     fn draw(&mut self, frame: &mut Frame) {
         self.refresh_area(frame);
 
@@ -123,6 +137,12 @@ impl<'a> App<'a> {
                 self.data_block.update_data(data, self.data_block_area);
             }
             // TODO: When we cannot find data, should warn user (maybe message in data block?)
+        }
+
+        if let Some(header) = self.header.as_ref() {
+            if !self.skip_header {
+                header.draw(frame, self.header_area);
+            }
         }
 
         let tree_focus = matches!(self.focus, ElementInFocus::TreeOverview);
@@ -136,7 +156,37 @@ impl<'a> App<'a> {
 
     fn refresh_area(&mut self, frame: &Frame) {
         let tree_size = self.layout_tree_size;
-        let data_size = 100 - tree_size;
+        let data_size = 100_u16.saturating_sub(tree_size);
+
+        // These checks should be done in config validation.
+        debug_assert_ne!(tree_size, 0);
+        debug_assert_ne!(data_size, 0);
+
+        let frame_area = frame.size();
+        let main_area = match self.header {
+            Some(_) => {
+                let Rect { height, .. } = frame_area;
+                if height <= Self::HEADER_HEIGHT + 1 {
+                    // God knows under what circumstances such a small terminal would appear!
+                    // We will not render the header.
+                    self.skip_header = true;
+                    frame_area
+                } else {
+                    self.skip_header = false;
+                    self.header_area = Rect {
+                        height: Self::HEADER_HEIGHT,
+                        y: 0,
+                        ..frame_area
+                    };
+                    Rect {
+                        height: height.saturating_sub(Self::HEADER_HEIGHT),
+                        y: Self::HEADER_HEIGHT,
+                        ..frame_area
+                    }
+                }
+            }
+            None => frame_area,
+        };
 
         match self.layout_direction {
             LayoutDirection::Vertical => {
@@ -144,14 +194,14 @@ impl<'a> App<'a> {
                     Constraint::Percentage(tree_size),
                     Constraint::Percentage(data_size),
                 ]);
-                [self.tree_overview_area, self.data_block_area] = vertical.areas(frame.size());
+                [self.tree_overview_area, self.data_block_area] = vertical.areas(main_area);
             }
             LayoutDirection::Horizontal => {
                 let horizontal = Layout::horizontal([
                     Constraint::Percentage(tree_size),
                     Constraint::Percentage(data_size),
                 ]);
-                [self.tree_overview_area, self.data_block_area] = horizontal.areas(frame.size());
+                [self.tree_overview_area, self.data_block_area] = horizontal.areas(main_area);
             }
         }
     }

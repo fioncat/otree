@@ -21,6 +21,14 @@ pub struct CommandArgs {
     #[clap(short, long)]
     pub content_type: Option<ContentType>,
 
+    /// Force to no render the header.
+    #[clap(long)]
+    pub disable_header: bool,
+
+    /// Force to use the header format.
+    #[clap(short = 'f', long)]
+    pub header_format: Option<String>,
+
     /// Force to use vertical layout.
     #[clap(short = 'V', long)]
     pub vertical: bool,
