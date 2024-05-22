@@ -146,9 +146,15 @@ fn run() -> Result<()> {
         app.set_header(header_ctx);
     }
 
-    app.show().context("show tui")?;
+    let mut terminal = ui::start().context("start tui")?;
+    let result = app.show(&mut terminal).context("show tui");
 
-    Ok(())
+    // Regardless of how the TUI app executes, we should always restore the terminal.
+    // Otherwise, if the app encounters an error (such as a draw error), the user's terminal
+    // will become a mess.
+    ui::restore(terminal).context("restore terminal")?;
+
+    result
 }
 
 fn main() {
