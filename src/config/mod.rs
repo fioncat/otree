@@ -17,6 +17,9 @@ pub struct Config {
     #[serde(default = "Layout::default")]
     pub layout: Layout,
 
+    #[serde(default = "Header::default")]
+    pub header: Header,
+
     #[serde(default = "Colors::default")]
     pub colors: Colors,
 
@@ -42,6 +45,15 @@ pub enum LayoutDirection {
     Vertical,
     #[serde(rename = "horizontal")]
     Horizontal,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Header {
+    #[serde(default = "Header::default_disable")]
+    pub disable: bool,
+
+    #[serde(default = "Header::default_format")]
+    pub format: String,
 }
 
 impl Config {
@@ -105,6 +117,7 @@ impl Config {
     pub fn default() -> Self {
         Self {
             layout: Layout::default(),
+            header: Header::default(),
             colors: Colors::default(),
             types: Types::default(),
             keys: Keys::default(),
@@ -132,5 +145,22 @@ impl Layout {
 
     fn default_tree_size() -> u16 {
         40
+    }
+}
+
+impl Header {
+    fn default() -> Self {
+        Self {
+            disable: Self::default_disable(),
+            format: Self::default_format(),
+        }
+    }
+
+    fn default_disable() -> bool {
+        false
+    }
+
+    fn default_format() -> String {
+        "{version} - {data_source} ({content_type}) - {data_size}".to_string()
     }
 }

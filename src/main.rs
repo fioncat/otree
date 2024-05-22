@@ -18,7 +18,7 @@ use crate::cmd::CommandArgs;
 use crate::config::Config;
 use crate::config::LayoutDirection;
 use crate::tree::{ContentType, Tree};
-use crate::ui::app::App;
+use crate::ui::{App, HeaderContext};
 
 // Forbid large data size to ensure TUI performance
 const MAX_DATA_SIZE: usize = 10 * 1024 * 1024;
@@ -50,8 +50,7 @@ fn run() -> Result<()> {
     let mut cfg = if args.ignore_config {
         Config::default()
     } else {
-        let config_path = args.config.clone();
-        Config::load(config_path)?
+        Config::load(args.config)?
     };
 
     if args.vertical && args.horizontal {
@@ -62,6 +61,14 @@ fn run() -> Result<()> {
     }
     if args.horizontal {
         cfg.layout.direction = LayoutDirection::Horizontal;
+    }
+
+    if args.disable_header {
+        cfg.header.disable = true;
+    }
+
+    if let Some(format) = args.header_format {
+        cfg.header.format = format;
     }
 
     if let Some(size) = args.size {
@@ -126,6 +133,12 @@ fn run() -> Result<()> {
     let tree = Tree::parse(&cfg, &data, content_type).context("parse file")?;
 
     let mut app = App::new(&cfg, tree);
+
+    if !cfg.header.disable {
+        let header_ctx = HeaderContext::new(args.path, content_type, data.len());
+        app.set_header(header_ctx);
+    }
+
     app.show().context("show tui")?;
 
     Ok(())

@@ -10,7 +10,7 @@ use crate::config::Config;
 use crate::tree::Tree;
 use crate::ui::app::ScrollDirection;
 
-pub struct TreeOverview<'a> {
+pub(super) struct TreeOverview<'a> {
     cfg: &'a Config,
     state: TreeState<String>,
     tree: Option<Tree<'a>>,
@@ -19,7 +19,7 @@ pub struct TreeOverview<'a> {
 }
 
 impl<'a> TreeOverview<'a> {
-    pub fn new(cfg: &'a Config, tree: Tree<'a>) -> Self {
+    pub(super) fn new(cfg: &'a Config, tree: Tree<'a>) -> Self {
         Self {
             cfg,
             state: TreeState::default(),
@@ -29,7 +29,7 @@ impl<'a> TreeOverview<'a> {
         }
     }
 
-    pub fn get_selected(&self) -> Option<String> {
+    pub(super) fn get_selected(&self) -> Option<String> {
         let selected = self.state.get_selected();
         if selected.is_empty() {
             return None;
@@ -38,11 +38,11 @@ impl<'a> TreeOverview<'a> {
         Some(selected.join("/"))
     }
 
-    pub fn get_data(&self, id: &str) -> Option<String> {
+    pub(super) fn get_data(&self, id: &str) -> Option<String> {
         self.tree().details.get(id).map(|d| d.value.clone())
     }
 
-    pub fn on_key(&mut self, action: Action) -> bool {
+    pub(super) fn on_key(&mut self, action: Action) -> bool {
         match action {
             Action::MoveUp => self.state.key_up(),
             Action::MoveDown => self.state.key_down(),
@@ -140,7 +140,7 @@ impl<'a> TreeOverview<'a> {
         Some(parent)
     }
 
-    pub fn on_click(&mut self, index: u16) {
+    pub(super) fn on_click(&mut self, index: u16) {
         let offset = self.state.get_offset();
         let index = (index as usize) + offset;
 
@@ -150,14 +150,14 @@ impl<'a> TreeOverview<'a> {
         }
     }
 
-    pub fn on_scroll(&mut self, direction: ScrollDirection) -> bool {
+    pub(super) fn on_scroll(&mut self, direction: ScrollDirection) -> bool {
         match direction {
             ScrollDirection::Up => self.state.scroll_up(1),
             ScrollDirection::Down => self.state.scroll_down(1),
         }
     }
 
-    pub fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {
+    pub(super) fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {
         let (border_style, border_type) = super::get_border_style(
             &self.cfg.colors.focus_border,
             &self.cfg.colors.tree.border,

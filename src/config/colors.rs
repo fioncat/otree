@@ -15,6 +15,9 @@ macro_rules! generate_colors_parse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Colors {
+    #[serde(default = "Colors::default_header")]
+    pub header: Color,
+
     #[serde(default = "TreeColors::default")]
     pub tree: TreeColors,
 
@@ -28,16 +31,21 @@ pub struct Colors {
     pub focus_border: Color,
 }
 
-generate_colors_parse!(Colors, tree, item, data, focus_border);
+generate_colors_parse!(Colors, header, tree, item, data, focus_border);
 
 impl Colors {
     pub fn default() -> Self {
         Self {
+            header: Self::default_header(),
             tree: TreeColors::default(),
             item: ItemColors::default(),
             data: DataColors::default(),
             focus_border: Self::default_focus_boder(),
         }
+    }
+
+    fn default_header() -> Color {
+        Color::new("", "", true, false)
     }
 
     fn default_focus_boder() -> Color {
