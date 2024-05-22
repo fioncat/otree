@@ -12,25 +12,25 @@ use crate::ui::app::ScrollDirection;
 
 pub(super) struct TreeOverview<'a> {
     cfg: &'a Config,
-    state: TreeState<String>,
+    state: Option<TreeState<String>>,
     tree: Option<Tree<'a>>,
-    last_trees: Vec<Tree<'a>>,
-    root_tree: Option<Tree<'a>>,
+    last_switches: Vec<(Tree<'a>, TreeState<String>)>,
+    root_switch: Option<(Tree<'a>, TreeState<String>)>,
 }
 
 impl<'a> TreeOverview<'a> {
     pub(super) fn new(cfg: &'a Config, tree: Tree<'a>) -> Self {
         Self {
             cfg,
-            state: TreeState::default(),
+            state: Some(TreeState::default()),
             tree: Some(tree),
-            last_trees: vec![],
-            root_tree: None,
+            last_switches: vec![],
+            root_switch: None,
         }
     }
 
     pub(super) fn get_selected(&self) -> Option<String> {
-        let selected = self.state.get_selected();
+        let selected = self.state().get_selected();
         if selected.is_empty() {
             return None;
         }
@@ -44,15 +44,15 @@ impl<'a> TreeOverview<'a> {
 
     pub(super) fn on_key(&mut self, action: Action) -> bool {
         match action {
-            Action::MoveUp => self.state.key_up(),
-            Action::MoveDown => self.state.key_down(),
-            Action::SelectFocus => self.state.toggle_selected(),
+            Action::MoveUp => self.state_mut().key_up(),
+            Action::MoveDown => self.state_mut().key_down(),
+            Action::SelectFocus => self.state_mut().toggle_selected(),
             Action::SelectParent => self.select_parent(),
             Action::CloseParent => self.close_parent(),
-            Action::PageUp => self.state.scroll_up(3),
-            Action::PageDown => self.state.scroll_down(3),
-            Action::SelectFirst => self.state.select_first(),
-            Action::SelectLast => self.state.select_last(),
+            Action::PageUp => self.state_mut().scroll_up(3),
+            Action::PageDown => self.state_mut().scroll_down(3),
+            Action::SelectFirst => self.state_mut().select_first(),
+            Action::SelectLast => self.state_mut().select_last(),
             Action::ChangeRoot => self.change_root(),
             Action::Reset => self.reset(),
             _ => false,
@@ -80,35 +80,38 @@ impl<'a> TreeOverview<'a> {
             .expect("build tree from change_root must success");
 
         let current_tree = self.tree.take().unwrap();
-        if self.root_tree.is_none() {
-            self.root_tree = Some(current_tree);
+        let current_state = self.state.take().unwrap();
+        let switch = (current_tree, current_state);
+
+        if self.root_switch.is_none() {
+            self.root_switch = Some(switch);
         } else {
-            self.last_trees.push(current_tree);
+            self.last_switches.push(switch);
         }
 
-        self.state = TreeState::default();
+        self.state = Some(TreeState::default());
         self.tree = Some(new_tree);
 
         true
     }
 
     fn reset(&mut self) -> bool {
-        let reset_tree = match self.last_trees.pop() {
-            Some(tree) => tree,
-            None => match self.root_tree.take() {
+        let (reset_tree, reset_state) = match self.last_switches.pop() {
+            Some((tree, state)) => (tree, state),
+            None => match self.root_switch.take() {
                 Some(tree) => tree,
                 None => {
                     if self.get_selected().is_none() {
                         return false;
                     }
-                    self.state = TreeState::default();
+                    self.state = Some(TreeState::default());
                     return true;
                 }
             },
         };
 
-        self.state = TreeState::default();
         self.tree = Some(reset_tree);
+        self.state = Some(reset_state);
 
         true
     }
@@ -118,19 +121,19 @@ impl<'a> TreeOverview<'a> {
             return false;
         }
 
-        self.state.toggle_selected()
+        self.state_mut().toggle_selected()
     }
 
     fn select_parent(&mut self) -> bool {
         if let Some(parent) = self.get_selected_parent() {
-            self.state.select(parent);
+            self.state_mut().select(parent);
             return true;
         }
         false
     }
 
     fn get_selected_parent(&self) -> Option<Vec<String>> {
-        let selected = self.state.get_selected();
+        let selected = self.state().get_selected();
         if selected.len() <= 1 {
             return None;
         }
@@ -141,19 +144,19 @@ impl<'a> TreeOverview<'a> {
     }
 
     pub(super) fn on_click(&mut self, index: u16) {
-        let offset = self.state.get_offset();
+        let offset = self.state().get_offset();
         let index = (index as usize) + offset;
 
-        let changed = self.state.select_visible_index(index);
+        let changed = self.state_mut().select_visible_index(index);
         if !changed {
-            self.state.toggle_selected();
+            self.state_mut().toggle_selected();
         }
     }
 
     pub(super) fn on_scroll(&mut self, direction: ScrollDirection) -> bool {
         match direction {
-            ScrollDirection::Up => self.state.scroll_up(1),
-            ScrollDirection::Down => self.state.scroll_down(1),
+            ScrollDirection::Up => self.state_mut().scroll_up(1),
+            ScrollDirection::Down => self.state_mut().scroll_down(1),
         }
     }
 
@@ -180,10 +183,18 @@ impl<'a> TreeOverview<'a> {
             .highlight_style(self.cfg.colors.tree.selected.style)
             .block(block);
 
-        frame.render_stateful_widget(widget, area, &mut self.state);
+        frame.render_stateful_widget(widget, area, self.state.as_mut().unwrap());
     }
 
     fn tree(&self) -> &Tree<'a> {
         self.tree.as_ref().unwrap()
+    }
+
+    fn state(&self) -> &TreeState<String> {
+        self.state.as_ref().unwrap()
+    }
+
+    fn state_mut(&mut self) -> &mut TreeState<String> {
+        self.state.as_mut().unwrap()
     }
 }
