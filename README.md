@@ -1,5 +1,7 @@
 # OTree - Object Tree TUI Viewer
 
+![screenshot](assets/screenshot.png)
+
 A command line tool to view objects (json/yaml/toml) in TUI tree widget.
 
 ## Install
