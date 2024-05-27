@@ -68,7 +68,7 @@ impl<'a> TreeOverview<'a> {
         let value = match self.tree().details.get(id.as_str()) {
             Some(detail) => {
                 if !matches!(detail.raw_value, Value::Array(_) | Value::Object(_)) {
-                    // We donot allow to change root to non-expandable value
+                    // We don't allow to change root to non-expandable value
                     return false;
                 }
                 detail.raw_value.clone()

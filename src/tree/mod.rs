@@ -48,7 +48,7 @@ impl<'a> Tree<'a> {
     pub fn from_value(cfg: &'a Config, value: Value, content_type: ContentType) -> Result<Self> {
         let mut details: HashMap<String, Detail> = HashMap::new();
 
-        // The root value needs to be expanded directly, since we donot want to see a
+        // The root value needs to be expanded directly, since we don't want to see a
         // `root` item in the tree.
         let items: Vec<TreeItem<String>> = if let Value::Array(arr) = value {
             let mut items = Vec::with_capacity(arr.len());
