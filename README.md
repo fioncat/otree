@@ -4,7 +4,7 @@ A command line tool to view objects (json/yaml/toml) in TUI tree widget.
 
 ## Install
 
-Download binary files from [release page]().
+Download binary files from [release page](https://github.com/fioncat/otree/releases).
 
 You can also build it from source (require `cargo` installed):
 
@@ -26,7 +26,7 @@ For more command usage, please run `otree --help`.
 
 You can configure TUI keys, colors, and more in `~/.config/otree.toml`, the default configuration is [here](config/default.toml).
 
-For all available actions and their default key bindings, please refer to: [Actions Document](docs/actions.md).
+For all available actions and their default key bindings, please refer to: [All Available Actions](docs/actions.md).
 
 For how to configure TUI colors, please refer to: [Colors Document](docs/colors.md).
 
@@ -40,7 +40,6 @@ New actions:
 
 New features:
 
-- Add title widget to show opening file.
 - Add foot widget to show help message and version.
 - Syntax highlight in data block.
 - Mouse select in data block.
