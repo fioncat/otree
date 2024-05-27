@@ -17,10 +17,10 @@ crossterm = "0.27.0"
 dirs = "5.0.1"
 humansize = "2.1.3"
 paste = "1.0.15"
-ratatui = "0.26.2"
-serde = { version = "1.0.202", features = ["derive"] }
+ratatui = "0.26.3"
+serde = { version = "1.0.203", features = ["derive"] }
 serde_json = { version = "1.0.117", features = ["preserve_order"] }
-serde_yml = "0.0.7"
+serde_yml = "0.0.8"
 toml = { version = "0.8.13", features = ["preserve_order"] }
 tui-tree-widget = { git = "https://github.com/EdJoPaTo/tui-rs-tree-widget.git", rev = "b07b537067e22dcf684342ccef1a52ff9d637da0" }
 
