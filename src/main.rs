@@ -83,8 +83,8 @@ fn run() -> Result<()> {
 
     // The user can specify the content type manually, or we can determine it based on the
     // file extension. Another approach is to use file content (for example, if the file
-    // content starts with '{', we can assume it is json). But this approach is not reliable
-    // since the yaml is the superset of json, and the toml is not easy to determine.
+    // content starts with '{', we can assume it is JSON). But this approach is not reliable
+    // since the YAML is the superset of JSON, and the TOML is not easy to determine.
     let content_type = match args.content_type {
         Some(content_type) => content_type,
         None => {

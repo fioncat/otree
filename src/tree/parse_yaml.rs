@@ -6,12 +6,12 @@ use serde_json::Value;
 pub fn parse(data: &str) -> Result<Value> {
     let mut values = Vec::with_capacity(1);
     for document in serde_yml::Deserializer::from_str(data) {
-        let value = Value::deserialize(document).context("parse yaml")?;
+        let value = Value::deserialize(document).context("parse YAML")?;
         values.push(value);
     }
 
     if values.is_empty() {
-        bail!("no document found in yaml data");
+        bail!("no document found in YAML data");
     }
 
     if values.len() == 1 {
@@ -23,5 +23,5 @@ pub fn parse(data: &str) -> Result<Value> {
 
 #[inline(always)]
 pub fn to_string(values: &Value) -> Result<String> {
-    serde_yml::to_string(values).context("serialize yaml")
+    serde_yml::to_string(values).context("serialize YAML")
 }
