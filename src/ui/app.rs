@@ -205,68 +205,66 @@ impl<'a> App<'a> {
         }
         let action = action.unwrap();
 
-        if let Action::Quit = action {
-            return Refresh::Quit;
-        }
-
-        if let Action::Switch = action {
-            match self.focus {
+        match action {
+            Action::Quit => Refresh::Quit,
+            Action::Switch => match self.focus {
                 ElementInFocus::TreeOverview if self.can_switch_to_data_block() => {
                     self.focus = ElementInFocus::DataBlock;
-                    return Refresh::Update;
+                    Refresh::Update
                 }
                 ElementInFocus::DataBlock => {
                     self.focus = ElementInFocus::TreeOverview;
-                    return Refresh::Update;
+                    Refresh::Update
                 }
-                _ => return Refresh::Skip,
+                _ => Refresh::Skip,
+            },
+            Action::ChangeLayout => {
+                match self.layout_direction {
+                    LayoutDirection::Vertical => {
+                        self.layout_direction = LayoutDirection::Horizontal
+                    }
+                    LayoutDirection::Horizontal => {
+                        self.layout_direction = LayoutDirection::Vertical
+                    }
+                }
+                Refresh::Update
             }
-        }
+            Action::TreeScaleUp => {
+                if self.layout_tree_size == Config::MAX_LAYOUT_TREE_SIZE {
+                    return Refresh::Skip;
+                }
 
-        if let Action::ChangeLayout = action {
-            match self.layout_direction {
-                LayoutDirection::Vertical => self.layout_direction = LayoutDirection::Horizontal,
-                LayoutDirection::Horizontal => self.layout_direction = LayoutDirection::Vertical,
+                self.layout_tree_size += 2;
+                if self.layout_tree_size > Config::MAX_LAYOUT_TREE_SIZE {
+                    self.layout_tree_size = Config::MAX_LAYOUT_TREE_SIZE;
+                }
+
+                Refresh::Update
             }
-            return Refresh::Update;
-        }
+            Action::TreeScaleDown => {
+                if self.layout_tree_size == Config::MIN_LAYOUT_TREE_SIZE {
+                    return Refresh::Skip;
+                }
 
-        if let Action::TreeScaleUp = action {
-            if self.layout_tree_size == Config::MAX_LAYOUT_TREE_SIZE {
-                return Refresh::Skip;
+                self.layout_tree_size = self.layout_tree_size.saturating_sub(2);
+                if self.layout_tree_size < Config::MIN_LAYOUT_TREE_SIZE {
+                    self.layout_tree_size = Config::MIN_LAYOUT_TREE_SIZE;
+                }
+
+                Refresh::Update
             }
-
-            self.layout_tree_size += 2;
-            if self.layout_tree_size > Config::MAX_LAYOUT_TREE_SIZE {
-                self.layout_tree_size = Config::MAX_LAYOUT_TREE_SIZE;
+            _ => {
+                // These actions are handled by the focused widget
+                if match self.focus {
+                    ElementInFocus::TreeOverview => self.tree_overview.on_key(action),
+                    ElementInFocus::DataBlock => self.data_block.on_key(action),
+                    ElementInFocus::None => false,
+                } {
+                    Refresh::Update
+                } else {
+                    Refresh::Skip
+                }
             }
-
-            return Refresh::Update;
-        }
-
-        if let Action::TreeScaleDown = action {
-            if self.layout_tree_size == Config::MIN_LAYOUT_TREE_SIZE {
-                return Refresh::Skip;
-            }
-
-            self.layout_tree_size = self.layout_tree_size.saturating_sub(2);
-            if self.layout_tree_size < Config::MIN_LAYOUT_TREE_SIZE {
-                self.layout_tree_size = Config::MIN_LAYOUT_TREE_SIZE;
-            }
-
-            return Refresh::Update;
-        }
-
-        let update = match self.focus {
-            ElementInFocus::TreeOverview => self.tree_overview.on_key(action),
-            ElementInFocus::DataBlock => self.data_block.on_key(action),
-            ElementInFocus::None => return Refresh::Skip,
-        };
-
-        if update {
-            Refresh::Update
-        } else {
-            Refresh::Skip
         }
     }
 

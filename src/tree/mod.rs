@@ -50,37 +50,41 @@ impl<'a> Tree<'a> {
 
         // The root value needs to be expanded directly, since we don't want to see a
         // `root` item in the tree.
-        let items: Vec<TreeItem<String>> = if let Value::Array(arr) = value {
-            let mut items = Vec::with_capacity(arr.len());
-            for (idx, value) in arr.into_iter().enumerate() {
-                let item = Self::parse_value(
+        let items: Vec<TreeItem<String>> = match value {
+            Value::Array(arr) => {
+                let mut items = Vec::with_capacity(arr.len());
+                for (idx, value) in arr.into_iter().enumerate() {
+                    let item = Self::parse_value(
+                        cfg,
+                        vec![],
+                        idx.to_string(),
+                        value,
+                        &mut details,
+                        content_type,
+                    )?;
+                    items.push(item);
+                }
+                items
+            }
+            Value::Object(obj) => {
+                let mut items = Vec::with_capacity(obj.len());
+                for (field, value) in obj {
+                    let item =
+                        Self::parse_value(cfg, vec![], field, value, &mut details, content_type)?;
+                    items.push(item);
+                }
+                items
+            }
+            _ => {
+                vec![Self::parse_value(
                     cfg,
                     vec![],
-                    idx.to_string(),
+                    String::from("root"),
                     value,
                     &mut details,
                     content_type,
-                )?;
-                items.push(item);
+                )?]
             }
-            items
-        } else if let Value::Object(obj) = value {
-            let mut items = Vec::with_capacity(obj.len());
-            for (field, value) in obj {
-                let item =
-                    Self::parse_value(cfg, vec![], field, value, &mut details, content_type)?;
-                items.push(item);
-            }
-            items
-        } else {
-            vec![Self::parse_value(
-                cfg,
-                vec![],
-                String::from("root"),
-                value,
-                &mut details,
-                content_type,
-            )?]
         };
 
         Ok(Self {
