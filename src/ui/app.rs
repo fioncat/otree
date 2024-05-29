@@ -255,12 +255,11 @@ impl<'a> App<'a> {
             }
             _ => {
                 // These actions are handled by the focused widget
-                let update = match self.focus {
+                if match self.focus {
                     ElementInFocus::TreeOverview => self.tree_overview.on_key(action),
                     ElementInFocus::DataBlock => self.data_block.on_key(action),
-                    ElementInFocus::None => return Refresh::Skip,
-                };
-                if update {
+                    ElementInFocus::None => false,
+                } {
                     Refresh::Update
                 } else {
                     Refresh::Skip
