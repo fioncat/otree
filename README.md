@@ -14,6 +14,14 @@ You can also build it from source (require `cargo` installed):
 cargo install --git https://github.com/fioncat/otree
 ```
 
+### Arch Linux (AUR)
+
+You can install `otree` from the [AUR](https://aur.archlinux.org/packages/otree) with using an [AUR helper](https://wiki.archlinux.org/title/AUR_helpers).
+
+```bash
+paru -S otree
+```
+
 ## Usage
 
 Open a JSON/YAML/TOML file in TUI tree viewer:
