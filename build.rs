@@ -22,14 +22,7 @@ fn exec_git(args: &[&str]) -> Result<String, Box<dyn Error>> {
     Ok(output.trim().to_string())
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
-    EmitBuilder::builder()
-        .all_build()
-        .all_rustc()
-        .all_cargo()
-        .all_sysinfo()
-        .emit()?;
-
+fn fetch_git_info() -> Result<(), Box<dyn Error>> {
     let describe = match exec_git(&["describe", "--tags"]) {
         Ok(d) => d,
         Err(_) => String::from("unknown"),
@@ -62,10 +55,32 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo:rustc-env=OTREE_VERSION={version}");
     println!("cargo:rustc-env=OTREE_BUILD_TYPE={build_type}");
     println!("cargo:rustc-env=OTREE_SHA={sha}");
+
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    EmitBuilder::builder()
+        .all_build()
+        .all_rustc()
+        .all_cargo()
+        .all_sysinfo()
+        .emit()?;
+
     println!(
         "cargo:rustc-env=OTREE_TARGET={}",
         env::var("TARGET").unwrap()
     );
 
+    if let Ok(value) = env::var("BUILD_OTREE_WITH_GIT_INFO") {
+        if value == "true" {
+            return fetch_git_info();
+        }
+    }
+
+    let cargo_version = env!("CARGO_PKG_VERSION");
+    println!("cargo:rustc-env=OTREE_VERSION={cargo_version}");
+    println!("cargo:rustc-env=OTREE_BUILD_TYPE=stable");
+    println!("cargo:rustc-env=OTREE_SHA=<unknown>");
     Ok(())
 }

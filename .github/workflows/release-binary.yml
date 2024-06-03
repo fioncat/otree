@@ -30,6 +30,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    env:
+      BUILD_OTREE_WITH_GIT_INFO: "true"
+
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/upload-rust-binary-action@v1
