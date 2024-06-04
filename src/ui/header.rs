@@ -6,7 +6,7 @@ use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
 use crate::config::Config;
-use crate::tree::ContentType;
+use crate::parse::ContentType;
 
 pub struct HeaderContext {
     version: String,

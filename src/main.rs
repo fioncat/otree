@@ -1,5 +1,6 @@
 mod cmd;
 mod config;
+mod parse;
 mod tree;
 mod ui;
 mod version;
@@ -17,11 +18,12 @@ use clap::Parser;
 use crate::cmd::CommandArgs;
 use crate::config::Config;
 use crate::config::LayoutDirection;
-use crate::tree::{ContentType, Tree};
+use crate::parse::ContentType;
+use crate::tree::Tree;
 use crate::ui::{App, HeaderContext};
 
 // Forbid large data size to ensure TUI performance
-const MAX_DATA_SIZE: usize = 10 * 1024 * 1024;
+const MAX_DATA_SIZE: usize = 30 * 1024 * 1024;
 
 fn run() -> Result<()> {
     let args = match CommandArgs::try_parse() {
@@ -131,13 +133,13 @@ fn run() -> Result<()> {
     };
 
     if data.len() > MAX_DATA_SIZE {
-        bail!("the data size is too large, we limit the maximum size to 10 MiB to ensure TUI performance, you should try to reduce the read size");
+        bail!("the data size is too large, we limit the maximum size to 30 MiB to ensure TUI performance, you should try to reduce the read size");
     }
 
     // To make sure the data is utf8 encoded.
     let data = String::from_utf8(data).context("parse file utf8")?;
 
-    let tree = Tree::parse(&cfg, &data, content_type).context("parse file")?;
+    let tree = Tree::parse(&cfg, &data, content_type).context("parse data")?;
 
     let mut app = App::new(&cfg, tree);
 
