@@ -10,11 +10,15 @@ impl Parser for TomlParser {
         toml::from_str(data).context("parse TOML")
     }
 
-    fn syntax_highlight(&self, value: &Value) -> String {
+    fn to_string(&self, value: &Value) -> String {
         if let Value::Array(arr) = value {
             // TODO: Handle array toml
             return serde_json::to_string_pretty(arr).expect("serialize JSON");
         }
         toml::to_string_pretty(value).expect("serialize TOML")
+    }
+
+    fn syntax_highlight(&self, value: &Value) -> Vec<super::SyntaxToken> {
+        todo!()
     }
 }

@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use ratatui::layout::{Alignment, Margin, Rect};
 use ratatui::symbols::scrollbar;
-use ratatui::text::Text;
 use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
 };
@@ -151,16 +150,13 @@ impl<'a> DataBlock<'a> {
         // We can add a field in `TreeItem`, the path, compare path here, if it is equal,
         // skip updating.
 
-        let lines: Vec<_> = item.display.lines().collect();
-        let long_line = lines.iter().max_by_key(|line| line.len());
-
         // Reset all vertical scroll state.
         self.can_vertical_scroll = false;
         self.vertical_scroll_state = ScrollbarState::default();
         self.vertical_scroll = 0;
         self.vertical_scroll_last = 0;
 
-        let rows = lines.len() + Self::SCROLL_RETAIN;
+        let rows = item.data.rows + Self::SCROLL_RETAIN;
         if rows > area.height as usize {
             self.can_vertical_scroll = true;
             self.vertical_scroll_last = rows.saturating_sub(area.height as usize);
@@ -175,15 +171,13 @@ impl<'a> DataBlock<'a> {
         self.horizontal_scroll = 0;
         self.horizontal_scroll_last = 0;
 
-        if let Some(long_line) = long_line {
-            let columns = long_line.len() + Self::SCROLL_RETAIN;
-            if columns > area.width as usize {
-                self.can_horizontal_scroll = true;
-                self.horizontal_scroll_last = columns.saturating_sub(area.width as usize);
-                self.horizontal_scroll_state = self
-                    .horizontal_scroll_state
-                    .content_length(self.horizontal_scroll_last);
-            }
+        let columns = item.data.columns + Self::SCROLL_RETAIN;
+        if columns > area.width as usize {
+            self.can_horizontal_scroll = true;
+            self.horizontal_scroll_last = columns.saturating_sub(area.width as usize);
+            self.horizontal_scroll_state = self
+                .horizontal_scroll_state
+                .content_length(self.horizontal_scroll_last);
         }
 
         self.item = Some(item);
@@ -204,11 +198,10 @@ impl<'a> DataBlock<'a> {
             .title_alignment(Alignment::Center)
             .title("Data Block");
 
-        // TODO: Implement syntax highlighting
         let text = self
             .item
             .as_ref()
-            .map(|item| Text::from(item.display.as_ref()))
+            .map(|item| item.data.render(self.cfg))
             .unwrap_or_default();
 
         let widget = Paragraph::new(text)

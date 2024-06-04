@@ -25,7 +25,11 @@ impl Parser for YamlParser {
         Ok(Value::Array(values))
     }
 
-    fn syntax_highlight(&self, value: &Value) -> String {
+    fn to_string(&self, value: &Value) -> String {
         serde_yml::to_string(value).expect("serialize YAML")
+    }
+
+    fn syntax_highlight(&self, value: &Value) -> Vec<super::SyntaxToken> {
+        todo!()
     }
 }

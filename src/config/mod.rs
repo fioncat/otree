@@ -14,6 +14,9 @@ use self::types::Types;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
+    #[serde(default = "Config::disable")]
+    pub disable_highlight: bool,
+
     #[serde(default = "Layout::default")]
     pub layout: Layout,
 
@@ -116,6 +119,7 @@ impl Config {
 
     pub fn default() -> Self {
         Self {
+            disable_highlight: Self::disable(),
             layout: Layout::default(),
             header: Header::default(),
             colors: Colors::default(),
@@ -128,6 +132,10 @@ impl Config {
         let toml = toml::to_string(self).context("serialize config to toml")?;
         println!("{toml}");
         Ok(())
+    }
+
+    fn disable() -> bool {
+        false
     }
 }
 
