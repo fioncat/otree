@@ -1,4 +1,6 @@
-use ratatui::layout::{Alignment, Rect};
+use std::rc::Rc;
+
+use ratatui::layout::{Alignment, Position, Rect};
 use ratatui::widgets::{Block, Borders, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use serde_json::Value;
@@ -7,15 +9,15 @@ use tui_tree_widget::TreeState;
 
 use crate::config::keys::Action;
 use crate::config::Config;
-use crate::tree::Tree;
+use crate::tree::{Tree, TreeItem};
 use crate::ui::app::ScrollDirection;
 
 pub(super) struct TreeOverview<'a> {
     cfg: &'a Config,
-    state: Option<TreeState<String>>,
+    state: Option<TreeState<Vec<String>>>,
     tree: Option<Tree<'a>>,
-    last_switches: Vec<(Tree<'a>, TreeState<String>)>,
-    root_switch: Option<(Tree<'a>, TreeState<String>)>,
+    last_switches: Vec<(Tree<'a>, TreeState<Vec<String>>)>,
+    root_switch: Option<(Tree<'a>, TreeState<Vec<String>>)>,
 }
 
 impl<'a> TreeOverview<'a> {
@@ -30,16 +32,15 @@ impl<'a> TreeOverview<'a> {
     }
 
     pub(super) fn get_selected(&self) -> Option<String> {
-        let selected = self.state().get_selected();
+        let selected = self.state().selected()?;
         if selected.is_empty() {
             return None;
         }
-
         Some(selected.join("/"))
     }
 
-    pub(super) fn get_data(&self, id: &str) -> Option<String> {
-        self.tree().details.get(id).map(|d| d.value.clone())
+    pub(super) fn get_item(&self, id: &str) -> Option<Rc<TreeItem>> {
+        self.tree().get_item(id)
     }
 
     pub(super) fn on_key(&mut self, action: Action) -> bool {
@@ -65,19 +66,18 @@ impl<'a> TreeOverview<'a> {
             None => return false,
         };
 
-        let value = match self.tree().details.get(id.as_str()) {
-            Some(detail) => {
-                if !matches!(detail.raw_value, Value::Array(_) | Value::Object(_)) {
+        let value = match self.tree().get_item(id.as_str()) {
+            Some(item) => {
+                if !matches!(item.value, Value::Array(_) | Value::Object(_)) {
                     // We don't allow to change root to non-expandable value
                     return false;
                 }
-                detail.raw_value.clone()
+                item.value.clone()
             }
             None => return false,
         };
 
-        let new_tree = Tree::from_value(self.cfg, value, self.tree().content_type)
-            .expect("build tree from change_root must success");
+        let new_tree = Tree::from_value(self.cfg, value, self.tree().get_parser());
 
         let current_tree = self.tree.take().unwrap();
         let current_state = self.state.take().unwrap();
@@ -126,14 +126,14 @@ impl<'a> TreeOverview<'a> {
 
     fn select_parent(&mut self) -> bool {
         if let Some(parent) = self.get_selected_parent() {
-            self.state_mut().select(parent);
+            self.state_mut().select(Some(parent));
             return true;
         }
         false
     }
 
     fn get_selected_parent(&self) -> Option<Vec<String>> {
-        let selected = self.state().get_selected();
+        let selected = self.state().selected()?;
         if selected.len() <= 1 {
             return None;
         }
@@ -143,11 +143,8 @@ impl<'a> TreeOverview<'a> {
         Some(parent)
     }
 
-    pub(super) fn on_click(&mut self, index: u16) {
-        let offset = self.state().get_offset();
-        let index = (index as usize) + offset;
-
-        let changed = self.state_mut().select_visible_index(index);
+    pub(super) fn on_click(&mut self, column: u16, row: u16) {
+        let changed = self.state_mut().click_at(Position { x: column, y: row });
         if !changed {
             self.state_mut().toggle_selected();
         }
@@ -177,24 +174,25 @@ impl<'a> TreeOverview<'a> {
             .border_style(border_style)
             .title_alignment(Alignment::Center)
             .title("Tree Overview");
-        let widget = TreeWidget::new(&self.tree.as_ref().unwrap().items)
-            .unwrap()
+        let mut state = self.state.take().unwrap();
+        let widget = TreeWidget::new(self.tree())
             .experimental_scrollbar(Some(scrollbar))
             .highlight_style(self.cfg.colors.tree.selected.style)
             .block(block);
 
-        frame.render_stateful_widget(widget, area, self.state.as_mut().unwrap());
+        frame.render_stateful_widget(widget, area, &mut state);
+        self.state = Some(state);
     }
 
     fn tree(&self) -> &Tree<'a> {
         self.tree.as_ref().unwrap()
     }
 
-    fn state(&self) -> &TreeState<String> {
+    fn state(&self) -> &TreeState<Vec<String>> {
         self.state.as_ref().unwrap()
     }
 
-    fn state_mut(&mut self) -> &mut TreeState<String> {
+    fn state_mut(&mut self) -> &mut TreeState<Vec<String>> {
         self.state.as_mut().unwrap()
     }
 }

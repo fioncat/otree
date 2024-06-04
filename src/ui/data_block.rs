@@ -1,5 +1,8 @@
+use std::rc::Rc;
+
 use ratatui::layout::{Alignment, Margin, Rect};
 use ratatui::symbols::scrollbar;
+use ratatui::text::Text;
 use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
 };
@@ -7,11 +10,12 @@ use ratatui::Frame;
 
 use crate::config::keys::Action;
 use crate::config::Config;
+use crate::tree::TreeItem;
 use crate::ui::app::ScrollDirection;
 
 pub(super) struct DataBlock<'a> {
     cfg: &'a Config,
-    data: String,
+    item: Option<Rc<TreeItem>>,
 
     can_vertical_scroll: bool,
     vertical_scroll: usize,
@@ -32,7 +36,7 @@ impl<'a> DataBlock<'a> {
     pub(super) fn new(cfg: &'a Config) -> Self {
         Self {
             cfg,
-            data: String::new(),
+            item: None,
             can_vertical_scroll: false,
             vertical_scroll: 0,
             vertical_scroll_last: 0,
@@ -142,13 +146,12 @@ impl<'a> DataBlock<'a> {
         true
     }
 
-    pub(super) fn update_data(&mut self, data: String, area: Rect) {
-        if self.data == data.as_str() && self.last_area == area {
-            // No need to update data and scroll state.
-            return;
-        }
+    pub(super) fn update_item(&mut self, item: Rc<TreeItem>, area: Rect) {
+        // TODO: When item not changed, we don't need to update it.
+        // We can add a field in `TreeItem`, the path, compare path here, if it is equal,
+        // skip updating.
 
-        let lines: Vec<_> = data.lines().collect();
+        let lines: Vec<_> = item.display.lines().collect();
         let long_line = lines.iter().max_by_key(|line| line.len());
 
         // Reset all vertical scroll state.
@@ -183,7 +186,7 @@ impl<'a> DataBlock<'a> {
             }
         }
 
-        self.data = data;
+        self.item = Some(item);
         self.last_area = area;
     }
 
@@ -201,7 +204,14 @@ impl<'a> DataBlock<'a> {
             .title_alignment(Alignment::Center)
             .title("Data Block");
 
-        let widget = Paragraph::new(self.data.as_str())
+        // TODO: Implement syntax highlighting
+        let text = self
+            .item
+            .as_ref()
+            .map(|item| Text::from(item.display.as_ref()))
+            .unwrap_or_default();
+
+        let widget = Paragraph::new(text)
             .style(self.cfg.colors.data.text.style)
             .block(block)
             .scroll((self.vertical_scroll as u16, self.horizontal_scroll as u16));

@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::tree::ContentType;
+use crate::parse::ContentType;
 
 #[derive(Parser, Debug)]
 #[command(author, about)]

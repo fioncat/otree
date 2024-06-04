@@ -117,8 +117,8 @@ impl<'a> App<'a> {
 
         let selected = self.tree_overview.get_selected();
         if let Some(id) = selected {
-            if let Some(data) = self.tree_overview.get_data(id.as_str()) {
-                self.data_block.update_data(data, self.data_block_area);
+            if let Some(item) = self.tree_overview.get_item(id.as_str()) {
+                self.data_block.update_item(item, self.data_block_area);
             }
             // TODO: When we cannot find data, should warn user (maybe message in data block?)
         }
@@ -269,8 +269,8 @@ impl<'a> App<'a> {
     }
 
     fn on_click(&mut self, column: u16, row: u16) -> Refresh {
-        if let Some(index) = Self::get_row_inside(column, row, self.tree_overview_area) {
-            self.tree_overview.on_click(index);
+        if Self::get_row_inside(column, row, self.tree_overview_area).is_some() {
+            self.tree_overview.on_click(column, row);
             self.focus = ElementInFocus::TreeOverview;
             return Refresh::Update;
         }
