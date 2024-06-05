@@ -246,6 +246,7 @@ impl<'a> DataBlock<'a> {
             let horizontal_scrollbar = Scrollbar::new(ScrollbarOrientation::HorizontalBottom)
                 .symbols(scrollbar::HORIZONTAL)
                 .begin_symbol(None)
+                .thumb_symbol("🬋")
                 .track_symbol(None)
                 .end_symbol(None);
 

@@ -1,0 +1,46 @@
+# String
+name: "John Doe"
+
+# Number
+age: 30
+
+# Boolean
+is_student: false
+
+# Array
+skills:
+  - "programming"
+  - "mathematics"
+  - "writing"
+
+# Object
+address:
+  street: "123 Main St"
+  city: "Anytown"
+  state: "CA"
+  postal_code: 12345
+
+# Nested arrays and objects
+projects:
+  - name: "Project Alpha"
+    completed: true
+    technologies:
+      - "Python"
+      - "Django"
+  - name: "Project Beta"
+    completed: false
+    technologies:
+      - "Rust"
+      - "Tauri"
+
+# Composite data types
+metadata:
+  version: 1.0
+  tags:
+    - "example"
+    - "yaml"
+  properties:
+    creator: "Jane Smith"
+    created_date: "2023-01-01"
+    last_modified: "2023-06-05"
+    license: "MIT"
