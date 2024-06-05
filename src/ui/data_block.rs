@@ -26,6 +26,7 @@ pub(super) struct DataBlock<'a> {
     horizontal_scroll_last: usize,
     horizontal_scroll_state: ScrollbarState,
 
+    last_identify: String,
     last_area: Rect,
 }
 
@@ -44,6 +45,7 @@ impl<'a> DataBlock<'a> {
             horizontal_scroll: 0,
             horizontal_scroll_last: 0,
             horizontal_scroll_state: ScrollbarState::default(),
+            last_identify: String::default(),
             last_area: Rect::default(),
         }
     }
@@ -145,16 +147,12 @@ impl<'a> DataBlock<'a> {
         true
     }
 
-    pub(super) fn update_item(&mut self, item: Rc<TreeItem>, area: Rect) {
-        // TODO: When item not changed, we don't need to update it.
-        // We can add a field in `TreeItem`, the path, compare path here, if it is equal,
-        // skip updating.
+    pub(super) fn update_item(&mut self, identify: String, item: Rc<TreeItem>, area: Rect) {
+        if self.last_identify == identify {
+            return;
+        }
 
-        // Reset all vertical scroll state.
-        self.can_vertical_scroll = false;
-        self.vertical_scroll_state = ScrollbarState::default();
-        self.vertical_scroll = 0;
-        self.vertical_scroll_last = 0;
+        self.reset_scroll();
 
         let rows = item.data.rows + Self::SCROLL_RETAIN;
         if rows > area.height as usize {
@@ -164,12 +162,6 @@ impl<'a> DataBlock<'a> {
                 .vertical_scroll_state
                 .content_length(self.vertical_scroll_last);
         }
-
-        // Reset all horizontal scroll state.
-        self.can_horizontal_scroll = false;
-        self.horizontal_scroll_state = ScrollbarState::default();
-        self.horizontal_scroll = 0;
-        self.horizontal_scroll_last = 0;
 
         let columns = item.data.columns + Self::SCROLL_RETAIN;
         if columns > area.width as usize {
@@ -181,7 +173,29 @@ impl<'a> DataBlock<'a> {
         }
 
         self.item = Some(item);
+        self.last_identify = identify;
         self.last_area = area;
+    }
+
+    pub(super) fn reset(&mut self) {
+        self.reset_scroll();
+        self.item = None;
+        self.last_identify = String::default();
+        self.last_area = Rect::default();
+    }
+
+    fn reset_scroll(&mut self) {
+        // Reset all vertical scroll state.
+        self.can_vertical_scroll = false;
+        self.vertical_scroll_state = ScrollbarState::default();
+        self.vertical_scroll = 0;
+        self.vertical_scroll_last = 0;
+
+        // Reset all horizontal scroll state.
+        self.can_horizontal_scroll = false;
+        self.horizontal_scroll_state = ScrollbarState::default();
+        self.horizontal_scroll = 0;
+        self.horizontal_scroll_last = 0;
     }
 
     pub(super) fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {

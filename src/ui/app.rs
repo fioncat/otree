@@ -118,9 +118,11 @@ impl<'a> App<'a> {
         let selected = self.tree_overview.get_selected();
         if let Some(id) = selected {
             if let Some(item) = self.tree_overview.get_item(id.as_str()) {
-                self.data_block.update_item(item, self.data_block_area);
+                self.data_block.update_item(id, item, self.data_block_area);
             }
             // TODO: When we cannot find data, should warn user (maybe message in data block?)
+        } else {
+            self.data_block.reset();
         }
 
         if let Some(header) = self.header.as_ref() {
