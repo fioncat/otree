@@ -84,24 +84,24 @@ mod test {
     fn test_syntax_highlight() {
         let test_cases = [
             (
-                include_str!("test_cases/json/0.json"),
-                include_str!("test_cases/json/0_syntax.json"),
+                include_str!("test_cases/json/object.json"),
+                include_str!("test_cases/json/object_highlight.json"),
             ),
             (
-                include_str!("test_cases/json/1.json"),
-                include_str!("test_cases/json/1_syntax.json"),
+                include_str!("test_cases/json/array_of_objects.json"),
+                include_str!("test_cases/json/array_of_objects_highlight.json"),
             ),
             (
-                include_str!("test_cases/json/2.json"),
-                include_str!("test_cases/json/2_syntax.json"),
+                include_str!("test_cases/json/2d_array.json"),
+                include_str!("test_cases/json/2d_array.json"),
             ),
             (
-                include_str!("test_cases/json/3.json"),
-                include_str!("test_cases/json/3_syntax.json"),
+                include_str!("test_cases/json/3d_array.json"),
+                include_str!("test_cases/json/3d_array.json"),
             ),
             (
-                include_str!("../../examples/example.json"),
-                include_str!("test_cases/json/example_syntax.json"),
+                include_str!("test_cases/json/empty.json"),
+                include_str!("test_cases/json/empty.json"),
             ),
         ];
 

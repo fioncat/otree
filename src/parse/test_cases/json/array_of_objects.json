@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "title": "First Item",
+    "description": "This is the first item.",
+    "attributes": {
+      "color": "red",
+      "size": "M",
+      "available": true,
+      "price": 19.99
+    },
+    "tags": ["new", "sale", "popular"]
+  },
+  {
+    "id": 2,
+    "title": "Second Item",
+    "description": "This is the second item.",
+    "attributes": {
+      "color": "blue",
+      "size": "L",
+      "available": false,
+      "price": 29.99
+    },
+    "tags": ["new", "limited"]
+  },
+  {
+    "id": 3,
+    "title": "Third Item",
+    "description": "This is the third item.",
+    "attributes": {
+      "color": "green",
+      "size": "S",
+      "available": true,
+      "price": 9.99
+    },
+    "tags": ["sale", "discount"]
+  }
+]

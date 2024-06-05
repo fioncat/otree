@@ -1,0 +1,78 @@
+[
+  [
+    [
+      {
+        "id": 1,
+        "name": "Element 1-1-1",
+        "attributes": {
+          "type": "type1",
+          "status": "active"
+        }
+      },
+      {
+        "id": 2,
+        "name": "Element 1-1-2",
+        "attributes": {
+          "type": "type2",
+          "status": "inactive"
+        }
+      }
+    ],
+    [
+      {
+        "id": 3,
+        "name": "Element 1-2-1",
+        "attributes": {
+          "type": "type3",
+          "status": "active"
+        }
+      },
+      {
+        "id": 4,
+        "name": "Element 1-2-2",
+        "attributes": {
+          "type": "type4",
+          "status": "inactive"
+        }
+      }
+    ]
+  ],
+  [
+    [
+      {
+        "id": 5,
+        "name": "Element 2-1-1",
+        "attributes": {
+          "type": "type5",
+          "status": "active"
+        }
+      },
+      {
+        "id": 6,
+        "name": "Element 2-1-2",
+        "attributes": {
+          "type": "type6",
+          "status": "inactive"
+        }
+      }
+    ],
+    [
+      {
+        "id": 7,
+        "name": "Element 2-2-1",
+        "attributes": {
+          "type": "type7",
+          "status": "active"
+        }
+      },
+      {
+        "id": 8,
+        "name": "Element 2-2-2",
+        "attributes": {
+          "type": "type8",
+          "status": "inactive"
+        }
+      }
+    ]
+  ]
+]
