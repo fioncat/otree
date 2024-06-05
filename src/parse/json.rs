@@ -111,6 +111,9 @@ mod test {
             let tokens = parser.syntax_highlight(&value);
             let result = SyntaxToken::pure_text(&tokens);
             assert_eq!(result, expect);
+
+            let highlight_value = parser.parse(&result).unwrap();
+            assert_eq!(value, highlight_value);
         }
     }
 }

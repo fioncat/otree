@@ -1,0 +1,52 @@
+---
+apiVersion: "apps/v1"
+kind: Deployment
+metadata:
+  name: example-deployment
+  labels:
+    app: example-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: example-app
+  template:
+    metadata:
+      labels:
+        app: example-app
+    spec:
+      containers:
+        - name: example-container
+          image: "nginx:1.19.10"
+          ports:
+            - containerPort: 80
+          env:
+            - name: EXAMPLE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: example-config
+                  key: example-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-service
+  labels:
+    app: example-app
+spec:
+  selector:
+    app: example-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+  labels:
+    app: example-app
+data:
+  example-key: example-value

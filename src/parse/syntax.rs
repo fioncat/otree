@@ -1,4 +1,6 @@
+use once_cell::sync::Lazy;
 use ratatui::text::{Line, Span, Text};
+use regex::Regex;
 
 use crate::config::Config;
 
@@ -113,5 +115,69 @@ impl SyntaxToken {
             text.push_str(token);
         }
         text
+    }
+}
+
+static STANDARD_FIELD_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap());
+
+pub(super) fn quote_field_name(name: &str) -> String {
+    if STANDARD_FIELD_NAME_RE.is_match(name) {
+        // This is a standard field name, we don't need to quote it.
+        // Like: "version", "dev-dependencies"
+        name.to_string()
+    } else {
+        // Not a standard field name, quote it.
+        // Like: "/some/path", "with space" (include empty string "")
+        format!("{name:?}")
+    }
+}
+
+pub(super) enum StringValue {
+    String(String),
+    MultiLines(Vec<String>),
+}
+
+impl StringValue {
+    pub(super) fn new(s: &str, must_quote: bool) -> Self {
+        if s.is_empty() {
+            return StringValue::String("\"\"".to_string());
+        }
+
+        let trim_str = s.trim();
+        if !trim_str.is_empty() && s.contains('\n') {
+            // If the string contains newlines, we should use the multiline string feature
+            // provided by the schema language. This feature is available in both YAML and
+            // TOML. Therefore, a unified method for judgment is defined here.
+            // A special case is strings that only contain special characters, such as
+            // "\n\t\n\n". These are not considered normal multiline strings, so they should
+            // follow the logic below for quoting.
+            let lines: Vec<_> = s.lines().map(str::to_string).collect();
+            return StringValue::MultiLines(lines);
+        }
+
+        if must_quote {
+            return StringValue::String(Self::quote_string(s));
+        }
+
+        if s == "true" || s == "false" || Self::is_numeric(s) {
+            // Special strings. Boolean or numeric. These strings should be quoted to prevent
+            // the schema parser from interpreting them as actual booleans or numbers, as
+            // they are actually strings.
+            return StringValue::String(Self::quote_string(s));
+        }
+
+        if STANDARD_FIELD_NAME_RE.is_match(s) {
+            StringValue::String(s.to_string())
+        } else {
+            StringValue::String(Self::quote_string(s))
+        }
+    }
+
+    fn quote_string(s: &str) -> String {
+        format!("{s:?}")
+    }
+
+    fn is_numeric(s: &str) -> bool {
+        s.parse::<f64>().is_ok()
     }
 }
