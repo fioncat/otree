@@ -26,4 +26,31 @@ impl SyntaxToken {
     pub fn get_size(tokens: &[SyntaxToken]) -> (usize, usize) {
         todo!()
     }
+
+    #[cfg(test)]
+    pub(super) fn pure_text(tokens: &[SyntaxToken]) -> String {
+        let mut text = String::new();
+        for token in tokens {
+            if let Self::Indent(indent) = token {
+                for _ in 0..*indent {
+                    text.push_str("  ");
+                }
+                continue;
+            }
+
+            let token = match token {
+                Self::Symbol(sym) => sym,
+                Self::Name(name) => name.as_str(),
+                Self::String(str) => str.as_str(),
+                Self::Number(num) => num.as_str(),
+                Self::Null(null) => null,
+                Self::Bool(b) => b,
+                Self::Section(sec) => sec.as_str(),
+                Self::Break => "\n",
+                _ => unreachable!(),
+            };
+            text.push_str(token);
+        }
+        text
+    }
 }

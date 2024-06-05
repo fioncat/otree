@@ -75,3 +75,42 @@ fn highlight(value: &Value, indent: usize, has_next: bool) -> Vec<SyntaxToken> {
 
     tokens
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_syntax_highlight() {
+        let test_cases = [
+            (
+                include_str!("test_cases/json/0.json"),
+                include_str!("test_cases/json/0_syntax.json"),
+            ),
+            (
+                include_str!("test_cases/json/1.json"),
+                include_str!("test_cases/json/1_syntax.json"),
+            ),
+            (
+                include_str!("test_cases/json/2.json"),
+                include_str!("test_cases/json/2_syntax.json"),
+            ),
+            (
+                include_str!("test_cases/json/3.json"),
+                include_str!("test_cases/json/3_syntax.json"),
+            ),
+            (
+                include_str!("../../examples/example.json"),
+                include_str!("test_cases/json/example_syntax.json"),
+            ),
+        ];
+
+        let parser = JsonParser {};
+        for (raw, expect) in test_cases {
+            let value = parser.parse(raw).unwrap();
+            let tokens = parser.syntax_highlight(&value);
+            let result = SyntaxToken::pure_text(&tokens);
+            assert_eq!(result, expect);
+        }
+    }
+}

@@ -1,0 +1,35 @@
+{
+  "string": "Hello, World!",
+  "number": 12345,
+  "float": 123.45,
+  "boolean": true,
+  "null": null,
+  "array": [1, "two", 3.0, false, null],
+  "object": {
+    "nested_string": "Nested Hello",
+    "nested_number": 6789,
+    "nested_array": [10, "twenty", 30.0],
+    "nested_object": {
+      "deep_string": "Deep Hello",
+      "deep_number": 1111
+    }
+  },
+  "complex_array": [
+    {"id": 1, "value": "one"},
+    {"id": 2, "value": "two", "extra": {"sub_value": "extra"}},
+    {"id": 3, "value": "three"}
+  ],
+  "complex_object": {
+    "name": "Test Object",
+    "attributes": {
+      "height": 180,
+      "weight": 75.5,
+      "tags": ["sample", "json", "test"]
+    },
+    "active": true,
+    "metrics": [
+      {"type": "speed", "value": 7.5},
+      {"type": "strength", "value": 8.2}
+    ]
+  }
+}
