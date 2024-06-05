@@ -1,4 +1,4 @@
-desciption: |
+description: |
   Hello, I am the first line.
   The second line
   Last line?
@@ -6,7 +6,7 @@ desciption: |
 
 goods:
   - empty_string: "\t\t\n"
-  - desciption: |
+  - description: |
       another string!
 
       Last line
