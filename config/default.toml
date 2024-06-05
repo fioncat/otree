@@ -48,6 +48,13 @@ null = {fg = "dark-gray", italic = true}
 [colors.data]
 text = {}
 border = {fg = "blue"}
+symbol = {}
+name = {fg = "yellow", italic = true}
+str = {fg = "green"}
+num = {fg = "red"}
+null = {fg = "blue", italic = true}
+bool = {fg = "red", bold = true, italic = true}
+section = {fg = "cyan", bold = true}
 
 [types]
 str = "str"
