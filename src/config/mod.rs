@@ -14,8 +14,8 @@ use self::types::Types;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-    #[serde(default = "Config::disable")]
-    pub disable_highlight: bool,
+    #[serde(default = "Data::default")]
+    pub data: Data,
 
     #[serde(default = "Layout::default")]
     pub layout: Layout,
@@ -52,11 +52,17 @@ pub enum LayoutDirection {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Header {
-    #[serde(default = "Header::default_disable")]
+    #[serde(default = "Config::disable")]
     pub disable: bool,
 
     #[serde(default = "Header::default_format")]
     pub format: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Data {
+    #[serde(default = "Config::disable")]
+    pub disable_highlight: bool,
 }
 
 impl Config {
@@ -119,7 +125,7 @@ impl Config {
 
     pub fn default() -> Self {
         Self {
-            disable_highlight: Self::disable(),
+            data: Data::default(),
             layout: Layout::default(),
             header: Header::default(),
             colors: Colors::default(),
@@ -159,16 +165,20 @@ impl Layout {
 impl Header {
     fn default() -> Self {
         Self {
-            disable: Self::default_disable(),
+            disable: Config::disable(),
             format: Self::default_format(),
         }
     }
 
-    fn default_disable() -> bool {
-        false
-    }
-
     fn default_format() -> String {
         "{version} - {data_source} ({content_type}) - {data_size}".to_string()
+    }
+}
+
+impl Data {
+    fn default() -> Self {
+        Self {
+            disable_highlight: Config::disable(),
+        }
     }
 }

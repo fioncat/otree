@@ -161,7 +161,7 @@ impl<'a> Tree<'a> {
                     if arr.len() > 1 { "items" } else { "item" }
                 );
                 let text = self.build_item_text(name, FieldType::Arr, Cow::Owned(description));
-                let data = if self.cfg.disable_highlight {
+                let data = if self.cfg.data.disable_highlight {
                     Data::raw(Cow::Owned(self.parser.to_string(&raw_value)))
                 } else {
                     Data::highlight(self.parser.syntax_highlight(&raw_value))
@@ -191,7 +191,7 @@ impl<'a> Tree<'a> {
                     if obj.len() > 1 { "fields" } else { "field" }
                 );
                 let text = self.build_item_text(name, FieldType::Obj, Cow::Owned(description));
-                let data = if self.cfg.disable_highlight {
+                let data = if self.cfg.data.disable_highlight {
                     Data::raw(Cow::Owned(self.parser.to_string(&raw_value)))
                 } else {
                     Data::highlight(self.parser.syntax_highlight(&raw_value))
@@ -342,7 +342,7 @@ impl Data {
     }
 
     fn null(cfg: &Config) -> Self {
-        if cfg.disable_highlight {
+        if cfg.data.disable_highlight {
             Self::raw(Cow::Borrowed(""))
         } else {
             Self::highlight(vec![SyntaxToken::Null("null")])
@@ -350,7 +350,7 @@ impl Data {
     }
 
     fn string(cfg: &Config, s: String) -> Self {
-        if cfg.disable_highlight {
+        if cfg.data.disable_highlight {
             Self::raw(Cow::Owned(s))
         } else {
             Self::highlight(vec![SyntaxToken::String(s)])
@@ -358,7 +358,7 @@ impl Data {
     }
 
     fn number(cfg: &Config, num: String) -> Self {
-        if cfg.disable_highlight {
+        if cfg.data.disable_highlight {
             Self::raw(Cow::Owned(num))
         } else {
             Self::highlight(vec![SyntaxToken::Number(num)])
@@ -367,7 +367,7 @@ impl Data {
 
     fn bool(cfg: &Config, b: bool) -> Self {
         let b = if b { "true" } else { "false" };
-        if cfg.disable_highlight {
+        if cfg.data.disable_highlight {
             Self::raw(Cow::Borrowed(b))
         } else {
             Self::highlight(vec![SyntaxToken::Bool(b)])
