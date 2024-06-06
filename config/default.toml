@@ -6,6 +6,9 @@ tree_size = 40
 disable = false
 format = "{version} - {data_source} ({content_type}) - {data_size}"
 
+[data]
+disable_highlight = false
+
 [keys]
 move_up = ["k", "<up>"]
 move_down = ["j", "<down>"]
