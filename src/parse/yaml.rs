@@ -36,6 +36,19 @@ impl Parser for YamlParser {
                 return vec![SyntaxToken::Symbol("[]")];
             }
 
+            let mut has_complex = false;
+            for value in arr {
+                if matches!(value, Value::Array(_) | Value::Object(_)) {
+                    has_complex = true;
+                    break;
+                }
+            }
+
+            if !has_complex {
+                // For non-complex array, we don't need to use multi-documents.
+                return highlight(value, 0, false);
+            }
+
             // YAML Multi Documents
             // See: <https://gettaurus.org/docs/YAMLTutorial/#YAML-Multi-Documents>
             let mut tokens = Vec::new();
