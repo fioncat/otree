@@ -19,7 +19,7 @@ impl Parser for JsonParser {
     }
 }
 
-fn highlight(value: &Value, indent: usize, has_next: bool) -> Vec<SyntaxToken> {
+pub(super) fn highlight(value: &Value, indent: usize, has_next: bool) -> Vec<SyntaxToken> {
     let mut tokens = Vec::new();
 
     match value {

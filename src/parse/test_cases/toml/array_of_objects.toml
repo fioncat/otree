@@ -1,0 +1,19 @@
+name = "My Store"
+
+[[products]]
+name = "Product A"
+sku = "12345"
+price = 19.99
+in_stock = true
+
+[[products]]
+name = "Product B"
+sku = "67890"
+price = 29.99
+in_stock = false
+
+[[products]]
+name = "Product C"
+sku = "13579"
+price = 9.99
+in_stock = true

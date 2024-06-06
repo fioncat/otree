@@ -1,0 +1,46 @@
+[server]
+ip = "192.168.1.1"
+port = 8080
+
+[server.database]
+type = "PostgreSQL"
+user = "admin"
+password = "password"
+
+hosts = ["host1.example.com", "host2.example.com", "host3.example.com"]
+
+[[clients]]
+name = "client1"
+ip = "192.168.1.10"
+
+[[clients]]
+name = "client2"
+ip = "192.168.1.11"
+
+[server.database.settings]
+max_connections = 100
+timeout = 30
+
+[[products]]
+name = "Product A"
+sku = 12345
+
+[products.price]
+base = 19.99
+tax = 1.99
+
+[[products]]
+name = "Product B"
+sku = 67890
+
+[products.price]
+base = 29.99
+tax = 2.99
+
+[users]
+names = ["Alice", "Bob", "Charlie"]
+ages = [25, 30, 35]
+
+[users.contact]
+emails = ["alice@example.com", "bob@example.com", "charlie@example.com"]
+phones = ["123-456-7890", "987-654-3210", "555-555-5555"]
