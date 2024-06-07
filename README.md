@@ -40,17 +40,39 @@ For all available actions and their default key bindings, please refer to: [All 
 
 For how to configure TUI colors, please refer to: [Colors Document](docs/colors.md).
 
-## Coming soon
+## Features
 
-New actions:
+- [x] UI: Header (v0.1)
+- [x] UI: Tree Overview (v0.1)
+- [x] UI: Data Block (v0.1)
+- [ ] UI: Footer to show current attached root path
+- [ ] UI: Filter Input
+- [ ] UI: Popup widget to show error or help messages
+- [x] Action: Change current selected item as root (v0.1)
+- [x] Action: Back to previous root (v0.1)
+- [x] Action: Scale up/down tree widget (v0.1)
+- [x] Action: Mouse click actions
+- [x] Action: Mouse scroll actions
+- [ ] Action: Mouse select actions
+- [ ] Action: Open current selected item in editor
+- [x] Action: Switch between tree overview and data block (v0.1)
+- [x] Action: Jump to parent item (v0.1)
+- [x] Action: Jump to parent item and close (v0.1)
+- [ ] Action: Expand selected item's children
+- [ ] Action: Expand all items
+- [x] Action: Close all opened items (v0.1)
+- [ ] Action: Filter items, highlight searching keywords
+- [ ] Action: Popup to show help messages
+- [ ] Action: Clipboard support, copy current item's content (might need to call external program like `wl-copy`, `pbcopy`)
+- [x] Syntax highlighting in data block (v0.2)
+- [x] Allow user to customize TUI colors and key bindings (and other things you can imagine) (v0.1)
+- [ ] **Filter items! (Like [jnv](https://github.com/ynqa/jnv))**
+- [ ] When `OTREE_DEBUG` set to `true`, write some debug logs to a file
 
-- `ShowHelp`: Popup a widget to show available keys.
-- `SearchItems`: Search items.
-- `SearchContent`: Search contents.
+If you have any great ideas, please create an isssue, thanks!
 
-New features:
+## Thanks
 
-- Add foot widget to show help message and version.
-- Syntax highlight in data block.
-- Mouse select in data block.
-- Clipboard support: Copy selected item field or content to clipboard.
+I created this tool to better view those super deep YAML files of Kubernetes while [jnv](https://github.com/ynqa/jnv) only supports JSON.
+
+This is based on the amazing TUI framework [ratatui](https://github.com/ratatui-org/ratatui) and its tree widget [tui-tree-widget](https://github.com/EdJoPaTo/tui-rs-tree-widget.git).
