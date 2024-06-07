@@ -69,7 +69,7 @@ For how to configure TUI colors, please refer to: [Colors Document](docs/colors.
 - [ ] **Filter items! (Like [jnv](https://github.com/ynqa/jnv))**
 - [ ] When `OTREE_DEBUG` set to `true`, write some debug logs to a file
 
-If you have any great ideas, please create an isssue, thanks!
+If you have any great ideas, please create an issue, thanks!
 
 ## Thanks
 
