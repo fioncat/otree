@@ -2,6 +2,7 @@ pub mod colors;
 pub mod keys;
 pub mod types;
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::{env, fs, io};
 
@@ -22,6 +23,9 @@ pub struct Config {
 
     #[serde(default = "Header::default")]
     pub header: Header,
+
+    #[serde(default = "Config::empty_map")]
+    pub palette: HashMap<String, String>,
 
     #[serde(default = "Colors::default")]
     pub colors: Colors,
@@ -93,8 +97,19 @@ impl Config {
             );
         }
 
-        self.colors.parse()?;
+        self.validate_palette()?;
+        self.colors.parse(&self.palette)?;
         self.keys.parse()?;
+        Ok(())
+    }
+
+    fn validate_palette(&self) -> Result<()> {
+        use ratatui::style::Color;
+        for (key, color) in self.palette.iter() {
+            if let Err(err) = color.parse::<Color>() {
+                return Err(err).with_context(|| format!("validate palette color '{key}'"));
+            }
+        }
         Ok(())
     }
 
@@ -128,6 +143,7 @@ impl Config {
             data: Data::default(),
             layout: Layout::default(),
             header: Header::default(),
+            palette: Self::empty_map(),
             colors: Colors::default(),
             types: Types::default(),
             keys: Keys::default(),
@@ -142,6 +158,10 @@ impl Config {
 
     fn disable() -> bool {
         false
+    }
+
+    fn empty_map() -> HashMap<String, String> {
+        HashMap::new()
     }
 }
 

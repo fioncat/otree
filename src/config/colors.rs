@@ -1,12 +1,16 @@
+use std::collections::HashMap;
+
 use anyhow::{Context, Result};
 use ratatui::style::{Style, Stylize};
 use serde::{Deserialize, Serialize};
 
+use super::Config;
+
 macro_rules! generate_colors_parse {
     ($StructName:ident, $($field:ident),+) => {
         impl $StructName {
-            pub fn parse(&mut self) -> Result<()> {
-                $(self.$field.parse().with_context(|| format!("parse color for {}", stringify!($field)))?;)+
+            pub fn parse(&mut self, palette: &std::collections::HashMap<String, String>) -> Result<()> {
+                $(self.$field.parse(palette).with_context(|| format!("parse color for {}", stringify!($field)))?;)+
                 Ok(())
             }
         }
@@ -219,7 +223,9 @@ pub struct Color {
     pub fg: Option<String>,
     pub bg: Option<String>,
 
+    #[serde(default = "Config::disable")]
     pub bold: bool,
+    #[serde(default = "Config::disable")]
     pub italic: bool,
 
     #[serde(skip)]
@@ -247,12 +253,18 @@ impl Color {
         }
     }
 
-    fn parse(&mut self) -> Result<()> {
+    fn parse(&mut self, palette: &HashMap<String, String>) -> Result<()> {
         let mut style = Style::default();
-        if let Some(fg) = self.fg.as_ref() {
+        if let Some(mut fg) = self.fg.as_ref() {
+            if let Some(color) = palette.get(fg) {
+                fg = color;
+            }
             style = style.fg(fg.parse().context("parse fg color")?);
         }
-        if let Some(bg) = self.bg.as_ref() {
+        if let Some(mut bg) = self.bg.as_ref() {
+            if let Some(color) = palette.get(bg) {
+                bg = color;
+            }
             style = style.bg(bg.parse().context("parse bg color")?);
         }
         if self.bold {
