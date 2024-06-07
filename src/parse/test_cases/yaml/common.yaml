@@ -1,0 +1,7 @@
+string_example: "This is a string"
+boolean_true: true
+boolean_false: false
+integer_positive: 42
+integer_negative: -42
+float_positive: 3.14159
+float_negative: -2.71828

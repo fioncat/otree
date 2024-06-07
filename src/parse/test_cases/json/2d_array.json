@@ -1,0 +1,38 @@
+[
+  [
+    {
+      "id": 1,
+      "value": "A1",
+      "details": {
+        "description": "First element in the first array",
+        "isActive": true
+      }
+    },
+    {
+      "id": 2,
+      "value": "A2",
+      "details": {
+        "description": "Second element in the first array",
+        "isActive": false
+      }
+    }
+  ],
+  [
+    {
+      "id": 3,
+      "value": "B1",
+      "details": {
+        "description": "First element in the second array",
+        "isActive": true
+      }
+    },
+    {
+      "id": 4,
+      "value": "B2",
+      "details": {
+        "description": "Second element in the second array",
+        "isActive": false
+      }
+    }
+  ]
+]

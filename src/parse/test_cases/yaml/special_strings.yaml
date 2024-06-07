@@ -1,0 +1,5 @@
+special_strings:
+  - "true"
+  - "false"
+  - "123"
+  - "45.67"

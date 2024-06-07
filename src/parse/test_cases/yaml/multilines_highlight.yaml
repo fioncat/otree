@@ -1,0 +1,12 @@
+description: |
+  Hello, I am the first line.
+  The second line
+  Last line?
+  No, I lied to you, LOL, goodbye.
+goods:
+  - empty_string: "\t\t\n"
+  - description: |
+      another string!
+
+      Last line
+  - age: 18

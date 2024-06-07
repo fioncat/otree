@@ -1,0 +1,18 @@
+nested_object:
+  level1:
+    level2:
+      level3: "Deeply nested string"
+      another_level3:
+        - name: "Item 1"
+          value: 100
+        - name: "Item 2"
+          value: -50.5
+      array_in_object:
+        - 1
+        - 2
+        - 3
+      mixed_array:
+        - true
+        - false
+        - "Mixed"
+        - 4.56

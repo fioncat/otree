@@ -1,0 +1,11 @@
+array_of_objects:
+  - id: 1
+    name: "Object 1"
+    values: [1, 2, 3]
+  - id: 2
+    name: "Object 2"
+    values:
+      - key: "nested_key"
+        value: "nested_value"
+      - key: "another_key"
+        value: 42

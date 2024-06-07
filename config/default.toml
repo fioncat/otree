@@ -6,6 +6,9 @@ tree_size = 40
 disable = false
 format = "{version} - {data_source} ({content_type}) - {data_size}"
 
+[data]
+disable_highlight = false
+
 [keys]
 move_up = ["k", "<up>"]
 move_down = ["j", "<down>"]
@@ -48,6 +51,13 @@ null = {fg = "dark-gray", italic = true}
 [colors.data]
 text = {}
 border = {fg = "blue"}
+symbol = {}
+name = {fg = "yellow", italic = true}
+str = {fg = "green"}
+num = {fg = "red"}
+null = {fg = "blue", italic = true}
+bool = {fg = "red", bold = true, italic = true}
+section = {fg = "cyan", bold = true}
 
 [types]
 str = "str"

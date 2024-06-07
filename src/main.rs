@@ -3,7 +3,6 @@ mod config;
 mod parse;
 mod tree;
 mod ui;
-mod version;
 
 use std::fs;
 use std::io;
@@ -12,12 +11,9 @@ use std::path::PathBuf;
 use std::process;
 
 use anyhow::{bail, Context, Result};
-use clap::error::ErrorKind as ArgsErrorKind;
-use clap::Parser;
 
 use crate::cmd::CommandArgs;
 use crate::config::Config;
-use crate::config::LayoutDirection;
 use crate::parse::ContentType;
 use crate::tree::Tree;
 use crate::ui::{App, HeaderContext};
@@ -26,57 +22,18 @@ use crate::ui::{App, HeaderContext};
 const MAX_DATA_SIZE: usize = 30 * 1024 * 1024;
 
 fn run() -> Result<()> {
-    let args = match CommandArgs::try_parse() {
-        Ok(args) => args,
-        Err(err) => {
-            err.use_stderr();
-            err.print().unwrap();
-            if matches!(
-                err.kind(),
-                ArgsErrorKind::DisplayHelp
-                    | ArgsErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
-                    | ArgsErrorKind::DisplayVersion
-            ) {
-                return Ok(());
-            }
-
-            eprintln!();
-            bail!("parse command line args failed");
-        }
+    let args = match CommandArgs::parse()? {
+        Some(args) => args,
+        None => return Ok(()),
     };
-    if args.version {
-        version::show();
-        return Ok(());
-    }
 
     let mut cfg = if args.ignore_config {
         Config::default()
     } else {
-        Config::load(args.config)?
+        Config::load(args.config.clone())?
     };
 
-    if args.vertical && args.horizontal {
-        bail!("invalid command line args, the vertical and horizontal cannot be used together");
-    }
-    if args.vertical {
-        cfg.layout.direction = LayoutDirection::Vertical;
-    }
-    if args.horizontal {
-        cfg.layout.direction = LayoutDirection::Horizontal;
-    }
-
-    if args.disable_header {
-        cfg.header.disable = true;
-    }
-
-    if let Some(format) = args.header_format {
-        cfg.header.format = format;
-    }
-
-    if let Some(size) = args.size {
-        cfg.layout.tree_size = size;
-    }
-
+    args.update_config(&mut cfg);
     cfg.parse().context("parse config")?;
 
     if args.show_config {

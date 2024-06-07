@@ -1,6 +1,9 @@
 mod json;
+mod syntax;
 mod toml;
 mod yaml;
+
+pub use syntax::SyntaxToken;
 
 use anyhow::Result;
 use clap::ValueEnum;
@@ -16,8 +19,9 @@ pub enum ContentType {
 pub trait Parser {
     fn parse(&self, data: &str) -> Result<Value>;
 
-    // TODO: Returns `Text` to implement highlighting.
-    fn syntax_highlight(&self, value: &Value) -> String;
+    fn to_string(&self, value: &Value) -> String;
+
+    fn syntax_highlight(&self, value: &Value) -> Vec<SyntaxToken>;
 }
 
 impl ContentType {

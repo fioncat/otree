@@ -1,0 +1,48 @@
+{
+  "name": "example",
+  "isActive": true,
+  "age": 30,
+  "balance": 1234.56,
+  "tags": ["tag1", "tag2", "tag3"],
+  "address": {
+    "street": "123 Main St",
+    "city": "Example City",
+    "postalCode": "12345",
+    "coordinates": {
+      "latitude": 45.123,
+      "longitude": -93.456
+    }
+  },
+  "projects": [
+    {
+      "name": "Project Alpha",
+      "status": "completed",
+      "budget": 100000,
+      "members": [
+        {
+          "name": "Alice",
+          "role": "Manager"
+        },
+        {
+          "name": "Bob",
+          "role": "Developer"
+        }
+      ]
+    },
+    {
+      "name": "Project Beta",
+      "status": "in-progress",
+      "budget": 200000,
+      "members": [
+        {
+          "name": "Charlie",
+          "role": "Manager"
+        },
+        {
+          "name": "David",
+          "role": "Developer"
+        }
+      ]
+    }
+  ]
+}

@@ -60,20 +60,72 @@ pub struct DataColors {
 
     #[serde(default = "DataColors::default_border")]
     pub border: Color,
+
+    #[serde(default = "Color::default")]
+    pub symbol: Color,
+
+    #[serde(default = "DataColors::default_name")]
+    pub name: Color,
+
+    #[serde(default = "DataColors::default_str")]
+    pub str: Color,
+
+    #[serde(default = "DataColors::default_num")]
+    pub num: Color,
+
+    #[serde(default = "DataColors::default_null")]
+    pub null: Color,
+
+    #[serde(default = "DataColors::default_bool")]
+    pub bool: Color,
+
+    #[serde(default = "DataColors::default_section")]
+    pub section: Color,
 }
 
-generate_colors_parse!(DataColors, text, border);
+generate_colors_parse!(DataColors, text, border, symbol, name, str, num, null, bool, section);
 
 impl DataColors {
     fn default() -> Self {
         Self {
             text: Color::default(),
             border: Self::default_border(),
+            symbol: Color::default(),
+            name: Self::default_name(),
+            str: Self::default_str(),
+            num: Self::default_num(),
+            null: Self::default_null(),
+            bool: Self::default_bool(),
+            section: Self::default_section(),
         }
     }
 
     fn default_border() -> Color {
         Color::new("blue", "", false, false)
+    }
+
+    fn default_name() -> Color {
+        Color::new("yellow", "", false, true)
+    }
+
+    fn default_str() -> Color {
+        Color::new("green", "", false, false)
+    }
+
+    fn default_num() -> Color {
+        Color::new("red", "", false, false)
+    }
+
+    fn default_null() -> Color {
+        Color::new("blue", "", false, true)
+    }
+
+    fn default_bool() -> Color {
+        Color::new("red", "", true, true)
+    }
+
+    fn default_section() -> Color {
+        Color::new("cyan", "", true, false)
     }
 }
 
