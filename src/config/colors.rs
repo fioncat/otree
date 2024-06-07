@@ -18,27 +18,23 @@ pub struct Colors {
     #[serde(default = "Colors::default_header")]
     pub header: Color,
 
+    #[serde(default = "Colors::default_focus_boder")]
+    pub focus_border: Color,
+
     #[serde(default = "TreeColors::default")]
     pub tree: TreeColors,
 
-    #[serde(default = "ItemColors::default")]
-    pub item: ItemColors,
-
     #[serde(default = "DataColors::default")]
     pub data: DataColors,
-
-    #[serde(default = "Colors::default_focus_boder")]
-    pub focus_border: Color,
 }
 
-generate_colors_parse!(Colors, header, tree, item, data, focus_border);
+generate_colors_parse!(Colors, header, tree, data, focus_border);
 
 impl Colors {
     pub fn default() -> Self {
         Self {
             header: Self::default_header(),
             tree: TreeColors::default(),
-            item: ItemColors::default(),
             data: DataColors::default(),
             focus_border: Self::default_focus_boder(),
         }
@@ -136,59 +132,39 @@ pub struct TreeColors {
 
     #[serde(default = "TreeColors::default_selected")]
     pub selected: Color,
-}
 
-generate_colors_parse!(TreeColors, border, selected);
-
-impl TreeColors {
-    fn default() -> Self {
-        Self {
-            border: Self::default_border(),
-            selected: Self::default_selected(),
-        }
-    }
-
-    fn default_border() -> Color {
-        Color::new("blue", "", false, false)
-    }
-
-    fn default_selected() -> Color {
-        Color::new("black", "light_green", false, false)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ItemColors {
     #[serde(default = "Color::default")]
     pub name: Color,
 
-    #[serde(default = "ItemColors::default_type")]
+    #[serde(default = "TreeColors::default_type")]
     pub type_str: Color,
 
-    #[serde(default = "ItemColors::default_type")]
+    #[serde(default = "TreeColors::default_type")]
     pub type_null: Color,
 
-    #[serde(default = "ItemColors::default_type")]
+    #[serde(default = "TreeColors::default_type")]
     pub type_bool: Color,
 
-    #[serde(default = "ItemColors::default_type")]
+    #[serde(default = "TreeColors::default_type")]
     pub type_num: Color,
 
-    #[serde(default = "ItemColors::default_type")]
+    #[serde(default = "TreeColors::default_type")]
     pub type_arr: Color,
 
-    #[serde(default = "ItemColors::default_type")]
+    #[serde(default = "TreeColors::default_type")]
     pub type_obj: Color,
 
-    #[serde(default = "ItemColors::default_description")]
+    #[serde(default = "TreeColors::default_description")]
     pub description: Color,
 
-    #[serde(default = "ItemColors::default_null")]
+    #[serde(default = "TreeColors::default_null")]
     pub null: Color,
 }
 
 generate_colors_parse!(
-    ItemColors,
+    TreeColors,
+    border,
+    selected,
     name,
     type_str,
     type_null,
@@ -200,9 +176,11 @@ generate_colors_parse!(
     null
 );
 
-impl ItemColors {
+impl TreeColors {
     fn default() -> Self {
         Self {
+            border: Self::default_border(),
+            selected: Self::default_selected(),
             name: Color::default(),
             type_str: Self::default_type(),
             type_null: Self::default_type(),
@@ -213,6 +191,14 @@ impl ItemColors {
             description: Self::default_description(),
             null: Self::default_null(),
         }
+    }
+
+    fn default_border() -> Color {
+        Color::new("blue", "", false, false)
+    }
+
+    fn default_selected() -> Color {
+        Color::new("black", "light_green", false, false)
     }
 
     fn default_type() -> Color {

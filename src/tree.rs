@@ -230,35 +230,35 @@ impl<'a> Tree<'a> {
         let (type_str, type_style) = match field_type {
             FieldType::Null => (
                 self.cfg.types.null.clone(),
-                self.cfg.colors.item.type_null.style,
+                self.cfg.colors.tree.type_null.style,
             ),
             FieldType::Num => (
                 self.cfg.types.num.clone(),
-                self.cfg.colors.item.type_num.style,
+                self.cfg.colors.tree.type_num.style,
             ),
             FieldType::Bool => (
                 self.cfg.types.bool.clone(),
-                self.cfg.colors.item.type_bool.style,
+                self.cfg.colors.tree.type_bool.style,
             ),
             FieldType::Str => (
                 self.cfg.types.str.clone(),
-                self.cfg.colors.item.type_str.style,
+                self.cfg.colors.tree.type_str.style,
             ),
             FieldType::Obj => (
                 self.cfg.types.obj.clone(),
-                self.cfg.colors.item.type_obj.style,
+                self.cfg.colors.tree.type_obj.style,
             ),
             FieldType::Arr => (
                 self.cfg.types.arr.clone(),
-                self.cfg.colors.item.type_arr.style,
+                self.cfg.colors.tree.type_arr.style,
             ),
         };
         let line = Line::from(vec![
-            Span::styled(name, self.cfg.colors.item.name.style),
+            Span::styled(name, self.cfg.colors.tree.name.style),
             Span::raw(" "),
             Span::styled(type_str, type_style),
             Span::raw(" "),
-            Span::styled(description, self.cfg.colors.item.description.style),
+            Span::styled(description, self.cfg.colors.tree.description.style),
         ]);
         Text::from(line)
     }

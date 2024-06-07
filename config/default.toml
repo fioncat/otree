@@ -36,8 +36,6 @@ focus_border = {fg = "magenta", bold = true}
 [colors.tree]
 border = {fg = "blue"}
 selected = {fg = "black", bg = "light-green"}
-
-[colors.item]
 name = {}
 type_str = {fg = "cyan", bold = true, italic = true}
 type_null = {fg = "cyan", bold = true, italic = true}
