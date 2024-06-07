@@ -1,0 +1,57 @@
+[palette]
+base   = "#1e1e2e"
+mantle = "#181825"
+crust  = "#11111b"
+
+text     = "#cdd6f4"
+subtext0 = "#a6adc8"
+subtext1 = "#bac2de"
+
+surface0 = "#313244"
+surface1 = "#45475a"
+surface2 = "#585b70"
+
+overlay0 = "#6c7086"
+overlay1 = "#7f849c"
+overlay2 = "#9399b2"
+
+blue      = "#89b4fa"
+lavender  = "#b4befe"
+sapphire  = "#74c7ec"
+sky       = "#89dceb"
+teal      = "#94e2d5"
+green     = "#a6e3a1"
+yellow    = "#f9e2af"
+peach     = "#fab387"
+maroon    = "#eba0ac"
+red       = "#f38ba8"
+mauve     = "#cba6f7"
+pink      = "#f5c2e7"
+flamingo  = "#f2cdcd"
+rosewater = "#f5e0dc"
+
+[colors]
+header = { fg = "base", bg = "lavender", bold = true }
+focus_border = { fg = "lavender", bold = true }
+
+[colors.data]
+text = { fg = "text" }
+border = { fg = "blue" }
+symbol = { fg = "text" }
+name = { fg = "flamingo" }
+str = { fg = "green" }
+num = { fg = "peach" }
+null = { fg = "blue", italic = true }
+bool = { fg = "peach", bold = true, italic = true }
+section = { fg = "blue", bold = true }
+
+[colors.tree]
+border = { fg = "blue" }
+selected = { fg = "base", bg = "lavender" }
+type_str = { fg = "green", bold = true, italic = true }
+type_null = { fg = "blue", bold = true, italic = true }
+type_bool = { fg = "peach", bold = true, italic = true }
+type_num = { fg = "peach", bold = true, italic = true }
+type_arr = { fg = "blue", bold = true, italic = true }
+type_obj = { fg = "blue", bold = true, italic = true }
+description = { fg = "dark_gray" }

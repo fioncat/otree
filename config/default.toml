@@ -44,7 +44,6 @@ type_num = {fg = "cyan", bold = true, italic = true}
 type_arr = {fg = "cyan", bold = true, italic = true}
 type_obj = {fg = "cyan", bold = true, italic = true}
 description =  {fg = "dark-gray"}
-null = {fg = "dark-gray", italic = true}
 
 [colors.data]
 text = {}
