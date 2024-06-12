@@ -353,6 +353,18 @@ impl Data {
         if cfg.data.disable_highlight {
             Self::raw(Cow::Owned(s))
         } else {
+            let lines = s.lines().collect::<Vec<_>>();
+            if lines.len() > 1 {
+                let mut tokens = Vec::with_capacity(lines.len() * 2);
+                for (idx, line) in lines.iter().enumerate() {
+                    tokens.push(SyntaxToken::String(line.to_string()));
+                    if idx != lines.len() - 1 {
+                        tokens.push(SyntaxToken::Break);
+                    }
+                }
+                return Self::highlight(tokens);
+            }
+
             Self::highlight(vec![SyntaxToken::String(s)])
         }
     }
