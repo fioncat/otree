@@ -163,8 +163,17 @@ pub struct TreeColors {
 }
 
 generate_colors_parse!(
-    TreeColors, border, selected, name, type_str, type_null, type_bool, type_num, type_arr,
-    type_obj
+    TreeColors,
+    border,
+    selected,
+    name,
+    type_str,
+    type_null,
+    type_bool,
+    type_num,
+    type_arr,
+    type_obj,
+    description
 );
 
 impl TreeColors {
