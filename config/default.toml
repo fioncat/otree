@@ -1,5 +1,5 @@
 [editor]
-program = "nvim"
+program = "vim"
 args = ["{{file}}"]
 dir = "/tmp"
 
