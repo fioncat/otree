@@ -1,6 +1,7 @@
 mod app;
 mod data_block;
 mod header;
+mod popup;
 mod tree_overview;
 
 use std::io::Stdout;

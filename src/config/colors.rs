@@ -30,9 +30,12 @@ pub struct Colors {
 
     #[serde(default = "DataColors::default")]
     pub data: DataColors,
+
+    #[serde(default = "PopupColors::default")]
+    pub popup: PopupColors,
 }
 
-generate_colors_parse!(Colors, header, tree, data, focus_border);
+generate_colors_parse!(Colors, header, tree, data, focus_border, popup);
 
 impl Colors {
     pub fn default() -> Self {
@@ -41,6 +44,7 @@ impl Colors {
             tree: TreeColors::default(),
             data: DataColors::default(),
             focus_border: Self::default_focus_boder(),
+            popup: PopupColors::default(),
         }
     }
 
@@ -206,6 +210,26 @@ impl TreeColors {
 
     fn default_description() -> Color {
         Color::new("dark_gray", "", false, false)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PopupColors {
+    #[serde(default = "PopupColors::default_error_text")]
+    pub error_text: Color,
+}
+
+generate_colors_parse!(PopupColors, error_text);
+
+impl PopupColors {
+    fn default() -> Self {
+        Self {
+            error_text: Self::default_error_text(),
+        }
+    }
+
+    fn default_error_text() -> Color {
+        Color::new("red", "", false, false)
     }
 }
 
