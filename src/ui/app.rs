@@ -11,9 +11,8 @@ use crate::config::{Config, LayoutDirection};
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
 use crate::ui::header::{Header, HeaderContext};
+use crate::ui::popup::{Popup, PopupLevel};
 use crate::ui::tree_overview::TreeOverview;
-
-use super::popup::{Popup, PopupLevel};
 
 enum Refresh {
     /// Update the TUI

@@ -1,13 +1,11 @@
-use ratatui::{
-    layout::{Alignment, Constraint, Layout, Rect},
-    text::Text,
-    widgets::{Block, Borders, Clear, Paragraph, Wrap},
-    Frame,
-};
+use ratatui::layout::{Alignment, Constraint, Layout, Rect};
+use ratatui::text::Text;
+use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
+use ratatui::Frame;
 
-use crate::config::{keys::Action, Config};
-
-use super::app::ScrollDirection;
+use crate::config::keys::Action;
+use crate::config::Config;
+use crate::ui::app::ScrollDirection;
 
 #[derive(Debug, Clone, Copy)]
 pub(super) enum PopupLevel {
