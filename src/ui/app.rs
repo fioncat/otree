@@ -5,6 +5,7 @@ use crossterm::event::{Event, KeyEvent, MouseButton, MouseEventKind};
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout, Position, Rect};
 use ratatui::{Frame, Terminal};
+use serde_json::Value;
 
 use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
@@ -316,27 +317,10 @@ impl<'a> App<'a> {
                     return Refresh::Skip;
                 }
 
-                let identify = match self.tree_overview.get_selected() {
-                    Some(id) => id,
+                let edit = match self.build_edit() {
+                    Some(edit) => edit,
                     None => return Refresh::Skip,
                 };
-
-                let item = match self.tree_overview.get_item(identify.as_str()) {
-                    Some(item) => item,
-                    None => {
-                        self.popup(
-                            format!("cannot find data '{identify}' for editing"),
-                            PopupLevel::Error,
-                        );
-                        return Refresh::Update;
-                    }
-                };
-
-                let parser = self.tree_overview.get_parser();
-                let data = parser.to_string(&item.value);
-                let extension = parser.extension();
-
-                let edit = Edit::new(self.cfg, identify, data, extension);
                 Refresh::Edit(edit)
             }
             _ => {
@@ -437,5 +421,27 @@ impl<'a> App<'a> {
         } else {
             None
         }
+    }
+
+    fn build_edit(&self) -> Option<Edit> {
+        let identify = self.tree_overview.get_selected()?;
+        let item = self.tree_overview.get_item(identify.as_str())?;
+
+        let simple_value = match &item.value {
+            Value::String(s) => Some(s.clone()),
+            Value::Null => Some(String::from("null")),
+            Value::Number(num) => Some(num.to_string()),
+            Value::Bool(b) => Some(b.to_string()),
+            _ => None,
+        };
+
+        if let Some(simple_value) = simple_value {
+            return Some(Edit::new(self.cfg, identify, simple_value, "txt"));
+        }
+
+        let parser = self.tree_overview.get_parser();
+        let data = parser.to_string(&item.value);
+        let extension = parser.extension();
+        Some(Edit::new(self.cfg, identify, data, extension))
     }
 }
