@@ -1,9 +1,7 @@
-use std::{
-    fs,
-    io::{self, Read, Write},
-    path::PathBuf,
-    process::{Command, Stdio},
-};
+use std::fs;
+use std::io::{self, Read, Write};
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
 
 use anyhow::{bail, Context, Result};
 
