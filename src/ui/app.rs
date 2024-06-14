@@ -13,6 +13,8 @@ use crate::ui::data_block::DataBlock;
 use crate::ui::header::{Header, HeaderContext};
 use crate::ui::tree_overview::TreeOverview;
 
+use super::popup::{Popup, PopupLevel};
+
 enum Refresh {
     /// Update the TUI
     Update,
@@ -26,6 +28,7 @@ enum Refresh {
 enum ElementInFocus {
     TreeOverview,
     DataBlock,
+    Popup,
     None,
 }
 
@@ -52,6 +55,9 @@ pub struct App<'a> {
     header: Option<Header<'a>>,
     header_area: Rect,
     skip_header: bool,
+
+    popup: Popup<'a>,
+    before_popup_focus: ElementInFocus,
 }
 
 impl<'a> App<'a> {
@@ -71,6 +77,8 @@ impl<'a> App<'a> {
             header: None,
             header_area: Rect::default(),
             skip_header: false,
+            popup: Popup::new(cfg),
+            before_popup_focus: ElementInFocus::None,
         }
     }
 
@@ -119,8 +127,10 @@ impl<'a> App<'a> {
         if let Some(id) = selected {
             if let Some(item) = self.tree_overview.get_item(id.as_str()) {
                 self.data_block.update_item(id, item, self.data_block_area);
+            } else {
+                let text = format!("Cannot find data for '{}'", id);
+                self.popup(text, PopupLevel::Error);
             }
-            // TODO: When we cannot find data, should warn user (maybe message in data block?)
         } else {
             self.data_block.reset();
         }
@@ -131,6 +141,12 @@ impl<'a> App<'a> {
             }
         }
 
+        if let ElementInFocus::Popup = self.focus {
+            if self.popup.is_disabled() {
+                self.disable_popup();
+            }
+        }
+
         let tree_focus = matches!(self.focus, ElementInFocus::TreeOverview);
         self.tree_overview
             .draw(frame, self.tree_overview_area, tree_focus);
@@ -138,6 +154,30 @@ impl<'a> App<'a> {
         let data_focus = matches!(self.focus, ElementInFocus::DataBlock);
         self.data_block
             .draw(frame, self.data_block_area, data_focus);
+
+        if matches!(self.focus, ElementInFocus::Popup) {
+            self.popup.draw(frame);
+        }
+    }
+
+    fn popup(&mut self, text: String, level: PopupLevel) {
+        self.popup.set_data(text, level);
+        if !matches!(self.focus, ElementInFocus::Popup | ElementInFocus::None) {
+            self.before_popup_focus = self.focus;
+        }
+        self.focus = ElementInFocus::Popup;
+    }
+
+    fn disable_popup(&mut self) {
+        if !matches!(
+            self.before_popup_focus,
+            ElementInFocus::Popup | ElementInFocus::None
+        ) {
+            self.focus = self.before_popup_focus;
+            return;
+        }
+
+        self.focus = ElementInFocus::TreeOverview;
     }
 
     fn refresh_area(&mut self, frame: &Frame) {
@@ -197,6 +237,7 @@ impl<'a> App<'a> {
             ElementInFocus::TreeOverview => self.tree_overview.get_selected().is_some(),
             ElementInFocus::None => true,
             ElementInFocus::DataBlock => false,
+            ElementInFocus::Popup => false,
         }
     }
 
@@ -260,6 +301,7 @@ impl<'a> App<'a> {
                 if match self.focus {
                     ElementInFocus::TreeOverview => self.tree_overview.on_key(action),
                     ElementInFocus::DataBlock => self.data_block.on_key(action),
+                    ElementInFocus::Popup => self.popup.on_key(action),
                     ElementInFocus::None => false,
                 } {
                     Refresh::Update
@@ -271,6 +313,11 @@ impl<'a> App<'a> {
     }
 
     fn on_click(&mut self, column: u16, row: u16) -> Refresh {
+        if matches!(self.focus, ElementInFocus::Popup) {
+            self.popup.disable();
+            return Refresh::Update;
+        }
+
         if Self::get_row_inside(column, row, self.tree_overview_area).is_some() {
             self.tree_overview.on_click(column, row);
             self.focus = ElementInFocus::TreeOverview;
@@ -290,6 +337,14 @@ impl<'a> App<'a> {
     }
 
     fn on_scroll(&mut self, direction: ScrollDirection, column: u16, row: u16) -> Refresh {
+        if matches!(self.focus, ElementInFocus::Popup) {
+            if self.popup.on_scroll(direction) {
+                return Refresh::Update;
+            }
+
+            return Refresh::Skip;
+        }
+
         let update = if Self::get_row_inside(column, row, self.tree_overview_area).is_some() {
             self.tree_overview.on_scroll(direction)
         } else if Self::get_row_inside(column, row, self.data_block_area).is_some() {
