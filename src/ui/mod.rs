@@ -7,6 +7,7 @@ mod tree_overview;
 use std::io::Stdout;
 
 use anyhow::{Context, Result};
+use app::ShowResult;
 use crossterm::{event, terminal};
 use ratatui::backend::CrosstermBackend;
 use ratatui::style::Style;
@@ -29,7 +30,35 @@ fn get_border_style(focus_color: &Color, normal_color: &Color, focus: bool) -> (
     (color.style, border_type)
 }
 
-pub fn start() -> Result<Terminal<CrosstermBackend<Stdout>>> {
+pub fn start(mut app: App) -> Result<()> {
+    let mut terminal = new_terminal()?;
+    let mut result: Result<()> = Ok(());
+
+    loop {
+        let show_result = app.show(&mut terminal);
+        if let Err(err) = show_result {
+            result = Err(err);
+            break;
+        }
+
+        match show_result.unwrap() {
+            ShowResult::Edit(edit) => {
+                restore(&mut terminal)?;
+                edit.run();
+                terminal = new_terminal()?;
+            }
+            ShowResult::Quit => break,
+        }
+    }
+
+    // Regardless of how the TUI app executes, we should always restore the terminal.
+    // Otherwise, if the app encounters an error (such as a draw error), the user's terminal
+    // will become a mess.
+    restore(&mut terminal)?;
+    result
+}
+
+fn new_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>> {
     terminal::enable_raw_mode().context("enable terminal raw mode")?;
     let mut stdout = std::io::stdout();
     crossterm::execute!(
@@ -43,7 +72,7 @@ pub fn start() -> Result<Terminal<CrosstermBackend<Stdout>>> {
     Ok(terminal)
 }
 
-pub fn restore(mut terminal: Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
+fn restore(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
     terminal::disable_raw_mode().context("disable terminal raw mode")?;
     crossterm::execute!(
         terminal.backend_mut(),

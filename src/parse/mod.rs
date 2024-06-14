@@ -17,6 +17,8 @@ pub enum ContentType {
 }
 
 pub trait Parser {
+    fn extension(&self) -> &'static str;
+
     fn parse(&self, data: &str) -> Result<Value>;
 
     fn to_string(&self, value: &Value) -> String;

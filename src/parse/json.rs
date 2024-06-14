@@ -6,6 +6,10 @@ use super::{Parser, SyntaxToken};
 pub(super) struct JsonParser {}
 
 impl Parser for JsonParser {
+    fn extension(&self) -> &'static str {
+        "json"
+    }
+
     fn parse(&self, data: &str) -> Result<Value> {
         serde_json::from_str(data).context("parse JSON")
     }

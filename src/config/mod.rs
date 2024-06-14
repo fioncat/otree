@@ -15,6 +15,9 @@ use self::types::Types;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
+    #[serde(default = "Editor::default")]
+    pub editor: Editor,
+
     #[serde(default = "Data::default")]
     pub data: Data,
 
@@ -35,6 +38,18 @@ pub struct Config {
 
     #[serde(default = "Keys::default")]
     pub keys: Keys,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Editor {
+    #[serde(default = "Editor::default_program")]
+    pub program: String,
+
+    #[serde(default = "Editor::default_args")]
+    pub args: Vec<String>,
+
+    #[serde(default = "Editor::default_dir")]
+    pub dir: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -140,6 +155,7 @@ impl Config {
 
     pub fn default() -> Self {
         Self {
+            editor: Editor::default(),
             data: Data::default(),
             layout: Layout::default(),
             header: Header::default(),
@@ -162,6 +178,31 @@ impl Config {
 
     fn empty_map() -> HashMap<String, String> {
         HashMap::new()
+    }
+}
+
+impl Editor {
+    fn default() -> Self {
+        Self {
+            program: Self::default_program(),
+            args: Self::default_args(),
+            dir: Self::default_dir(),
+        }
+    }
+
+    fn default_program() -> String {
+        if let Some(editor) = env::var_os("EDITOR") {
+            return editor.to_string_lossy().to_string();
+        }
+        String::from("vim")
+    }
+
+    fn default_args() -> Vec<String> {
+        vec![String::from("{file}")]
+    }
+
+    fn default_dir() -> String {
+        String::from("/tmp")
     }
 }
 

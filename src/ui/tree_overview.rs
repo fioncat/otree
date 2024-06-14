@@ -9,6 +9,7 @@ use tui_tree_widget::TreeState;
 
 use crate::config::keys::Action;
 use crate::config::Config;
+use crate::parse::Parser;
 use crate::tree::{Tree, TreeItem};
 use crate::ui::app::ScrollDirection;
 
@@ -41,6 +42,10 @@ impl<'a> TreeOverview<'a> {
 
     pub(super) fn get_item(&self, id: &str) -> Option<Rc<TreeItem>> {
         self.tree().get_item(id)
+    }
+
+    pub(super) fn get_parser(&self) -> Rc<Box<dyn Parser>> {
+        self.tree().get_parser()
     }
 
     pub(super) fn on_key(&mut self, action: Action) -> bool {

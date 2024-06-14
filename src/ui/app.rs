@@ -8,6 +8,7 @@ use ratatui::{Frame, Terminal};
 
 use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
+use crate::edit::Edit;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
 use crate::ui::header::{Header, HeaderContext};
@@ -21,6 +22,8 @@ enum Refresh {
     Skip,
     /// Quit the TUI and return to the shell
     Quit,
+    /// Quit the TUI and edit text
+    Edit(Edit),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -59,6 +62,11 @@ pub struct App<'a> {
     before_popup_focus: ElementInFocus,
 }
 
+pub(super) enum ShowResult {
+    Edit(Edit),
+    Quit,
+}
+
 impl<'a> App<'a> {
     const HEADER_HEIGHT: u16 = 1;
 
@@ -81,7 +89,14 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn show(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
+    pub fn set_header(&mut self, ctx: HeaderContext) {
+        self.header = Some(Header::new(self.cfg, ctx));
+    }
+
+    pub(super) fn show(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<Stdout>>,
+    ) -> Result<ShowResult> {
         terminal.draw(|frame| self.draw(frame))?;
 
         loop {
@@ -107,16 +122,14 @@ impl<'a> App<'a> {
             };
 
             match refresh {
-                Refresh::Update => {}
+                Refresh::Update => {
+                    terminal.draw(|frame| self.draw(frame))?;
+                }
                 Refresh::Skip => continue,
-                Refresh::Quit => return Ok(()),
+                Refresh::Edit(edit) => return Ok(ShowResult::Edit(edit)),
+                Refresh::Quit => return Ok(ShowResult::Quit),
             }
-            terminal.draw(|frame| self.draw(frame))?;
         }
-    }
-
-    pub fn set_header(&mut self, ctx: HeaderContext) {
-        self.header = Some(Header::new(self.cfg, ctx));
     }
 
     fn draw(&mut self, frame: &mut Frame) {
@@ -294,6 +307,37 @@ impl<'a> App<'a> {
                 }
 
                 Refresh::Update
+            }
+            Action::Edit => {
+                if !matches!(
+                    self.focus,
+                    ElementInFocus::DataBlock | ElementInFocus::TreeOverview
+                ) {
+                    return Refresh::Skip;
+                }
+
+                let identify = match self.tree_overview.get_selected() {
+                    Some(id) => id,
+                    None => return Refresh::Skip,
+                };
+
+                let item = match self.tree_overview.get_item(identify.as_str()) {
+                    Some(item) => item,
+                    None => {
+                        self.popup(
+                            format!("cannot find data '{identify}' for editing"),
+                            PopupLevel::Error,
+                        );
+                        return Refresh::Update;
+                    }
+                };
+
+                let parser = self.tree_overview.get_parser();
+                let data = parser.to_string(&item.value);
+                let extension = parser.extension();
+
+                let edit = Edit::new(self.cfg, identify, data, extension);
+                Refresh::Edit(edit)
             }
             _ => {
                 // These actions are handled by the focused widget
