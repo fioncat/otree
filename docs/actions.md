@@ -19,7 +19,7 @@
 | tree_scale_up   | `[`                       | Scale up tree widget                                         |
 | tree_scale_down | `]`                       | Scale down tree widget                                       |
 | switch          | `<tab>`                   | Switch focus widget                                          |
-| edit            | `e`                       | Open current item in editor<br />**Notice that edited changes won't be saved** |
+| edit            | `e`                       | Open current item in editor<br />**(ReadOnly)**              |
 | quit            | `<ctrl-c>`, `q`           | Quit program                                                 |
 
 All available keys:
