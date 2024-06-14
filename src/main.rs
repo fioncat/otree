@@ -1,5 +1,6 @@
 mod cmd;
 mod config;
+mod edit;
 mod parse;
 mod tree;
 mod ui;
@@ -105,15 +106,7 @@ fn run() -> Result<()> {
         app.set_header(header_ctx);
     }
 
-    let mut terminal = ui::start().context("start tui")?;
-    let result = app.show(&mut terminal).context("show tui");
-
-    // Regardless of how the TUI app executes, we should always restore the terminal.
-    // Otherwise, if the app encounters an error (such as a draw error), the user's terminal
-    // will become a mess.
-    ui::restore(terminal).context("restore terminal")?;
-
-    result
+    ui::start(app)
 }
 
 fn main() {

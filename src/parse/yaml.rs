@@ -8,6 +8,10 @@ use super::{Parser, SyntaxToken};
 pub(super) struct YamlParser {}
 
 impl Parser for YamlParser {
+    fn extension(&self) -> &'static str {
+        "yaml"
+    }
+
     fn parse(&self, data: &str) -> Result<Value> {
         let mut values = Vec::with_capacity(1);
         for document in serde_yml::Deserializer::from_str(data) {

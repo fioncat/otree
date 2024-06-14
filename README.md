@@ -54,7 +54,7 @@ For how to configure TUI colors, please refer to: [Colors Document](docs/colors.
 - [x] Action: Mouse click actions
 - [x] Action: Mouse scroll actions
 - [ ] Action: Mouse select actions
-- [ ] Action: Open current selected item in editor
+- [x] Action: Open current selected item in editor **ReadOnly** (v0.2)
 - [x] Action: Switch between tree overview and data block (v0.1)
 - [x] Action: Jump to parent item (v0.1)
 - [x] Action: Jump to parent item and close (v0.1)

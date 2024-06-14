@@ -9,6 +9,10 @@ use super::{Parser, SyntaxToken};
 pub(super) struct TomlParser {}
 
 impl Parser for TomlParser {
+    fn extension(&self) -> &'static str {
+        "toml"
+    }
+
     fn parse(&self, data: &str) -> Result<Value> {
         let toml_value: TomlValue = toml::from_str(data).context("parse TOML")?;
         Ok(toml_value_to_json(toml_value))

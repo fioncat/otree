@@ -1,3 +1,8 @@
+[editor]
+program = "vim"
+args = ["{{file}}"]
+dir = "/tmp"
+
 [layout]
 direction = "horizontal"
 tree_size = 40

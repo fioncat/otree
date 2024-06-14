@@ -5,9 +5,11 @@ use crossterm::event::{Event, KeyEvent, MouseButton, MouseEventKind};
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout, Position, Rect};
 use ratatui::{Frame, Terminal};
+use serde_json::Value;
 
 use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
+use crate::edit::Edit;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
 use crate::ui::header::{Header, HeaderContext};
@@ -21,6 +23,8 @@ enum Refresh {
     Skip,
     /// Quit the TUI and return to the shell
     Quit,
+    /// Quit the TUI and edit text
+    Edit(Edit),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -59,6 +63,11 @@ pub struct App<'a> {
     before_popup_focus: ElementInFocus,
 }
 
+pub(super) enum ShowResult {
+    Edit(Edit),
+    Quit,
+}
+
 impl<'a> App<'a> {
     const HEADER_HEIGHT: u16 = 1;
 
@@ -81,7 +90,14 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn show(&mut self, terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
+    pub fn set_header(&mut self, ctx: HeaderContext) {
+        self.header = Some(Header::new(self.cfg, ctx));
+    }
+
+    pub(super) fn show(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<Stdout>>,
+    ) -> Result<ShowResult> {
         terminal.draw(|frame| self.draw(frame))?;
 
         loop {
@@ -107,16 +123,14 @@ impl<'a> App<'a> {
             };
 
             match refresh {
-                Refresh::Update => {}
+                Refresh::Update => {
+                    terminal.draw(|frame| self.draw(frame))?;
+                }
                 Refresh::Skip => continue,
-                Refresh::Quit => return Ok(()),
+                Refresh::Edit(edit) => return Ok(ShowResult::Edit(edit)),
+                Refresh::Quit => return Ok(ShowResult::Quit),
             }
-            terminal.draw(|frame| self.draw(frame))?;
         }
-    }
-
-    pub fn set_header(&mut self, ctx: HeaderContext) {
-        self.header = Some(Header::new(self.cfg, ctx));
     }
 
     fn draw(&mut self, frame: &mut Frame) {
@@ -295,6 +309,20 @@ impl<'a> App<'a> {
 
                 Refresh::Update
             }
+            Action::Edit => {
+                if !matches!(
+                    self.focus,
+                    ElementInFocus::DataBlock | ElementInFocus::TreeOverview
+                ) {
+                    return Refresh::Skip;
+                }
+
+                let edit = match self.build_edit() {
+                    Some(edit) => edit,
+                    None => return Refresh::Skip,
+                };
+                Refresh::Edit(edit)
+            }
             _ => {
                 // These actions are handled by the focused widget
                 if match self.focus {
@@ -393,5 +421,27 @@ impl<'a> App<'a> {
         } else {
             None
         }
+    }
+
+    fn build_edit(&self) -> Option<Edit> {
+        let identify = self.tree_overview.get_selected()?;
+        let item = self.tree_overview.get_item(identify.as_str())?;
+
+        let simple_value = match &item.value {
+            Value::String(s) => Some(s.clone()),
+            Value::Null => Some(String::from("null")),
+            Value::Number(num) => Some(num.to_string()),
+            Value::Bool(b) => Some(b.to_string()),
+            _ => None,
+        };
+
+        if let Some(simple_value) = simple_value {
+            return Some(Edit::new(self.cfg, identify, simple_value, "txt"));
+        }
+
+        let parser = self.tree_overview.get_parser();
+        let data = parser.to_string(&item.value);
+        let extension = parser.extension();
+        Some(Edit::new(self.cfg, identify, data, extension))
     }
 }
