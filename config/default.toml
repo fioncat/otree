@@ -1,6 +1,6 @@
 [editor]
 program = "vim"
-args = ["{{file}}"]
+args = ["{file}"]
 dir = "/tmp"
 
 [layout]
@@ -10,6 +10,9 @@ tree_size = 40
 [header]
 disable = false
 format = "{version} - {data_source} ({content_type}) - {data_size}"
+
+[footer]
+disable = false
 
 [data]
 disable_highlight = false

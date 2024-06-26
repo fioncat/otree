@@ -50,7 +50,7 @@ pub struct CommandArgs {
     #[clap(long)]
     pub disable_highlight: bool,
 
-    /// Print loaded config (in toml).
+    /// Print loaded config.
     #[clap(long)]
     pub show_config: bool,
 
@@ -62,7 +62,7 @@ pub struct CommandArgs {
     #[clap(long)]
     pub build_info: bool,
 
-    /// Print the version.
+    /// Print version.
     #[clap(short, long)]
     pub version: bool,
 }
