@@ -13,6 +13,7 @@ use crate::config::{Config, LayoutDirection};
 use crate::edit::Edit;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
+use crate::ui::footer::{Footer, FooterText};
 use crate::ui::header::{Header, HeaderContext};
 use crate::ui::popup::{Popup, PopupLevel};
 use crate::ui::tree_overview::TreeOverview;
@@ -60,6 +61,11 @@ pub struct App<'a> {
     header_area: Rect,
     skip_header: bool,
 
+    footer: Option<Footer<'a>>,
+    footer_area: Rect,
+    skip_footer: bool,
+    copy_message: Option<String>,
+
     popup: Popup<'a>,
     before_popup_focus: ElementInFocus,
 }
@@ -71,8 +77,14 @@ pub(super) enum ShowResult {
 
 impl<'a> App<'a> {
     const HEADER_HEIGHT: u16 = 1;
+    const FOOTER_HEIGHT: u16 = 1;
 
     pub fn new(cfg: &'a Config, tree: Tree<'a>) -> Self {
+        let footer = if cfg.footer.disable {
+            None
+        } else {
+            Some(Footer::new(cfg))
+        };
         Self {
             cfg,
             focus: ElementInFocus::TreeOverview,
@@ -86,6 +98,10 @@ impl<'a> App<'a> {
             header: None,
             header_area: Rect::default(),
             skip_header: false,
+            footer,
+            footer_area: Rect::default(),
+            skip_footer: false,
+            copy_message: None,
             popup: Popup::new(cfg),
             before_popup_focus: ElementInFocus::None,
         }
@@ -152,6 +168,25 @@ impl<'a> App<'a> {
         if let Some(header) = self.header.as_ref() {
             if !self.skip_header {
                 header.draw(frame, self.header_area);
+            }
+        }
+
+        if let Some(footer) = self.footer.as_ref() {
+            let text = match self.copy_message.take() {
+                Some(message) => FooterText::Message(message),
+                None => {
+                    let roots = self.tree_overview.get_root_identifies();
+                    let identify = self.tree_overview.get_selected();
+                    if roots.is_empty() && identify.is_none() {
+                        FooterText::None
+                    } else {
+                        FooterText::Identify(roots, identify)
+                    }
+                }
+            };
+
+            if !self.skip_footer {
+                footer.draw(frame, self.footer_area, text);
             }
         }
 
@@ -226,6 +261,28 @@ impl<'a> App<'a> {
                 }
             }
             None => frame_area,
+        };
+
+        let main_area = match self.footer {
+            Some(_) => {
+                let Rect { height, .. } = main_area;
+                if height <= Self::FOOTER_HEIGHT + 1 {
+                    self.skip_footer = true;
+                    main_area
+                } else {
+                    self.skip_footer = false;
+                    self.footer_area = Rect {
+                        height: Self::FOOTER_HEIGHT,
+                        y: height,
+                        ..main_area
+                    };
+                    Rect {
+                        height: height.saturating_sub(Self::FOOTER_HEIGHT),
+                        ..main_area
+                    }
+                }
+            }
+            None => main_area,
         };
 
         match self.layout_direction {
@@ -336,7 +393,9 @@ impl<'a> App<'a> {
                     return Refresh::Update;
                 }
 
-                // TODO: When copy success, show a temporary message in footer
+                let size = humansize::format_size(text.len(), humansize::BINARY);
+                let copy_message = format!("copied {size} data to system clipboard");
+                self.copy_message = Some(copy_message);
                 Refresh::Update
             }
             _ => {

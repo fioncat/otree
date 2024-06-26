@@ -19,6 +19,7 @@ pub(super) struct TreeOverview<'a> {
     tree: Option<Tree<'a>>,
     last_switches: Vec<(Tree<'a>, TreeState<Vec<String>>)>,
     root_switch: Option<(Tree<'a>, TreeState<Vec<String>>)>,
+    root_identifies: Vec<String>,
 }
 
 impl<'a> TreeOverview<'a> {
@@ -29,6 +30,7 @@ impl<'a> TreeOverview<'a> {
             tree: Some(tree),
             last_switches: vec![],
             root_switch: None,
+            root_identifies: vec![],
         }
     }
 
@@ -38,6 +40,10 @@ impl<'a> TreeOverview<'a> {
             return None;
         }
         Some(selected.join("/"))
+    }
+
+    pub(super) fn get_root_identifies(&self) -> &[String] {
+        self.root_identifies.as_ref()
     }
 
     pub(super) fn get_item(&self, id: &str) -> Option<Rc<TreeItem>> {
@@ -94,6 +100,7 @@ impl<'a> TreeOverview<'a> {
             self.last_switches.push(switch);
         }
 
+        self.root_identifies.push(id);
         self.state = Some(TreeState::default());
         self.tree = Some(new_tree);
 
@@ -115,6 +122,7 @@ impl<'a> TreeOverview<'a> {
             },
         };
 
+        self.root_identifies.pop();
         self.tree = Some(reset_tree);
         self.state = Some(reset_state);
 

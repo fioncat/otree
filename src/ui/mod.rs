@@ -1,5 +1,6 @@
 mod app;
 mod data_block;
+mod footer;
 mod header;
 mod popup;
 mod tree_overview;

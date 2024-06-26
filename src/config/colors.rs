@@ -25,6 +25,9 @@ pub struct Colors {
     #[serde(default = "Colors::default_focus_boder")]
     pub focus_border: Color,
 
+    #[serde(default = "FooterColors::default")]
+    pub footer: FooterColors,
+
     #[serde(default = "TreeColors::default")]
     pub tree: TreeColors,
 
@@ -35,13 +38,14 @@ pub struct Colors {
     pub popup: PopupColors,
 }
 
-generate_colors_parse!(Colors, header, tree, data, focus_border, popup);
+generate_colors_parse!(Colors, header, footer, tree, data, focus_border, popup);
 
 impl Colors {
     pub fn default() -> Self {
         Self {
             header: Self::default_header(),
             tree: TreeColors::default(),
+            footer: FooterColors::default(),
             data: DataColors::default(),
             focus_border: Self::default_focus_boder(),
             popup: PopupColors::default(),
@@ -210,6 +214,41 @@ impl TreeColors {
 
     fn default_description() -> Color {
         Color::new("dark_gray", "", false, false)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FooterColors {
+    #[serde(default = "FooterColors::default_root")]
+    pub root: Color,
+
+    pub identify: Color,
+
+    #[serde(default = "FooterColors::default_message")]
+    pub message: Color,
+}
+
+generate_colors_parse!(FooterColors, root, identify, message);
+
+impl FooterColors {
+    fn default() -> Self {
+        Self {
+            root: Self::default_root(),
+            identify: Self::default_identify(),
+            message: Self::default_message(),
+        }
+    }
+
+    fn default_root() -> Color {
+        Color::new("black", "light-cyan", true, false)
+    }
+
+    fn default_identify() -> Color {
+        Color::new("black", "light-green", true, false)
+    }
+
+    fn default_message() -> Color {
+        Color::new("green", "", true, false)
     }
 }
 

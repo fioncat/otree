@@ -1,6 +1,6 @@
 [editor]
 program = "vim"
-args = ["{{file}}"]
+args = ["{file}"]
 dir = "/tmp"
 
 [layout]
@@ -10,6 +10,9 @@ tree_size = 40
 [header]
 disable = false
 format = "{version} - {data_source} ({content_type}) - {data_size}"
+
+[footer]
+disable = false
 
 [data]
 disable_highlight = false
@@ -63,6 +66,11 @@ num = {fg = "red"}
 null = {fg = "blue", italic = true}
 bool = {fg = "red", bold = true, italic = true}
 section = {fg = "cyan", bold = true}
+
+[colors.footer]
+root = {fg = "black", bg = "light-cyan", bold = true}
+identify = {fg = "black", bg = "light-green", bold = true}
+message = {fg = "green", bold = true}
 
 [types]
 str = "str"
