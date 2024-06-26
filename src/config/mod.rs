@@ -27,6 +27,9 @@ pub struct Config {
     #[serde(default = "Header::default")]
     pub header: Header,
 
+    #[serde(default = "Footer::default")]
+    pub footer: Footer,
+
     #[serde(default = "Config::empty_map")]
     pub palette: HashMap<String, String>,
 
@@ -76,6 +79,12 @@ pub struct Header {
 
     #[serde(default = "Header::default_format")]
     pub format: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Footer {
+    #[serde(default = "Config::disable")]
+    pub disable: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -159,6 +168,7 @@ impl Config {
             data: Data::default(),
             layout: Layout::default(),
             header: Header::default(),
+            footer: Footer::default(),
             palette: Self::empty_map(),
             colors: Colors::default(),
             types: Types::default(),
@@ -233,6 +243,14 @@ impl Header {
 
     fn default_format() -> String {
         "{version} - {data_source} ({content_type}) - {data_size}".to_string()
+    }
+}
+
+impl Footer {
+    fn default() -> Self {
+        Self {
+            disable: Config::disable(),
+        }
     }
 }
 

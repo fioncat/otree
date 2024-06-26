@@ -22,9 +22,13 @@ pub struct CommandArgs {
     #[clap(short = 't', long)]
     pub content_type: Option<ContentType>,
 
-    /// Do not show the header.
+    /// Don't show the header.
     #[clap(long)]
     pub disable_header: bool,
+
+    /// Don't show the footer.
+    #[clap(long)]
+    pub disable_footer: bool,
 
     /// The header format.
     #[clap(short = 'f', long)]
@@ -46,7 +50,7 @@ pub struct CommandArgs {
     #[clap(long)]
     pub disable_highlight: bool,
 
-    /// Show loaded config (in toml) and exit.
+    /// Print loaded config (in toml).
     #[clap(long)]
     pub show_config: bool,
 
@@ -54,11 +58,11 @@ pub struct CommandArgs {
     #[clap(long)]
     pub ignore_config: bool,
 
-    /// Show build info and exit.
+    /// Print build info.
     #[clap(long)]
     pub build_info: bool,
 
-    /// Print the version and exit.
+    /// Print the version.
     #[clap(short, long)]
     pub version: bool,
 }
@@ -111,6 +115,10 @@ impl CommandArgs {
 
         if self.disable_header {
             cfg.header.disable = true;
+        }
+
+        if self.disable_footer {
+            cfg.footer.disable = true;
         }
 
         if self.disable_highlight {

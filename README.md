@@ -45,7 +45,7 @@ For how to configure TUI colors, please refer to: [Colors Document](docs/colors.
 - [x] UI: Header (v0.1)
 - [x] UI: Tree Overview (v0.1)
 - [x] UI: Data Block (v0.1)
-- [ ] UI: Footer to show current attached root path
+- [x] UI: Footer to show current attached root path and selected item (v0.2)
 - [ ] UI: Filter Input
 - [x] UI: Popup widget to show error or help messages (v0.2)
 - [x] Action: Change current selected item as root (v0.1)

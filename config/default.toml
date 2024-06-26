@@ -64,6 +64,11 @@ null = {fg = "blue", italic = true}
 bool = {fg = "red", bold = true, italic = true}
 section = {fg = "cyan", bold = true}
 
+[colors.footer]
+root = {fg = "black", bg = "light-cyan", bold = true}
+identify = {fg = "black", bg = "light-green", bold = true}
+message = {fg = "green", bold = true}
+
 [types]
 str = "str"
 null = "null"
