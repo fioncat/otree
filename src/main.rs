@@ -1,3 +1,4 @@
+mod clipboard;
 mod cmd;
 mod config;
 mod edit;
