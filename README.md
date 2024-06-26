@@ -63,7 +63,7 @@ For how to configure TUI colors, please refer to: [Colors Document](docs/colors.
 - [x] Action: Close all opened items (v0.1)
 - [ ] Action: Filter items, highlight searching keywords
 - [ ] Action: Popup to show help messages
-- [ ] Action: Clipboard support, copy current item's content (might need to call external program like `wl-copy`, `pbcopy`)
+- [x] Action: Clipboard support, copy current item's content (might need to call external program like `wl-copy`, `pbcopy`) (v0.2)
 - [x] Syntax highlighting in data block (v0.2)
 - [x] Allow user to customize TUI colors and key bindings (and other things you can imagine) (v0.1)
 - [ ] **Filter items! (Like [jnv](https://github.com/ynqa/jnv))**
