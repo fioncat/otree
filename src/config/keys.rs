@@ -243,6 +243,12 @@ pub struct Keys {
     #[serde(default = "Keys::default_edit")]
     pub edit: Vec<String>,
 
+    #[serde(default = "Keys::default_copy_key")]
+    pub copy_key: Vec<String>,
+
+    #[serde(default = "Keys::default_copy_value")]
+    pub copy_value: Vec<String>,
+
     #[serde(default = "Keys::default_quit")]
     pub quit: Vec<String>,
 
@@ -269,6 +275,8 @@ generate_keys_default!(
     tree_scale_down => ["]"],
     switch => ["<tab>"],
     edit => ["e"],
+    copy_key => ["y"],
+    copy_value => ["Y"],
     quit => ["<ctrl-c>", "q"]
 );
 
@@ -291,6 +299,8 @@ generate_actions!(
     tree_scale_down => TreeScaleDown,
     switch => Switch,
     edit => Edit,
+    copy_key => CopyKey,
+    copy_value => CopyValue,
     quit => Quit
 );
 

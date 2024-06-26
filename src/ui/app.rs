@@ -7,6 +7,7 @@ use ratatui::layout::{Constraint, Layout, Position, Rect};
 use ratatui::{Frame, Terminal};
 use serde_json::Value;
 
+use crate::clipboard::write_clipboard;
 use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
 use crate::edit::Edit;
@@ -323,6 +324,21 @@ impl<'a> App<'a> {
                 };
                 Refresh::Edit(edit)
             }
+            Action::CopyKey | Action::CopyValue => {
+                let text = match self.get_copy_text(action) {
+                    Some(text) => text,
+                    None => return Refresh::Skip,
+                };
+
+                if let Err(err) = write_clipboard(&text) {
+                    let message = format!("Failed to copy text to clipboard: {err:#}");
+                    self.popup(message, PopupLevel::Error);
+                    return Refresh::Update;
+                }
+
+                // TODO: When copy success, show a temporary message in footer
+                Refresh::Update
+            }
             _ => {
                 // These actions are handled by the focused widget
                 if match self.focus {
@@ -443,5 +459,18 @@ impl<'a> App<'a> {
         let data = parser.to_string(&item.value);
         let extension = parser.extension();
         Some(Edit::new(self.cfg, identify, data, extension))
+    }
+
+    fn get_copy_text(&self, action: Action) -> Option<String> {
+        let identify = self.tree_overview.get_selected()?;
+        let item = self.tree_overview.get_item(identify.as_str())?;
+
+        if matches!(action, Action::CopyKey) {
+            return Some(item.name.clone());
+        }
+
+        let parser = self.tree_overview.get_parser();
+        let data = parser.to_string(&item.value);
+        Some(data)
     }
 }

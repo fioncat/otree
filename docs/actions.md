@@ -20,6 +20,8 @@
 | tree_scale_down | `]`                       | Scale down tree widget                                       |
 | switch          | `<tab>`                   | Switch focus widget                                          |
 | edit            | `e`                       | Open current item in editor<br />**(ReadOnly)**              |
+| copy_key        | `y`                       | Copy current selected item's key name                        |
+| copy_value      | `Y`                       | Copy current selected item's value                           |
 | quit            | `<ctrl-c>`, `q`           | Quit program                                                 |
 
 All available keys:
