@@ -166,22 +166,13 @@ pub struct TreeColors {
     #[serde(default = "TreeColors::default_type")]
     pub type_obj: Color,
 
-    #[serde(default = "TreeColors::default_description")]
-    pub description: Color,
+    #[serde(default = "TreeColors::default_value")]
+    pub value: Color,
 }
 
 generate_colors_parse!(
-    TreeColors,
-    border,
-    selected,
-    name,
-    type_str,
-    type_null,
-    type_bool,
-    type_num,
-    type_arr,
-    type_obj,
-    description
+    TreeColors, border, selected, name, type_str, type_null, type_bool, type_num, type_arr,
+    type_obj, value
 );
 
 impl TreeColors {
@@ -196,7 +187,7 @@ impl TreeColors {
             type_num: Self::default_type(),
             type_arr: Self::default_type(),
             type_obj: Self::default_type(),
-            description: Self::default_description(),
+            value: Self::default_value(),
         }
     }
 
@@ -212,7 +203,7 @@ impl TreeColors {
         Color::new("cyan", "", true, true)
     }
 
-    fn default_description() -> Color {
+    fn default_value() -> Color {
         Color::new("dark_gray", "", false, false)
     }
 }

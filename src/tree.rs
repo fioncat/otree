@@ -258,7 +258,7 @@ impl<'a> Tree<'a> {
             Span::raw(" "),
             Span::styled(type_str, type_style),
             Span::raw(" "),
-            Span::styled(description, self.cfg.colors.tree.description.style),
+            Span::styled(description, self.cfg.colors.tree.value.style),
         ]);
         Text::from(line)
     }

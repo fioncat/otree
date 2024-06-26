@@ -36,7 +36,7 @@ tree_scale_up = ["["]
 tree_scale_down = ["]"]
 switch = ["<tab>"]
 edit = ["e"]
-copy_key = ["y"]
+copy_name = ["y"]
 copy_value = ["Y"]
 quit = ["<ctrl-c>", "q"]
 
@@ -54,7 +54,7 @@ type_bool = {fg = "cyan", bold = true, italic = true}
 type_num = {fg = "cyan", bold = true, italic = true}
 type_arr = {fg = "cyan", bold = true, italic = true}
 type_obj = {fg = "cyan", bold = true, italic = true}
-description =  {fg = "dark-gray"}
+value =  {fg = "dark-gray"}
 
 [colors.data]
 text = {}
@@ -71,6 +71,9 @@ section = {fg = "cyan", bold = true}
 root = {fg = "black", bg = "light-cyan", bold = true}
 identify = {fg = "black", bg = "light-green", bold = true}
 message = {fg = "green", bold = true}
+
+[colors.popup]
+error_text = {fg = "red"}
 
 [types]
 str = "str"

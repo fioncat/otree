@@ -54,4 +54,12 @@ type_bool = { fg = "peach", bold = true, italic = true }
 type_num = { fg = "peach", bold = true, italic = true }
 type_arr = { fg = "blue", bold = true, italic = true }
 type_obj = { fg = "blue", bold = true, italic = true }
-description = { fg = "dark_gray" }
+value = { fg = "dark_gray" }
+
+[colors.footer]
+root = { fg = "base", bg = "sky", bold = true }
+identify = { fg = "base", bg = "peach", bold = true }
+message = { fg = "green", bold = true }
+
+[colors.popup]
+error_text = { fg = "red" }

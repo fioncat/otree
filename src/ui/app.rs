@@ -381,7 +381,7 @@ impl<'a> App<'a> {
                 };
                 Refresh::Edit(edit)
             }
-            Action::CopyKey | Action::CopyValue => {
+            Action::CopyName | Action::CopyValue => {
                 let text = match self.get_copy_text(action) {
                     Some(text) => text,
                     None => return Refresh::Skip,
@@ -524,7 +524,7 @@ impl<'a> App<'a> {
         let identify = self.tree_overview.get_selected()?;
         let item = self.tree_overview.get_item(identify.as_str())?;
 
-        if matches!(action, Action::CopyKey) {
+        if matches!(action, Action::CopyName) {
             return Some(item.name.clone());
         }
 
