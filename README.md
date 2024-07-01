@@ -22,6 +22,14 @@ You can install `otree` from the [AUR](https://aur.archlinux.org/packages/otree)
 paru -S otree
 ```
 
+### macOS and Linux (Homebrew)
+
+You can install [`otree`](https://formulae.brew.sh/formula/otree) using [Homebrew](https://brew.sh).
+
+```bash
+brew install otree
+```
+
 ## Usage
 
 Open a JSON/YAML/TOML file in TUI tree viewer:
