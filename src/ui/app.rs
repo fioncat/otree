@@ -155,7 +155,7 @@ impl<'a> App<'a> {
 
         let selected = self.tree_overview.get_selected();
         if let Some(id) = selected {
-            if let Some(item) = self.tree_overview.get_item(id.as_str()) {
+            if let Some(item) = self.tree_overview.get_value(id.as_str()) {
                 self.data_block.update_item(id, item, self.data_block_area);
             } else {
                 let text = format!("Cannot find data for '{}'", id);
@@ -500,7 +500,7 @@ impl<'a> App<'a> {
 
     fn build_edit(&self) -> Option<Edit> {
         let identify = self.tree_overview.get_selected()?;
-        let item = self.tree_overview.get_item(identify.as_str())?;
+        let item = self.tree_overview.get_value(identify.as_str())?;
 
         let simple_value = match &item.value {
             Value::String(s) => Some(s.clone()),
@@ -522,7 +522,7 @@ impl<'a> App<'a> {
 
     fn get_copy_text(&self, action: Action) -> Option<String> {
         let identify = self.tree_overview.get_selected()?;
-        let item = self.tree_overview.get_item(identify.as_str())?;
+        let item = self.tree_overview.get_value(identify.as_str())?;
 
         if matches!(action, Action::CopyName) {
             return Some(item.name.clone());

@@ -1,14 +1,11 @@
 use std::borrow::Cow;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use anyhow::Result;
-use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::Widget;
 use serde_json::Value;
-use tui_tree_widget::{Node as TreeNode, TreeData};
+use tui_tree_widget::TreeItem;
 
 use crate::config::Config;
 use crate::parse::{ContentType, Parser, SyntaxToken};
@@ -16,21 +13,17 @@ use crate::parse::{ContentType, Parser, SyntaxToken};
 pub struct Tree<'a> {
     pub parser: Rc<Box<dyn Parser>>,
 
-    pub items: Vec<Rc<TreeItem>>,
-    pub items_map: HashMap<String, Rc<TreeItem>>,
+    pub items: Vec<TreeItem<'static, String>>,
+    pub values: HashMap<String, Rc<ItemValue>>,
 
     cfg: &'a Config,
 }
 
-pub struct TreeItem {
+pub struct ItemValue {
     pub name: String,
     pub value: Value,
 
-    pub text: Text<'static>,
-
     pub data: Data,
-
-    pub children: Vec<Rc<TreeItem>>,
 }
 
 pub struct Data {
@@ -65,13 +58,13 @@ impl<'a> Tree<'a> {
         let mut tree = Self {
             parser,
             items: vec![],
-            items_map: HashMap::new(),
+            values: HashMap::new(),
             cfg,
         };
 
         // The root value needs to be expanded directly, since we don't want to see a
         // `root` item in the tree.
-        let items: Vec<Rc<TreeItem>> = match value {
+        let items: Vec<TreeItem<String>> = match value {
             Value::Array(arr) => {
                 let mut items = Vec::with_capacity(arr.len());
                 for (idx, value) in arr.into_iter().enumerate() {
@@ -96,15 +89,20 @@ impl<'a> Tree<'a> {
         tree
     }
 
-    pub fn get_item(&self, path: &str) -> Option<Rc<TreeItem>> {
-        self.items_map.get(path).cloned()
+    pub fn get_value(&self, path: &str) -> Option<Rc<ItemValue>> {
+        self.values.get(path).cloned()
     }
 
     pub fn get_parser(&self) -> Rc<Box<dyn Parser>> {
         Rc::clone(&self.parser)
     }
 
-    fn build_item(&mut self, parent: Vec<String>, name: String, value: Value) -> Rc<TreeItem> {
+    fn build_item(
+        &mut self,
+        parent: Vec<String>,
+        name: String,
+        value: Value,
+    ) -> TreeItem<'static, String> {
         let path = if parent.is_empty() {
             name.clone()
         } else {
@@ -113,46 +111,53 @@ impl<'a> Tree<'a> {
 
         let raw_value = value.clone();
         let raw_name = name.clone();
-        let item = match value {
-            Value::Null => TreeItem {
-                name: raw_name,
-                value: raw_value,
-                text: self.build_item_text(name, FieldType::Null, Cow::Borrowed("null")),
-                data: Data::null(self.cfg),
-                children: vec![],
-            },
+        let (item, value) = match value {
+            Value::Null => (
+                TreeItem::new_leaf(
+                    raw_name.clone(),
+                    self.build_item_text(name, FieldType::Null, Cow::Borrowed("null")),
+                ),
+                ItemValue {
+                    name: raw_name,
+                    value: raw_value,
+                    data: Data::null(self.cfg),
+                },
+            ),
             Value::String(s) => {
                 let description = format!("= {s:?}");
                 let text = self.build_item_text(name, FieldType::Str, Cow::Owned(description));
-                TreeItem {
-                    name: raw_name,
-                    value: raw_value,
-                    text,
-                    data: Data::string(self.cfg, s),
-                    children: vec![],
-                }
+                (
+                    TreeItem::new_leaf(raw_name.clone(), text),
+                    ItemValue {
+                        name: raw_name,
+                        value: raw_value,
+                        data: Data::string(self.cfg, s),
+                    },
+                )
             }
             Value::Number(num) => {
                 let description = format!("= {num}");
                 let text = self.build_item_text(name, FieldType::Num, Cow::Owned(description));
-                TreeItem {
-                    name: raw_name,
-                    value: raw_value,
-                    text,
-                    data: Data::number(self.cfg, num.to_string()),
-                    children: vec![],
-                }
+                (
+                    TreeItem::new_leaf(raw_name.clone(), text),
+                    ItemValue {
+                        name: raw_name,
+                        value: raw_value,
+                        data: Data::number(self.cfg, num.to_string()),
+                    },
+                )
             }
             Value::Bool(b) => {
                 let description = if b { "= true" } else { "= false" };
                 let text = self.build_item_text(name, FieldType::Bool, Cow::Borrowed(description));
-                TreeItem {
-                    name: raw_name,
-                    value: raw_value,
-                    text,
-                    data: Data::bool(self.cfg, b),
-                    children: vec![],
-                }
+                (
+                    TreeItem::new_leaf(raw_name.clone(), text),
+                    ItemValue {
+                        name: raw_name,
+                        value: raw_value,
+                        data: Data::bool(self.cfg, b),
+                    },
+                )
             }
             Value::Array(arr) => {
                 let description = format!(
@@ -176,13 +181,14 @@ impl<'a> Tree<'a> {
                     children.push(child);
                 }
 
-                TreeItem {
-                    name: raw_name,
-                    value: raw_value,
-                    text,
-                    data,
-                    children,
-                }
+                (
+                    TreeItem::new(raw_name.clone(), text, children).unwrap(),
+                    ItemValue {
+                        name: raw_name,
+                        value: raw_value,
+                        data,
+                    },
+                )
             }
             Value::Object(obj) => {
                 let description = format!(
@@ -205,18 +211,19 @@ impl<'a> Tree<'a> {
                     let child = self.build_item(child_parent, field, item);
                     children.push(child);
                 }
-                TreeItem {
-                    name: raw_name,
-                    value: raw_value,
-                    text,
-                    data,
-                    children,
-                }
+                (
+                    TreeItem::new(raw_name.clone(), text, children).unwrap(),
+                    ItemValue {
+                        name: raw_name,
+                        value: raw_value,
+                        data,
+                    },
+                )
             }
         };
 
-        let item = Rc::new(item);
-        self.items_map.insert(path, Rc::clone(&item));
+        let value = Rc::new(value);
+        self.values.insert(path, value);
         item
     }
 
@@ -261,54 +268,6 @@ impl<'a> Tree<'a> {
             Span::styled(description, self.cfg.colors.tree.value.style),
         ]);
         Text::from(line)
-    }
-
-    // From: <https://github.com/EdJoPaTo/tui-rs-tree-widget/blob/main/src/flatten.rs>
-    fn flatten(
-        open_identifiers: &HashSet<Vec<String>>,
-        items: &[Rc<TreeItem>],
-        current: &[String],
-    ) -> Vec<TreeNode<Vec<String>>> {
-        let mut nodes = Vec::new();
-        for item in items {
-            let mut child_identifier = current.to_vec();
-            child_identifier.push(item.name.clone());
-
-            let child_result = open_identifiers
-                .contains(&child_identifier)
-                .then(|| Self::flatten(open_identifiers, &item.children, &child_identifier));
-
-            nodes.push(TreeNode {
-                depth: child_identifier.len() - 1,
-                has_children: !item.children.is_empty(),
-                height: item.text.height(),
-                identifier: child_identifier,
-            });
-
-            if let Some(mut child_node) = child_result {
-                nodes.append(&mut child_node);
-            }
-        }
-        nodes
-    }
-}
-
-impl<'a> TreeData for Tree<'a> {
-    type Identifier = Vec<String>;
-
-    fn get_nodes(
-        &self,
-        open_identifiers: &HashSet<Self::Identifier>,
-    ) -> Vec<TreeNode<Self::Identifier>> {
-        Self::flatten(open_identifiers, &self.items, &[])
-    }
-
-    fn render(&self, identifier: &Self::Identifier, area: Rect, buffer: &mut Buffer) {
-        let path = identifier.join("/");
-        if let Some(item) = self.items_map.get(&path) {
-            // TODO: When in search mode, highlight search keyword
-            Widget::render(&item.text, area, buffer);
-        }
     }
 }
 

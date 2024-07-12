@@ -10,7 +10,7 @@ use tui_tree_widget::TreeState;
 use crate::config::keys::Action;
 use crate::config::Config;
 use crate::parse::Parser;
-use crate::tree::{Tree, TreeItem};
+use crate::tree::{ItemValue, Tree};
 use crate::ui::app::ScrollDirection;
 
 pub(super) struct TreeOverview<'a> {
@@ -46,8 +46,8 @@ impl<'a> TreeOverview<'a> {
         self.root_identifies.as_ref()
     }
 
-    pub(super) fn get_item(&self, id: &str) -> Option<Rc<TreeItem>> {
-        self.tree().get_item(id)
+    pub(super) fn get_value(&self, id: &str) -> Option<Rc<ItemValue>> {
+        self.tree().get_value(id)
     }
 
     pub(super) fn get_parser(&self) -> Rc<Box<dyn Parser>> {
@@ -77,7 +77,7 @@ impl<'a> TreeOverview<'a> {
             None => return false,
         };
 
-        let value = match self.tree().get_item(id.as_str()) {
+        let value = match self.tree().get_value(id.as_str()) {
             Some(item) => {
                 if !matches!(item.value, Value::Array(_) | Value::Object(_)) {
                     // We don't allow to change root to non-expandable value
@@ -188,7 +188,7 @@ impl<'a> TreeOverview<'a> {
             .title_alignment(Alignment::Center)
             .title("Tree Overview");
         let mut state = self.state.take().unwrap();
-        let widget = TreeWidget::new(self.tree())
+        let widget = TreeWidget::new(&self.tree().items)
             .experimental_scrollbar(Some(scrollbar))
             .highlight_style(self.cfg.colors.tree.selected.style)
             .block(block);
