@@ -15,10 +15,10 @@ use crate::ui::app::ScrollDirection;
 
 pub(super) struct TreeOverview<'a> {
     cfg: &'a Config,
-    state: Option<TreeState<Vec<String>>>,
+    state: Option<TreeState<String>>,
     tree: Option<Tree<'a>>,
-    last_switches: Vec<(Tree<'a>, TreeState<Vec<String>>)>,
-    root_switch: Option<(Tree<'a>, TreeState<Vec<String>>)>,
+    last_switches: Vec<(Tree<'a>, TreeState<String>)>,
+    root_switch: Option<(Tree<'a>, TreeState<String>)>,
     root_identifies: Vec<String>,
 }
 
@@ -35,7 +35,7 @@ impl<'a> TreeOverview<'a> {
     }
 
     pub(super) fn get_selected(&self) -> Option<String> {
-        let selected = self.state().selected()?;
+        let selected = self.state().selected();
         if selected.is_empty() {
             return None;
         }
@@ -139,14 +139,14 @@ impl<'a> TreeOverview<'a> {
 
     fn select_parent(&mut self) -> bool {
         if let Some(parent) = self.get_selected_parent() {
-            self.state_mut().select(Some(parent));
+            self.state_mut().select(parent);
             return true;
         }
         false
     }
 
     fn get_selected_parent(&self) -> Option<Vec<String>> {
-        let selected = self.state().selected()?;
+        let selected = self.state().selected();
         if selected.len() <= 1 {
             return None;
         }
@@ -189,6 +189,7 @@ impl<'a> TreeOverview<'a> {
             .title("Tree Overview");
         let mut state = self.state.take().unwrap();
         let widget = TreeWidget::new(&self.tree().items)
+            .unwrap()
             .experimental_scrollbar(Some(scrollbar))
             .highlight_style(self.cfg.colors.tree.selected.style)
             .block(block);
@@ -201,11 +202,11 @@ impl<'a> TreeOverview<'a> {
         self.tree.as_ref().unwrap()
     }
 
-    fn state(&self) -> &TreeState<Vec<String>> {
+    fn state(&self) -> &TreeState<String> {
         self.state.as_ref().unwrap()
     }
 
-    fn state_mut(&mut self) -> &mut TreeState<Vec<String>> {
+    fn state_mut(&mut self) -> &mut TreeState<String> {
         self.state.as_mut().unwrap()
     }
 }
