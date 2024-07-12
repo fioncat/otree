@@ -9,12 +9,12 @@ use ratatui::Frame;
 
 use crate::config::keys::Action;
 use crate::config::Config;
-use crate::tree::TreeItem;
+use crate::tree::ItemValue;
 use crate::ui::app::ScrollDirection;
 
 pub(super) struct DataBlock<'a> {
     cfg: &'a Config,
-    item: Option<Rc<TreeItem>>,
+    item: Option<Rc<ItemValue>>,
 
     can_vertical_scroll: bool,
     vertical_scroll: usize,
@@ -147,7 +147,7 @@ impl<'a> DataBlock<'a> {
         true
     }
 
-    pub(super) fn update_item(&mut self, identify: String, item: Rc<TreeItem>, area: Rect) {
+    pub(super) fn update_item(&mut self, identify: String, item: Rc<ItemValue>, area: Rect) {
         if self.last_identify == identify {
             return;
         }
@@ -234,7 +234,7 @@ impl<'a> DataBlock<'a> {
 
             frame.render_stateful_widget(
                 vertical_scrollbar,
-                area.inner(&Margin {
+                area.inner(Margin {
                     vertical: 1,
                     horizontal: 0,
                 }),
@@ -252,7 +252,7 @@ impl<'a> DataBlock<'a> {
 
             frame.render_stateful_widget(
                 horizontal_scrollbar,
-                area.inner(&Margin {
+                area.inner(Margin {
                     vertical: 0,
                     horizontal: 1,
                 }),
