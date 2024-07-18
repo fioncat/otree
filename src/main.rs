@@ -3,6 +3,7 @@ mod cmd;
 mod config;
 mod edit;
 mod parse;
+mod syntax;
 mod tree;
 mod ui;
 

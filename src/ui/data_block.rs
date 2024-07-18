@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::rc::Rc;
 
 use ratatui::layout::{Alignment, Margin, Rect};
@@ -154,7 +155,7 @@ impl<'a> DataBlock<'a> {
 
         self.reset_scroll();
 
-        let rows = item.data.rows + Self::SCROLL_RETAIN;
+        let rows = item.text.rows + Self::SCROLL_RETAIN;
         if rows > area.height as usize {
             self.can_vertical_scroll = true;
             self.vertical_scroll_last = rows.saturating_sub(area.height as usize);
@@ -163,7 +164,7 @@ impl<'a> DataBlock<'a> {
                 .content_length(self.vertical_scroll_last);
         }
 
-        let columns = item.data.columns + Self::SCROLL_RETAIN;
+        let columns = item.text.columns + Self::SCROLL_RETAIN;
         if columns > area.width as usize {
             self.can_horizontal_scroll = true;
             self.horizontal_scroll_last = columns.saturating_sub(area.width as usize);
@@ -215,7 +216,7 @@ impl<'a> DataBlock<'a> {
         let text = self
             .item
             .as_ref()
-            .map(|item| item.data.render(self.cfg))
+            .map(|item| item.text.text.clone())
             .unwrap_or_default();
 
         let widget = Paragraph::new(text)

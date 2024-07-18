@@ -9,6 +9,7 @@ use tui_tree_widget::TreeItem;
 
 use crate::config::Config;
 use crate::parse::{ContentType, Parser, SyntaxToken};
+use crate::syntax::SyntaxText;
 
 pub struct Tree<'a> {
     pub parser: Rc<Box<dyn Parser>>,
@@ -23,7 +24,7 @@ pub struct ItemValue {
     pub name: String,
     pub value: Value,
 
-    pub data: Data,
+    pub text: SyntaxText,
 }
 
 pub struct Data {
@@ -109,55 +110,34 @@ impl<'a> Tree<'a> {
             format!("{}/{name}", parent.join("/"))
         };
 
-        let raw_value = value.clone();
-        let raw_name = name.clone();
-        let (item, value) = match value {
-            Value::Null => (
-                TreeItem::new_leaf(
-                    raw_name.clone(),
-                    self.build_item_text(name, FieldType::Null, Cow::Borrowed("null")),
-                ),
-                ItemValue {
-                    name: raw_name,
-                    value: raw_value,
-                    data: Data::null(self.cfg),
-                },
+        let item_value = ItemValue {
+            name: name.clone(),
+            value: value.clone(),
+            text: SyntaxText::parse(&self.cfg, &value, Rc::clone(&self.parser)),
+        };
+
+        let item = match value {
+            Value::Null => TreeItem::new_leaf(
+                name.clone(),
+                self.build_item_text(name, FieldType::Null, Cow::Borrowed("null")),
             ),
             Value::String(s) => {
                 let description = format!("= {s:?}");
-                let text = self.build_item_text(name, FieldType::Str, Cow::Owned(description));
-                (
-                    TreeItem::new_leaf(raw_name.clone(), text),
-                    ItemValue {
-                        name: raw_name,
-                        value: raw_value,
-                        data: Data::string(self.cfg, s),
-                    },
-                )
+                let text =
+                    self.build_item_text(name.clone(), FieldType::Str, Cow::Owned(description));
+                TreeItem::new_leaf(name, text)
             }
             Value::Number(num) => {
                 let description = format!("= {num}");
-                let text = self.build_item_text(name, FieldType::Num, Cow::Owned(description));
-                (
-                    TreeItem::new_leaf(raw_name.clone(), text),
-                    ItemValue {
-                        name: raw_name,
-                        value: raw_value,
-                        data: Data::number(self.cfg, num.to_string()),
-                    },
-                )
+                let text =
+                    self.build_item_text(name.clone(), FieldType::Num, Cow::Owned(description));
+                TreeItem::new_leaf(name, text)
             }
             Value::Bool(b) => {
                 let description = if b { "= true" } else { "= false" };
-                let text = self.build_item_text(name, FieldType::Bool, Cow::Borrowed(description));
-                (
-                    TreeItem::new_leaf(raw_name.clone(), text),
-                    ItemValue {
-                        name: raw_name,
-                        value: raw_value,
-                        data: Data::bool(self.cfg, b),
-                    },
-                )
+                let text =
+                    self.build_item_text(name.clone(), FieldType::Bool, Cow::Borrowed(description));
+                TreeItem::new_leaf(name, text)
             }
             Value::Array(arr) => {
                 let description = format!(
@@ -165,30 +145,18 @@ impl<'a> Tree<'a> {
                     arr.len(),
                     if arr.len() > 1 { "items" } else { "item" }
                 );
-                let text = self.build_item_text(name, FieldType::Arr, Cow::Owned(description));
-                let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(self.parser.to_string(&raw_value)))
-                } else {
-                    Data::highlight(self.parser.syntax_highlight(&raw_value))
-                };
-
+                let text =
+                    self.build_item_text(name.clone(), FieldType::Arr, Cow::Owned(description));
                 let mut children = Vec::with_capacity(arr.len());
                 for (idx, item) in arr.into_iter().enumerate() {
                     let mut child_parent = parent.to_vec();
-                    child_parent.push(raw_name.clone());
+                    child_parent.push(name.clone());
 
                     let child = self.build_item(child_parent, idx.to_string(), item);
                     children.push(child);
                 }
 
-                (
-                    TreeItem::new(raw_name.clone(), text, children).unwrap(),
-                    ItemValue {
-                        name: raw_name,
-                        value: raw_value,
-                        data,
-                    },
-                )
+                TreeItem::new(name, text, children).unwrap()
             }
             Value::Object(obj) => {
                 let description = format!(
@@ -196,34 +164,22 @@ impl<'a> Tree<'a> {
                     obj.len(),
                     if obj.len() > 1 { "fields" } else { "field" }
                 );
-                let text = self.build_item_text(name, FieldType::Obj, Cow::Owned(description));
-                let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(self.parser.to_string(&raw_value)))
-                } else {
-                    Data::highlight(self.parser.syntax_highlight(&raw_value))
-                };
+                let text =
+                    self.build_item_text(name.clone(), FieldType::Obj, Cow::Owned(description));
 
                 let mut children = Vec::with_capacity(obj.len());
                 for (field, item) in obj {
                     let mut child_parent = parent.to_vec();
-                    child_parent.push(raw_name.clone());
+                    child_parent.push(name.clone());
 
                     let child = self.build_item(child_parent, field, item);
                     children.push(child);
                 }
-                (
-                    TreeItem::new(raw_name.clone(), text, children).unwrap(),
-                    ItemValue {
-                        name: raw_name,
-                        value: raw_value,
-                        data,
-                    },
-                )
+                TreeItem::new(name, text, children).unwrap()
             }
         };
 
-        let value = Rc::new(value);
-        self.values.insert(path, value);
+        self.values.insert(path, Rc::new(item_value));
         item
     }
 
