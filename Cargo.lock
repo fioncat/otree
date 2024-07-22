@@ -478,9 +478,9 @@ dependencies = [
 
 [[package]]
 name = "libyml"
-version = "0.0.3"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e281a65eeba3d4503a2839252f86374528f9ceafe6fed97c1d3b52e1fb625c1"
+checksum = "64804cc6a5042d4f05379909ba25b503ec04e2c082151d62122d5dcaa274b961"
 
 [[package]]
 name = "linux-raw-sys"
@@ -828,9 +828,9 @@ dependencies = [
 
 [[package]]
 name = "serde_yml"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78ce6afeda22f0b55dde2c34897bce76a629587348480384231205c14b59a01f"
+checksum = "48e76bab63c3fd98d27c17f9cbce177f64a91f5e69ac04cafe04e1bb25d1dc3c"
 dependencies = [
  "indexmap",
  "itoa",
@@ -1032,9 +1032,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.8.14"
+version = "0.8.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f49eb2ab21d2f26bd6db7bf383edc527a7ebaee412d17af4d40fdccd442f335"
+checksum = "ac2caab0bf757388c6c0ae23b3293fdb463fee59434529014f85e3263b995c28"
 dependencies = [
  "indexmap",
  "serde",
@@ -1054,9 +1054,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.22.15"
+version = "0.22.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d59a3a72298453f564e2b111fa896f8d07fabb36f51f06d7e875fc5e0b5a3ef1"
+checksum = "278f3d518e152219c994ce877758516bca5e118eaed6996192a774fb9fbf0788"
 dependencies = [
  "indexmap",
  "serde",
