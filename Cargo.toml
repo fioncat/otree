@@ -22,8 +22,8 @@ ratatui = "0.27.0"
 regex = "1.10.5"
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = { version = "1.0.120", features = ["preserve_order"] }
-serde_yml = "0.0.10"
-toml = { version = "0.8.14", features = ["preserve_order"] }
+serde_yml = "0.0.11"
+toml = { version = "0.8.15", features = ["preserve_order"] }
 tui-tree-widget = "0.21.0"
 
 [build-dependencies]
