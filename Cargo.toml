@@ -12,7 +12,7 @@ description = "A command line tool to view objects (json/yaml/toml) in TUI tree 
 
 [dependencies]
 anyhow = "1.0.86"
-clap = { version = "4.5.15", features = ["derive"] }
+clap = { version = "4.5.16", features = ["derive"] }
 crossterm = "0.28.1"
 dirs = "5.0.1"
 humansize = "2.1.3"
@@ -20,8 +20,8 @@ once_cell = "1.19.0"
 paste = "1.0.15"
 ratatui = "0.28.0"
 regex = "1.10.6"
-serde = { version = "1.0.206", features = ["derive"] }
-serde_json = { version = "1.0.124", features = ["preserve_order"] }
+serde = { version = "1.0.208", features = ["derive"] }
+serde_json = { version = "1.0.125", features = ["preserve_order"] }
 serde_yml = "0.0.11"
 toml = { version = "0.8.19", features = ["preserve_order"] }
 tui-tree-widget = "0.22.0"
