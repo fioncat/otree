@@ -151,9 +151,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "clap"
-version = "4.5.15"
+version = "4.5.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11d8838454fda655dafd3accb2b6e2bea645b9e4078abe84a22ceb947235c5cc"
+checksum = "ed6719fffa43d0d87e5fd8caeab59be1554fb028cd30edc88fc4369b17971019"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -359,12 +359,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fastrand"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fc0510504f03c51ada170672ac806f1f105a88aa97a5281117e1ddc3368e51a"
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -495,9 +489,13 @@ dependencies = [
 
 [[package]]
 name = "libyml"
-version = "0.0.4"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64804cc6a5042d4f05379909ba25b503ec04e2c082151d62122d5dcaa274b961"
+checksum = "3302702afa434ffa30847a83305f0a69d6abd74293b6554c18ec85c7ef30c980"
+dependencies = [
+ "anyhow",
+ "version_check",
+]
 
 [[package]]
 name = "linux-raw-sys"
@@ -686,9 +684,9 @@ dependencies = [
 
 [[package]]
 name = "ratatui"
-version = "0.28.0"
+version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ba6a365afbe5615999275bea2446b970b10a41102500e27ce7678d50d978303"
+checksum = "fdef7f9be5c0122f890d58bdf4d964349ba6a6161f705907526d891efabba57d"
 dependencies = [
  "bitflags",
  "cassowary",
@@ -805,18 +803,18 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.206"
+version = "1.0.209"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b3e4cd94123dd520a128bcd11e34d9e9e423e7e3e50425cb1b4b1e3549d0284"
+checksum = "99fce0ffe7310761ca6bf9faf5115afbc19688edd00171d81b1bb1b116c63e09"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.206"
+version = "1.0.209"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fabfb6138d2383ea8208cf98ccf69cdfb1aff4088460681d84189aa259762f97"
+checksum = "a5831b979fd7b5439637af1752d535ff49f4860c0f341d1baeb6faf0f4242170"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -825,9 +823,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.124"
+version = "1.0.127"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66ad62847a56b3dba58cc891acd13884b9c61138d330c0d7b6181713d4fce38d"
+checksum = "8043c06d9f82bd7271361ed64f415fe5e12a77fdb52e573e7f06a516dea329ad"
 dependencies = [
  "indexmap",
  "itoa",
@@ -847,19 +845,17 @@ dependencies = [
 
 [[package]]
 name = "serde_yml"
-version = "0.0.11"
+version = "0.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48e76bab63c3fd98d27c17f9cbce177f64a91f5e69ac04cafe04e1bb25d1dc3c"
+checksum = "59e2dd588bf1597a252c3b920e0143eb99b0f76e4e082f4c92ce34fbc9e71ddd"
 dependencies = [
  "indexmap",
  "itoa",
  "libyml",
- "log",
  "memchr",
  "ryu",
  "serde",
- "serde_json",
- "tempfile",
+ "version_check",
 ]
 
 [[package]]
@@ -972,18 +968,6 @@ dependencies = [
  "ntapi",
  "once_cell",
  "windows",
-]
-
-[[package]]
-name = "tempfile"
-version = "3.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85b77fafb263dd9d05cbeac119526425676db3784113aa9295c88498cbf8bff1"
-dependencies = [
- "cfg-if",
- "fastrand",
- "rustix",
- "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1151,9 +1135,9 @@ dependencies = [
 
 [[package]]
 name = "version_check"
-version = "0.9.4"
+version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "wasi"
