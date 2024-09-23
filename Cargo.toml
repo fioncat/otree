@@ -11,8 +11,8 @@ repository = "https://github.com/fioncat/otree"
 description = "A command line tool to view objects (json/yaml/toml) in TUI tree widget"
 
 [dependencies]
-anyhow = "1.0.87"
-clap = { version = "4.5.17", features = ["derive"] }
+anyhow = "1.0.89"
+clap = { version = "4.5.18", features = ["derive"] }
 crossterm = "0.28.1"
 dirs = "5.0.1"
 humansize = "2.1.3"
@@ -28,7 +28,7 @@ tui-tree-widget = "0.22.0"
 
 [build-dependencies]
 simple-error = "0.3.0"
-vergen = { version = "9.0.0", features = ["build", "rustc", "cargo", "si"] }
+vergen = { version = "9.0.1", features = ["build", "rustc", "cargo", "si"] }
 
 [profile.release]
 lto = true
