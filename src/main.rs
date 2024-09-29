@@ -78,13 +78,6 @@ fn run() -> Result<()> {
             fs::read(path).context("read file")?
         }
         None => {
-            if cfg!(target_os = "macos") {
-                // Read from stdin is not supported on macOS.
-                // See: <https://github.com/crossterm-rs/crossterm/issues/500>
-                bail!(
-                    "reading data from stdin is not supported on macOS, please read it from file"
-                );
-            }
             let mut data = Vec::new();
             io::stdin().read_to_end(&mut data).context("read stdin")?;
             data
