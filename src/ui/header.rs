@@ -23,6 +23,7 @@ impl HeaderContext {
             ContentType::Toml => "toml",
             ContentType::Yaml => "yaml",
             ContentType::Json => "json",
+            ContentType::Jsonl => "jsonl",
         };
 
         let data_size = humansize::format_size(size, humansize::BINARY);

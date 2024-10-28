@@ -1,4 +1,5 @@
 mod json;
+mod jsonl;
 mod syntax;
 mod toml;
 mod yaml;
@@ -14,6 +15,9 @@ pub enum ContentType {
     Json,
     Yaml,
     Toml,
+
+    /// Useful for some logs file: https://jsonlines.org/
+    Jsonl,
 }
 
 pub trait Parser {
@@ -32,6 +36,7 @@ impl ContentType {
             Self::Json => Box::new(json::JsonParser {}),
             Self::Yaml => Box::new(yaml::YamlParser {}),
             Self::Toml => Box::new(toml::TomlParser {}),
+            Self::Jsonl => Box::new(jsonl::JsonlParser {}),
         }
     }
 }
