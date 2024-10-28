@@ -16,6 +16,11 @@ impl Parser for JsonlParser {
         let lines: Vec<&str> = data.lines().collect();
         let mut objects = Vec::with_capacity(lines.len());
         for (idx, line) in lines.iter().enumerate() {
+            let line = line.trim();
+            if line.is_empty() {
+                // let's skip those empty lines
+                continue;
+            }
             let object = serde_json::from_str(line)
                 .with_context(|| format!("parse JSON object at line {}", idx + 1))?;
             objects.push(object);
