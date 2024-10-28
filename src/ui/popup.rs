@@ -113,7 +113,7 @@ impl<'a> Popup<'a> {
             .wrap(Wrap { trim: false })
             .scroll((self.scroll as u16, 0));
 
-        let area = Self::centered_rect(50, 50, frame.size());
+        let area = Self::centered_rect(50, 50, frame.area());
         frame.render_widget(Clear, area); // this clears out the background
         frame.render_widget(widget, area);
     }

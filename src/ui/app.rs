@@ -237,7 +237,7 @@ impl<'a> App<'a> {
         debug_assert_ne!(tree_size, 0);
         debug_assert_ne!(data_size, 0);
 
-        let frame_area = frame.size();
+        let frame_area = frame.area();
         let main_area = match self.header {
             Some(_) => {
                 let Rect { height, .. } = frame_area;
