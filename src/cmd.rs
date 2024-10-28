@@ -17,7 +17,7 @@ pub struct CommandArgs {
     pub config: Option<String>,
 
     /// The data content type. If the file extension is one of
-    /// ["json", "yaml", "yml", "toml"], this can be automatically inferred. In other
+    /// ["json", "yaml", "yml", "toml", "jsonl"], this can be automatically inferred. In other
     /// cases, this is required.
     #[clap(short = 't', long)]
     pub content_type: Option<ContentType>,
