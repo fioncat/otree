@@ -48,6 +48,16 @@ For all available actions and their default key bindings, please refer to: [All 
 
 For how to configure TUI colors, please refer to: [Colors Document](docs/colors.md).
 
+### Large files
+
+You can force to open large file be setting `OTREE_MAX_SIZE`(in MiB) environment variable.
+
+```bash
+OTREE_MAX_SIZE=40 otree large_file.json
+```
+
+Default max size is 30 MiB.
+
 ## Features
 
 - [x] UI: Header (v0.1)
