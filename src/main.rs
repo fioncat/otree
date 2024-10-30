@@ -13,7 +13,6 @@ use std::io;
 use std::io::Read;
 use std::path::PathBuf;
 use std::process;
-use std::sync::LazyLock;
 
 use anyhow::{bail, Context, Result};
 
@@ -22,17 +21,6 @@ use crate::config::Config;
 use crate::parse::ContentType;
 use crate::tree::Tree;
 use crate::ui::{App, HeaderContext};
-
-// Forbid large data size to ensure TUI performance
-static MAX_DATA_SIZE: LazyLock<usize> = LazyLock::new(|| {
-    use std::str::FromStr;
-    let megabytes = std::env::var("OTREE_MAX_SIZE")
-        .ok()
-        .and_then(|s| usize::from_str(&s).ok())
-        .unwrap_or(30);
-
-    megabytes * 1024 * 1024
-});
 
 fn run() -> Result<()> {
     let args = match CommandArgs::parse()? {
@@ -96,8 +84,9 @@ fn run() -> Result<()> {
         }
     };
 
-    if data.len() > *MAX_DATA_SIZE {
-        bail!("the data size is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size", humansize::format_size(*MAX_DATA_SIZE, humansize::BINARY));
+    let max_file_size = args.max_file_size.unwrap_or(cfg.data.max_file_size) * 1024 * 1024;
+    if data.len() > max_file_size {
+        bail!("the data size is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size", humansize::format_size(max_file_size, humansize::BINARY));
     }
 
     // To make sure the data is utf8 encoded.

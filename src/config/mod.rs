@@ -91,6 +91,8 @@ pub struct Footer {
 pub struct Data {
     #[serde(default = "Config::disable")]
     pub disable_highlight: bool,
+    #[serde(default = "Config::default_max_file_size")]
+    pub max_file_size: usize,
 }
 
 impl Config {
@@ -182,8 +184,12 @@ impl Config {
         Ok(())
     }
 
-    fn disable() -> bool {
+    const fn disable() -> bool {
         false
+    }
+
+    const fn default_max_file_size() -> usize {
+        30
     }
 
     fn empty_map() -> HashMap<String, String> {
@@ -258,6 +264,7 @@ impl Data {
     fn default() -> Self {
         Self {
             disable_highlight: Config::disable(),
+            max_file_size: Config::default_max_file_size(),
         }
     }
 }

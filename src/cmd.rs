@@ -62,6 +62,10 @@ pub struct CommandArgs {
     #[clap(long)]
     pub build_info: bool,
 
+    /// Limit file size to open. In MiB
+    #[clap(long)]
+    pub max_file_size: Option<usize>,
+
     /// Print version.
     #[clap(short, long)]
     pub version: bool,
