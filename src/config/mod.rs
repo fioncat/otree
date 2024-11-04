@@ -91,8 +91,8 @@ pub struct Footer {
 pub struct Data {
     #[serde(default = "Config::disable")]
     pub disable_highlight: bool,
-    #[serde(default = "Config::default_max_file_size")]
-    pub max_file_size: usize,
+    #[serde(default = "Config::default_max_data_size")]
+    pub max_data_size: usize,
 }
 
 impl Config {
@@ -188,7 +188,7 @@ impl Config {
         false
     }
 
-    const fn default_max_file_size() -> usize {
+    const fn default_max_data_size() -> usize {
         30
     }
 
@@ -264,7 +264,7 @@ impl Data {
     fn default() -> Self {
         Self {
             disable_highlight: Config::disable(),
-            max_file_size: Config::default_max_file_size(),
+            max_data_size: Config::default_max_data_size(),
         }
     }
 }
