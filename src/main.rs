@@ -86,7 +86,7 @@ fn run() -> Result<()> {
 
     let max_data_size = args.max_data_size.unwrap_or(cfg.data.max_data_size) * 1024 * 1024;
     if data.len() > max_data_size {
-        bail!("the data size is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size", humansize::format_size(max_file_size, humansize::BINARY));
+        bail!("the data size is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size", humansize::format_size(max_data_size, humansize::BINARY));
     }
 
     // To make sure the data is utf8 encoded.
