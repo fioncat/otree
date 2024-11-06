@@ -16,6 +16,7 @@ disable = false
 
 [data]
 disable_highlight = false
+max_data_size = 30
 
 [keys]
 move_up = ["k", "<up>"]

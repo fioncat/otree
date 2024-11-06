@@ -1,3 +1,5 @@
+// #![warn(clippy::pedantic)]
+
 mod clipboard;
 mod cmd;
 mod config;
@@ -19,9 +21,6 @@ use crate::config::Config;
 use crate::parse::ContentType;
 use crate::tree::Tree;
 use crate::ui::{App, HeaderContext};
-
-// Forbid large data size to ensure TUI performance
-const MAX_DATA_SIZE: usize = 30 * 1024 * 1024;
 
 fn run() -> Result<()> {
     let args = match CommandArgs::parse()? {
@@ -85,8 +84,9 @@ fn run() -> Result<()> {
         }
     };
 
-    if data.len() > MAX_DATA_SIZE {
-        bail!("the data size is too large, we limit the maximum size to 30 MiB to ensure TUI performance, you should try to reduce the read size");
+    let max_data_size = args.max_data_size.unwrap_or(cfg.data.max_data_size) * 1024 * 1024;
+    if data.len() > max_data_size {
+        bail!("the data size is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size. HINT: You can use command line arg `--max-data-size` or config option `data.max_data_size` to modify this limitation", humansize::format_size(max_data_size, humansize::BINARY));
     }
 
     // To make sure the data is utf8 encoded.
