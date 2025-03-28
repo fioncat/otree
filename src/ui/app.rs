@@ -10,6 +10,7 @@ use serde_json::Value;
 use crate::clipboard::write_clipboard;
 use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
+use crate::debug;
 use crate::edit::Edit;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
@@ -115,6 +116,7 @@ impl<'a> App<'a> {
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<Stdout>>,
     ) -> Result<ShowResult> {
+        debug!("Start ui show loop, with config: {:?}", self.cfg);
         terminal.draw(|frame| self.draw(frame))?;
 
         loop {

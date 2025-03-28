@@ -2,6 +2,8 @@
 
 ### Features
 
+- Command: Add new flag `--debug`, to write some debug logs to a file.
+
 ## v0.3.0
 
 ### Features
