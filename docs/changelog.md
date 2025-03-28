@@ -1,3 +1,18 @@
+## v0.4.0
+
+### Features
+
+## v0.3.0
+
+### Features
+
+- Parser: Support [JSONL](https://jsonlines.org/)
+- README: Add Homebrew instructions.
+
+### Fixes
+
+- Allow reading from stdin on macOS.
+
 ## v0.2.0
 
 ### Features

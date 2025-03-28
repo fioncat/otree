@@ -1,6 +1,6 @@
 [package]
 name = "otree"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 build = "build.rs"
 license = "MIT"
