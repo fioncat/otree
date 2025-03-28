@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::text::Text;
 use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
@@ -12,16 +14,16 @@ pub(super) enum PopupLevel {
     Error,
 }
 
-pub(super) struct Popup<'a> {
+pub(super) struct Popup {
     data: Option<(String, PopupLevel)>,
 
-    cfg: &'a Config,
+    cfg: Rc<Config>,
 
     scroll: usize,
 }
 
-impl<'a> Popup<'a> {
-    pub(super) fn new(cfg: &'a Config) -> Self {
+impl Popup {
+    pub(super) fn new(cfg: Rc<Config>) -> Self {
         Self {
             data: None,
             cfg,

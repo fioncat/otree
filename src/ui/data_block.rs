@@ -12,8 +12,8 @@ use crate::config::Config;
 use crate::tree::ItemValue;
 use crate::ui::app::ScrollDirection;
 
-pub(super) struct DataBlock<'a> {
-    cfg: &'a Config,
+pub(super) struct DataBlock {
+    cfg: Rc<Config>,
     item: Option<Rc<ItemValue>>,
 
     can_vertical_scroll: bool,
@@ -30,10 +30,10 @@ pub(super) struct DataBlock<'a> {
     last_area: Rect,
 }
 
-impl<'a> DataBlock<'a> {
+impl DataBlock {
     const SCROLL_RETAIN: usize = 5;
 
-    pub(super) fn new(cfg: &'a Config) -> Self {
+    pub(super) fn new(cfg: Rc<Config>) -> Self {
         Self {
             cfg,
             item: None,
@@ -215,7 +215,7 @@ impl<'a> DataBlock<'a> {
         let text = self
             .item
             .as_ref()
-            .map(|item| item.data.render(self.cfg))
+            .map(|item| item.data.render(self.cfg.as_ref()))
             .unwrap_or_default();
 
         let widget = Paragraph::new(text)

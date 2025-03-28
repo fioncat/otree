@@ -1,10 +1,9 @@
-// #![warn(clippy::pedantic)]
-
 mod clipboard;
 mod cmd;
 mod config;
 mod debug;
 mod edit;
+mod live_reload;
 mod parse;
 mod tree;
 mod ui;
@@ -14,6 +13,7 @@ use std::io;
 use std::io::Read;
 use std::path::PathBuf;
 use std::process;
+use std::rc::Rc;
 
 use anyhow::{bail, Context, Result};
 
@@ -37,6 +37,8 @@ fn run() -> Result<()> {
 
     args.update_config(&mut cfg);
     cfg.parse().context("parse config")?;
+
+    let cfg = Rc::new(cfg);
 
     if args.show_config {
         return cfg.show();
@@ -97,9 +99,9 @@ fn run() -> Result<()> {
     // To make sure the data is utf8 encoded.
     let data = String::from_utf8(data).context("parse file utf8")?;
 
-    let tree = Tree::parse(&cfg, &data, content_type).context("parse data")?;
+    let tree = Tree::parse(cfg.clone(), &data, content_type).context("parse data")?;
 
-    let mut app = App::new(&cfg, tree);
+    let mut app = App::new(cfg.clone(), tree);
 
     if !cfg.header.disable {
         let header_ctx = HeaderContext::new(args.path, content_type, data.len());

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ratatui::layout::{Alignment, Rect};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
@@ -11,12 +13,12 @@ pub(super) enum FooterText<'a> {
     None,
 }
 
-pub(super) struct Footer<'a> {
-    cfg: &'a Config,
+pub(super) struct Footer {
+    cfg: Rc<Config>,
 }
 
-impl<'a> Footer<'a> {
-    pub(super) fn new(cfg: &'a Config) -> Self {
+impl Footer {
+    pub(super) fn new(cfg: Rc<Config>) -> Self {
         Self { cfg }
     }
 
