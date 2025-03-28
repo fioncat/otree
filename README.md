@@ -75,7 +75,7 @@ For how to configure TUI colors, please refer to: [Colors Document](docs/colors.
 - [x] Syntax highlighting in data block (v0.2)
 - [x] Allow user to customize TUI colors and key bindings (and other things you can imagine) (v0.1)
 - [ ] **Filter items! (Like [jnv](https://github.com/ynqa/jnv))**
-- [ ] When `OTREE_DEBUG` set to `true`, write some debug logs to a file
+- [x] With `--debug` flag, write some debug logs to a file (v0.4)
 
 If you have any great ideas, please create an issue, thanks!
 

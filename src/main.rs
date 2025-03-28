@@ -3,6 +3,7 @@
 mod clipboard;
 mod cmd;
 mod config;
+mod debug;
 mod edit;
 mod parse;
 mod tree;
@@ -39,6 +40,10 @@ fn run() -> Result<()> {
 
     if args.show_config {
         return cfg.show();
+    }
+
+    if let Some(ref debug_file) = args.debug {
+        debug::set_file(debug_file.clone());
     }
 
     // The user can specify the content type manually, or we can determine it based on the

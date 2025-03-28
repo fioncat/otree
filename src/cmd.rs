@@ -66,6 +66,10 @@ pub struct CommandArgs {
     #[clap(long)]
     pub max_data_size: Option<usize>,
 
+    /// Write debug logs into this file. The file will be created if not exists.
+    #[clap(long)]
+    pub debug: Option<String>,
+
     /// Print version.
     #[clap(short, long)]
     pub version: bool,
