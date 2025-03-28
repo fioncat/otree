@@ -13,17 +13,17 @@ use crate::parse::Parser;
 use crate::tree::{ItemValue, Tree};
 use crate::ui::app::ScrollDirection;
 
-pub(super) struct TreeOverview<'a> {
-    cfg: &'a Config,
+pub(super) struct TreeOverview {
+    cfg: Rc<Config>,
     state: Option<TreeState<String>>,
-    tree: Option<Tree<'a>>,
-    last_switches: Vec<(Tree<'a>, TreeState<String>)>,
-    root_switch: Option<(Tree<'a>, TreeState<String>)>,
+    tree: Option<Tree>,
+    last_switches: Vec<(Tree, TreeState<String>)>,
+    root_switch: Option<(Tree, TreeState<String>)>,
     root_identifies: Vec<String>,
 }
 
-impl<'a> TreeOverview<'a> {
-    pub(super) fn new(cfg: &'a Config, tree: Tree<'a>) -> Self {
+impl TreeOverview {
+    pub(super) fn new(cfg: Rc<Config>, tree: Tree) -> Self {
         Self {
             cfg,
             state: Some(TreeState::default()),
@@ -88,7 +88,7 @@ impl<'a> TreeOverview<'a> {
             None => return false,
         };
 
-        let new_tree = Tree::from_value(self.cfg, value, self.tree().get_parser());
+        let new_tree = Tree::from_value(self.cfg.clone(), value, self.tree().get_parser());
 
         let current_tree = self.tree.take().unwrap();
         let current_state = self.state.take().unwrap();
@@ -198,7 +198,7 @@ impl<'a> TreeOverview<'a> {
         self.state = Some(state);
     }
 
-    fn tree(&self) -> &Tree<'a> {
+    fn tree(&self) -> &Tree {
         self.tree.as_ref().unwrap()
     }
 

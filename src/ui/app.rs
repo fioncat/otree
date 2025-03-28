@@ -1,4 +1,5 @@
 use std::io::Stdout;
+use std::rc::Rc;
 
 use anyhow::Result;
 use crossterm::event::{Event, KeyEvent, MouseButton, MouseEventKind};
@@ -43,31 +44,31 @@ pub enum ScrollDirection {
     Down,
 }
 
-pub struct App<'a> {
-    cfg: &'a Config,
+pub struct App {
+    cfg: Rc<Config>,
 
     focus: ElementInFocus,
     last_focus: Option<ElementInFocus>,
 
-    tree_overview: TreeOverview<'a>,
+    tree_overview: TreeOverview,
     tree_overview_area: Rect,
 
-    data_block: DataBlock<'a>,
+    data_block: DataBlock,
     data_block_area: Rect,
 
     layout_direction: LayoutDirection,
     layout_tree_size: u16,
 
-    header: Option<Header<'a>>,
+    header: Option<Header>,
     header_area: Rect,
     skip_header: bool,
 
-    footer: Option<Footer<'a>>,
+    footer: Option<Footer>,
     footer_area: Rect,
     skip_footer: bool,
     copy_message: Option<String>,
 
-    popup: Popup<'a>,
+    popup: Popup,
     before_popup_focus: ElementInFocus,
 }
 
@@ -76,23 +77,23 @@ pub(super) enum ShowResult {
     Quit,
 }
 
-impl<'a> App<'a> {
+impl App {
     const HEADER_HEIGHT: u16 = 1;
     const FOOTER_HEIGHT: u16 = 1;
 
-    pub fn new(cfg: &'a Config, tree: Tree<'a>) -> Self {
+    pub fn new(cfg: Rc<Config>, tree: Tree) -> Self {
         let footer = if cfg.footer.disable {
             None
         } else {
-            Some(Footer::new(cfg))
+            Some(Footer::new(cfg.clone()))
         };
         Self {
-            cfg,
+            cfg: cfg.clone(),
             focus: ElementInFocus::TreeOverview,
             last_focus: None,
-            tree_overview: TreeOverview::new(cfg, tree),
+            tree_overview: TreeOverview::new(cfg.clone(), tree),
             tree_overview_area: Rect::default(),
-            data_block: DataBlock::new(cfg),
+            data_block: DataBlock::new(cfg.clone()),
             data_block_area: Rect::default(),
             layout_direction: cfg.layout.direction,
             layout_tree_size: cfg.layout.tree_size,
@@ -103,13 +104,13 @@ impl<'a> App<'a> {
             footer_area: Rect::default(),
             skip_footer: false,
             copy_message: None,
-            popup: Popup::new(cfg),
+            popup: Popup::new(cfg.clone()),
             before_popup_focus: ElementInFocus::None,
         }
     }
 
     pub fn set_header(&mut self, ctx: HeaderContext) {
-        self.header = Some(Header::new(self.cfg, ctx));
+        self.header = Some(Header::new(self.cfg.clone(), ctx));
     }
 
     pub(super) fn show(
@@ -513,13 +514,13 @@ impl<'a> App<'a> {
         };
 
         if let Some(simple_value) = simple_value {
-            return Some(Edit::new(self.cfg, identify, simple_value, "txt"));
+            return Some(Edit::new(self.cfg.as_ref(), identify, simple_value, "txt"));
         }
 
         let parser = self.tree_overview.get_parser();
         let data = parser.to_string(&item.value);
         let extension = parser.extension();
-        Some(Edit::new(self.cfg, identify, data, extension))
+        Some(Edit::new(self.cfg.as_ref(), identify, data, extension))
     }
 
     fn get_copy_text(&self, action: Action) -> Option<String> {
