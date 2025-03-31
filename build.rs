@@ -23,10 +23,7 @@ fn exec_git(args: &[&str]) -> Result<String, Box<dyn Error>> {
 }
 
 fn fetch_git_info() -> Result<(), Box<dyn Error>> {
-    let describe = match exec_git(&["describe", "--tags"]) {
-        Ok(d) => d,
-        Err(_) => String::from("unknown"),
-    };
+    let describe = exec_git(&["describe", "--tags"]).unwrap_or_default();
     let sha = exec_git(&["rev-parse", "HEAD"])?;
     let short_sha = exec_git(&["rev-parse", "--short", "HEAD"])?;
 
@@ -42,6 +39,8 @@ fn fetch_git_info() -> Result<(), Box<dyn Error>> {
         } else {
             (cargo_version.to_string(), "stable")
         }
+    } else if describe.is_empty() {
+        (cargo_version.to_string(), "stable")
     } else {
         (format!("{cargo_version}-dev_{short_sha}"), "dev")
     };

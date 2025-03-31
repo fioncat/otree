@@ -3,6 +3,7 @@
 ### Features
 
 - Command: Add new flag `--debug`, to write some debug logs to a file.
+- UI: Add `--live-reload` option, to watch file changes and update tui (#63).
 
 ## v0.3.0
 
