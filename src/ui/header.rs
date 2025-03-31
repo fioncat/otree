@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::rc::Rc;
 
 use ratatui::layout::{Alignment, Rect};
 use ratatui::text::Span;
@@ -44,16 +45,17 @@ impl HeaderContext {
     }
 }
 
-pub(super) struct Header<'a> {
-    cfg: &'a Config,
+pub(super) struct Header {
+    cfg: Rc<Config>,
     data: String,
 }
 
-impl<'a> Header<'a> {
-    pub(super) fn new(cfg: &'a Config, ctx: HeaderContext) -> Self {
+impl Header {
+    pub(super) fn new(cfg: Rc<Config>, ctx: HeaderContext) -> Self {
+        let header_format = &cfg.clone().header.format;
         Self {
             cfg,
-            data: ctx.format(&cfg.header.format),
+            data: ctx.format(header_format),
         }
     }
 

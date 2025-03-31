@@ -10,13 +10,13 @@ use tui_tree_widget::TreeItem;
 use crate::config::Config;
 use crate::parse::{ContentType, Parser, SyntaxToken};
 
-pub struct Tree<'a> {
+pub struct Tree {
     pub parser: Rc<Box<dyn Parser>>,
 
     pub items: Vec<TreeItem<'static, String>>,
     pub values: HashMap<String, Rc<ItemValue>>,
 
-    cfg: &'a Config,
+    cfg: Rc<Config>,
 }
 
 pub struct ItemValue {
@@ -47,14 +47,14 @@ enum FieldType {
     Arr,
 }
 
-impl<'a> Tree<'a> {
-    pub fn parse(cfg: &'a Config, data: &str, content_type: ContentType) -> Result<Self> {
+impl Tree {
+    pub fn parse(cfg: Rc<Config>, data: &str, content_type: ContentType) -> Result<Self> {
         let parser = content_type.new_parser();
         let value = parser.parse(data)?;
         Ok(Self::from_value(cfg, value, Rc::new(parser)))
     }
 
-    pub fn from_value(cfg: &'a Config, value: Value, parser: Rc<Box<dyn Parser>>) -> Self {
+    pub fn from_value(cfg: Rc<Config>, value: Value, parser: Rc<Box<dyn Parser>>) -> Self {
         let mut tree = Self {
             parser,
             items: vec![],
@@ -120,7 +120,7 @@ impl<'a> Tree<'a> {
                 ItemValue {
                     name: raw_name,
                     value: raw_value,
-                    data: Data::null(self.cfg),
+                    data: Data::null(self.cfg.as_ref()),
                 },
             ),
             Value::String(s) => {
@@ -131,7 +131,7 @@ impl<'a> Tree<'a> {
                     ItemValue {
                         name: raw_name,
                         value: raw_value,
-                        data: Data::string(self.cfg, s),
+                        data: Data::string(self.cfg.as_ref(), s),
                     },
                 )
             }
@@ -143,7 +143,7 @@ impl<'a> Tree<'a> {
                     ItemValue {
                         name: raw_name,
                         value: raw_value,
-                        data: Data::number(self.cfg, num.to_string()),
+                        data: Data::number(self.cfg.as_ref(), num.to_string()),
                     },
                 )
             }
@@ -155,7 +155,7 @@ impl<'a> Tree<'a> {
                     ItemValue {
                         name: raw_name,
                         value: raw_value,
-                        data: Data::bool(self.cfg, b),
+                        data: Data::bool(self.cfg.as_ref(), b),
                     },
                 )
             }

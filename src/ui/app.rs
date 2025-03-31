@@ -1,4 +1,6 @@
 use std::io::Stdout;
+use std::rc::Rc;
+use std::time::Duration;
 
 use anyhow::Result;
 use crossterm::event::{Event, KeyEvent, MouseButton, MouseEventKind};
@@ -12,6 +14,7 @@ use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
 use crate::debug;
 use crate::edit::Edit;
+use crate::live_reload::FileWatcher;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
 use crate::ui::footer::{Footer, FooterText};
@@ -43,32 +46,34 @@ pub enum ScrollDirection {
     Down,
 }
 
-pub struct App<'a> {
-    cfg: &'a Config,
+pub struct App {
+    cfg: Rc<Config>,
 
     focus: ElementInFocus,
     last_focus: Option<ElementInFocus>,
 
-    tree_overview: TreeOverview<'a>,
+    tree_overview: TreeOverview,
     tree_overview_area: Rect,
 
-    data_block: DataBlock<'a>,
+    data_block: DataBlock,
     data_block_area: Rect,
 
     layout_direction: LayoutDirection,
     layout_tree_size: u16,
 
-    header: Option<Header<'a>>,
+    header: Option<Header>,
     header_area: Rect,
     skip_header: bool,
 
-    footer: Option<Footer<'a>>,
+    footer: Option<Footer>,
     footer_area: Rect,
     skip_footer: bool,
-    copy_message: Option<String>,
+    foot_message: Option<String>,
 
-    popup: Popup<'a>,
+    popup: Popup,
     before_popup_focus: ElementInFocus,
+
+    fw: Option<FileWatcher>,
 }
 
 pub(super) enum ShowResult {
@@ -76,23 +81,25 @@ pub(super) enum ShowResult {
     Quit,
 }
 
-impl<'a> App<'a> {
+impl App {
     const HEADER_HEIGHT: u16 = 1;
     const FOOTER_HEIGHT: u16 = 1;
 
-    pub fn new(cfg: &'a Config, tree: Tree<'a>) -> Self {
+    const POLL_EVENT_DURATION: Duration = Duration::from_millis(100);
+
+    pub fn new(cfg: Rc<Config>, tree: Tree, fw: Option<FileWatcher>) -> Self {
         let footer = if cfg.footer.disable {
             None
         } else {
-            Some(Footer::new(cfg))
+            Some(Footer::new(cfg.clone()))
         };
         Self {
-            cfg,
+            cfg: cfg.clone(),
             focus: ElementInFocus::TreeOverview,
             last_focus: None,
-            tree_overview: TreeOverview::new(cfg, tree),
+            tree_overview: TreeOverview::new(cfg.clone(), tree),
             tree_overview_area: Rect::default(),
-            data_block: DataBlock::new(cfg),
+            data_block: DataBlock::new(cfg.clone()),
             data_block_area: Rect::default(),
             layout_direction: cfg.layout.direction,
             layout_tree_size: cfg.layout.tree_size,
@@ -102,14 +109,15 @@ impl<'a> App<'a> {
             footer,
             footer_area: Rect::default(),
             skip_footer: false,
-            copy_message: None,
-            popup: Popup::new(cfg),
+            foot_message: None,
+            popup: Popup::new(cfg.clone()),
             before_popup_focus: ElementInFocus::None,
+            fw,
         }
     }
 
     pub fn set_header(&mut self, ctx: HeaderContext) {
-        self.header = Some(Header::new(self.cfg, ctx));
+        self.header = Some(Header::new(self.cfg.clone(), ctx));
     }
 
     pub(super) fn show(
@@ -120,25 +128,14 @@ impl<'a> App<'a> {
         terminal.draw(|frame| self.draw(frame))?;
 
         loop {
-            let refresh = match crossterm::event::read()? {
-                Event::Key(key) => self.on_key(key),
-                Event::Mouse(mouse) => match mouse.kind {
-                    MouseEventKind::Down(MouseButton::Left) => {
-                        self.on_click(mouse.column, mouse.row)
-                    }
-                    MouseEventKind::ScrollUp => {
-                        self.on_scroll(ScrollDirection::Up, mouse.column, mouse.row)
-                    }
-                    MouseEventKind::ScrollDown => {
-                        self.on_scroll(ScrollDirection::Down, mouse.column, mouse.row)
-                    }
-                    _ => Refresh::Skip,
-                },
-                // When resize happens, we need to redraw the widgets to fit the new size
-                Event::Resize(_, _) => Refresh::Update,
-                Event::FocusGained => self.on_focus_changed(true),
-                Event::FocusLost => self.on_focus_changed(false),
-                _ => Refresh::Skip,
+            let refresh = if self.fw.is_some() {
+                if crossterm::event::poll(Self::POLL_EVENT_DURATION)? {
+                    self.refresh()?
+                } else {
+                    self.refresh_with_fw()?
+                }
+            } else {
+                self.refresh()?
             };
 
             match refresh {
@@ -150,6 +147,69 @@ impl<'a> App<'a> {
                 Refresh::Quit => return Ok(ShowResult::Quit),
             }
         }
+    }
+
+    fn refresh(&mut self) -> Result<Refresh> {
+        let refresh = match crossterm::event::read()? {
+            Event::Key(key) => self.on_key(key),
+            Event::Mouse(mouse) => match mouse.kind {
+                MouseEventKind::Down(MouseButton::Left) => self.on_click(mouse.column, mouse.row),
+                MouseEventKind::ScrollUp => {
+                    self.on_scroll(ScrollDirection::Up, mouse.column, mouse.row)
+                }
+                MouseEventKind::ScrollDown => {
+                    self.on_scroll(ScrollDirection::Down, mouse.column, mouse.row)
+                }
+                _ => Refresh::Skip,
+            },
+            // When resize happens, we need to redraw the widgets to fit the new size
+            Event::Resize(_, _) => Refresh::Update,
+            Event::FocusGained => self.on_focus_changed(true),
+            Event::FocusLost => self.on_focus_changed(false),
+            _ => Refresh::Skip,
+        };
+        Ok(refresh)
+    }
+
+    fn refresh_with_fw(&mut self) -> Result<Refresh> {
+        if crossterm::event::poll(Self::POLL_EVENT_DURATION)? {
+            return self.refresh();
+        }
+        let fw = self.fw.as_ref().unwrap();
+
+        if let Some(err_msg) = fw.get_err() {
+            let msg = format!("Failed to parse file: {err_msg}");
+            self.foot_message = Some(msg);
+            return Ok(Refresh::Update);
+        }
+
+        let maybe_tree = match fw.parse_tree() {
+            Ok(tree) => tree,
+            Err(e) => {
+                let message = format!("Failed to watch file events: {e:#}");
+                self.popup(message, PopupLevel::Error);
+                return Ok(Refresh::Update);
+            }
+        };
+
+        match maybe_tree {
+            Some(tree) => {
+                self.reload_tree(tree);
+                self.foot_message = Some(String::from("File updated, tree reloaded"));
+                Ok(Refresh::Update)
+            }
+            None => Ok(Refresh::Skip),
+        }
+    }
+
+    fn reload_tree(&mut self, tree: Tree) {
+        // TODO: we can keep tree status
+        self.focus = ElementInFocus::TreeOverview;
+        self.last_focus = None;
+        self.tree_overview = TreeOverview::new(self.cfg.clone(), tree);
+        self.tree_overview_area = Rect::default();
+        self.data_block = DataBlock::new(self.cfg.clone());
+        self.data_block_area = Rect::default();
     }
 
     fn draw(&mut self, frame: &mut Frame) {
@@ -174,7 +234,7 @@ impl<'a> App<'a> {
         }
 
         if let Some(footer) = self.footer.as_ref() {
-            let text = match self.copy_message.take() {
+            let text = match self.foot_message.take() {
                 Some(message) => FooterText::Message(message),
                 None => {
                     let roots = self.tree_overview.get_root_identifies();
@@ -211,8 +271,8 @@ impl<'a> App<'a> {
         }
     }
 
-    fn popup(&mut self, text: String, level: PopupLevel) {
-        self.popup.set_data(text, level);
+    fn popup(&mut self, text: impl ToString, level: PopupLevel) {
+        self.popup.set_data(text.to_string(), level);
         if !matches!(self.focus, ElementInFocus::Popup | ElementInFocus::None) {
             self.before_popup_focus = self.focus;
         }
@@ -397,7 +457,7 @@ impl<'a> App<'a> {
 
                 let size = humansize::format_size(text.len(), humansize::BINARY);
                 let copy_message = format!("copied {size} data to system clipboard");
-                self.copy_message = Some(copy_message);
+                self.foot_message = Some(copy_message);
                 Refresh::Update
             }
             _ => {
@@ -513,13 +573,13 @@ impl<'a> App<'a> {
         };
 
         if let Some(simple_value) = simple_value {
-            return Some(Edit::new(self.cfg, identify, simple_value, "txt"));
+            return Some(Edit::new(self.cfg.as_ref(), identify, simple_value, "txt"));
         }
 
         let parser = self.tree_overview.get_parser();
         let data = parser.to_string(&item.value);
         let extension = parser.extension();
-        Some(Edit::new(self.cfg, identify, data, extension))
+        Some(Edit::new(self.cfg.as_ref(), identify, data, extension))
     }
 
     fn get_copy_text(&self, action: Action) -> Option<String> {
