@@ -1,5 +1,6 @@
 use std::io::Stdout;
 use std::rc::Rc;
+use std::time::Duration;
 
 use anyhow::Result;
 use crossterm::event::{Event, KeyEvent, MouseButton, MouseEventKind};
@@ -13,6 +14,7 @@ use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
 use crate::debug;
 use crate::edit::Edit;
+use crate::live_reload::FileWatcher;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
 use crate::ui::footer::{Footer, FooterText};
@@ -66,10 +68,12 @@ pub struct App {
     footer: Option<Footer>,
     footer_area: Rect,
     skip_footer: bool,
-    copy_message: Option<String>,
+    foot_message: Option<String>,
 
     popup: Popup,
     before_popup_focus: ElementInFocus,
+
+    fw: Option<FileWatcher>,
 }
 
 pub(super) enum ShowResult {
@@ -81,7 +85,9 @@ impl App {
     const HEADER_HEIGHT: u16 = 1;
     const FOOTER_HEIGHT: u16 = 1;
 
-    pub fn new(cfg: Rc<Config>, tree: Tree) -> Self {
+    const POLL_EVENT_DURATION: Duration = Duration::from_millis(100);
+
+    pub fn new(cfg: Rc<Config>, tree: Tree, fw: Option<FileWatcher>) -> Self {
         let footer = if cfg.footer.disable {
             None
         } else {
@@ -103,9 +109,10 @@ impl App {
             footer,
             footer_area: Rect::default(),
             skip_footer: false,
-            copy_message: None,
+            foot_message: None,
             popup: Popup::new(cfg.clone()),
             before_popup_focus: ElementInFocus::None,
+            fw,
         }
     }
 
@@ -121,25 +128,14 @@ impl App {
         terminal.draw(|frame| self.draw(frame))?;
 
         loop {
-            let refresh = match crossterm::event::read()? {
-                Event::Key(key) => self.on_key(key),
-                Event::Mouse(mouse) => match mouse.kind {
-                    MouseEventKind::Down(MouseButton::Left) => {
-                        self.on_click(mouse.column, mouse.row)
-                    }
-                    MouseEventKind::ScrollUp => {
-                        self.on_scroll(ScrollDirection::Up, mouse.column, mouse.row)
-                    }
-                    MouseEventKind::ScrollDown => {
-                        self.on_scroll(ScrollDirection::Down, mouse.column, mouse.row)
-                    }
-                    _ => Refresh::Skip,
-                },
-                // When resize happens, we need to redraw the widgets to fit the new size
-                Event::Resize(_, _) => Refresh::Update,
-                Event::FocusGained => self.on_focus_changed(true),
-                Event::FocusLost => self.on_focus_changed(false),
-                _ => Refresh::Skip,
+            let refresh = if self.fw.is_some() {
+                if crossterm::event::poll(Self::POLL_EVENT_DURATION)? {
+                    self.refresh()?
+                } else {
+                    self.refresh_with_fw()?
+                }
+            } else {
+                self.refresh()?
             };
 
             match refresh {
@@ -151,6 +147,69 @@ impl App {
                 Refresh::Quit => return Ok(ShowResult::Quit),
             }
         }
+    }
+
+    fn refresh(&mut self) -> Result<Refresh> {
+        let refresh = match crossterm::event::read()? {
+            Event::Key(key) => self.on_key(key),
+            Event::Mouse(mouse) => match mouse.kind {
+                MouseEventKind::Down(MouseButton::Left) => self.on_click(mouse.column, mouse.row),
+                MouseEventKind::ScrollUp => {
+                    self.on_scroll(ScrollDirection::Up, mouse.column, mouse.row)
+                }
+                MouseEventKind::ScrollDown => {
+                    self.on_scroll(ScrollDirection::Down, mouse.column, mouse.row)
+                }
+                _ => Refresh::Skip,
+            },
+            // When resize happens, we need to redraw the widgets to fit the new size
+            Event::Resize(_, _) => Refresh::Update,
+            Event::FocusGained => self.on_focus_changed(true),
+            Event::FocusLost => self.on_focus_changed(false),
+            _ => Refresh::Skip,
+        };
+        Ok(refresh)
+    }
+
+    fn refresh_with_fw(&mut self) -> Result<Refresh> {
+        if crossterm::event::poll(Self::POLL_EVENT_DURATION)? {
+            return self.refresh();
+        }
+        let fw = self.fw.as_ref().unwrap();
+
+        if let Some(err_msg) = fw.get_err() {
+            let msg = format!("Failed to parse file: {err_msg}");
+            self.foot_message = Some(msg);
+            return Ok(Refresh::Update);
+        }
+
+        let maybe_tree = match fw.parse_tree() {
+            Ok(tree) => tree,
+            Err(e) => {
+                let message = format!("Failed to watch file events: {e:#}");
+                self.popup(message, PopupLevel::Error);
+                return Ok(Refresh::Update);
+            }
+        };
+
+        match maybe_tree {
+            Some(tree) => {
+                self.reload_tree(tree);
+                self.foot_message = Some(String::from("File updated, tree reloaded"));
+                Ok(Refresh::Update)
+            }
+            None => Ok(Refresh::Skip),
+        }
+    }
+
+    fn reload_tree(&mut self, tree: Tree) {
+        // TODO: we can keep tree status
+        self.focus = ElementInFocus::TreeOverview;
+        self.last_focus = None;
+        self.tree_overview = TreeOverview::new(self.cfg.clone(), tree);
+        self.tree_overview_area = Rect::default();
+        self.data_block = DataBlock::new(self.cfg.clone());
+        self.data_block_area = Rect::default();
     }
 
     fn draw(&mut self, frame: &mut Frame) {
@@ -175,7 +234,7 @@ impl App {
         }
 
         if let Some(footer) = self.footer.as_ref() {
-            let text = match self.copy_message.take() {
+            let text = match self.foot_message.take() {
                 Some(message) => FooterText::Message(message),
                 None => {
                     let roots = self.tree_overview.get_root_identifies();
@@ -212,8 +271,8 @@ impl App {
         }
     }
 
-    fn popup(&mut self, text: String, level: PopupLevel) {
-        self.popup.set_data(text, level);
+    fn popup(&mut self, text: impl ToString, level: PopupLevel) {
+        self.popup.set_data(text.to_string(), level);
         if !matches!(self.focus, ElementInFocus::Popup | ElementInFocus::None) {
             self.before_popup_focus = self.focus;
         }
@@ -398,7 +457,7 @@ impl App {
 
                 let size = humansize::format_size(text.len(), humansize::BINARY);
                 let copy_message = format!("copied {size} data to system clipboard");
-                self.copy_message = Some(copy_message);
+                self.foot_message = Some(copy_message);
                 Refresh::Update
             }
             _ => {

@@ -16,6 +16,7 @@ use std::process;
 use std::rc::Rc;
 
 use anyhow::{bail, Context, Result};
+use live_reload::FileWatcher;
 
 use crate::cmd::CommandArgs;
 use crate::config::Config;
@@ -79,9 +80,16 @@ fn run() -> Result<()> {
         }
     };
 
+    let max_data_size = args.max_data_size.unwrap_or(cfg.data.max_data_size) * 1024 * 1024;
+    let mut fw = None;
     let data = match args.path.as_ref() {
         Some(path) => {
             let path = PathBuf::from(path);
+            if args.live_reload {
+                let _fw = FileWatcher::new(path.clone(), cfg.clone(), content_type, max_data_size);
+                _fw.start();
+                fw = Some(_fw);
+            }
             fs::read(path).context("read file")?
         }
         None => {
@@ -91,7 +99,6 @@ fn run() -> Result<()> {
         }
     };
 
-    let max_data_size = args.max_data_size.unwrap_or(cfg.data.max_data_size) * 1024 * 1024;
     if data.len() > max_data_size {
         bail!("the data size is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size. HINT: You can use command line arg `--max-data-size` or config option `data.max_data_size` to modify this limitation", humansize::format_size(max_data_size, humansize::BINARY));
     }
@@ -101,7 +108,7 @@ fn run() -> Result<()> {
 
     let tree = Tree::parse(cfg.clone(), &data, content_type).context("parse data")?;
 
-    let mut app = App::new(cfg.clone(), tree);
+    let mut app = App::new(cfg.clone(), tree, fw);
 
     if !cfg.header.disable {
         let header_ctx = HeaderContext::new(args.path, content_type, data.len());

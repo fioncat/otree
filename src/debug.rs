@@ -20,7 +20,8 @@ pub fn set_file(file: String) {
     FILE.set(file).unwrap();
 }
 
-pub fn write_logs(msg: String) -> Result<()> {
+pub fn write_logs(mut msg: String) -> Result<()> {
+    msg.push('\n');
     let file = match FILE.get() {
         Some(file) => file,
         None => return Ok(()),

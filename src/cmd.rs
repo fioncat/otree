@@ -66,6 +66,10 @@ pub struct CommandArgs {
     #[clap(long)]
     pub max_data_size: Option<usize>,
 
+    /// Watch file changes, reload tui if updates
+    #[clap(long, short = 'R')]
+    pub live_reload: bool,
+
     /// Write debug logs into this file. The file will be created if not exists.
     #[clap(long)]
     pub debug: Option<String>,

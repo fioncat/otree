@@ -1,11 +1,9 @@
-#![allow(dead_code)]
-
 use std::cell::RefCell;
-use std::fs;
 use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
+use std::{fs, thread};
 
 use anyhow::{bail, Context, Result};
 use notify::{EventKind, RecursiveMode, Watcher};
@@ -16,6 +14,8 @@ use crate::parse::ContentType;
 use crate::tree::Tree;
 
 pub struct FileWatcher {
+    path: PathBuf,
+
     cfg: Rc<Config>,
     content_type: ContentType,
 
@@ -25,10 +25,46 @@ pub struct FileWatcher {
 }
 
 impl FileWatcher {
+    pub fn new(
+        path: PathBuf,
+        cfg: Rc<Config>,
+        content_type: ContentType,
+        max_data_size: usize,
+    ) -> Self {
+        let data = Arc::new(Mutex::new(Data {
+            data: RefCell::new(None),
+            err: RefCell::new(None),
+        }));
+
+        Self {
+            path,
+            cfg,
+            content_type,
+            max_data_size,
+            data,
+        }
+    }
+
+    pub fn start(&self) {
+        let data_clone = self.data.clone();
+        let path = self.path.clone();
+        thread::spawn(move || {
+            if let Err(e) = watch_file(path, data_clone) {
+                debug!("FileWatcher: watch file error: {:#}", e);
+            }
+        });
+    }
+
+    pub fn get_err(&self) -> Option<String> {
+        let data_lock = self.data.lock().unwrap();
+        let err = data_lock.get_err();
+        drop(data_lock);
+        err
+    }
+
     pub fn parse_tree(&self) -> Result<Option<Tree>> {
         let data_lock = self.data.lock().unwrap();
         let new_data = data_lock.get_data();
-        drop(data_lock);
 
         let new_data = match new_data {
             Some(new_data) => {
@@ -39,14 +75,15 @@ impl FileWatcher {
         };
 
         if new_data.len() > self.max_data_size {
-            debug!("FileWatcher: file size exceeds the limit, skip");
+            data_lock.set_err("file size exceeds the limit");
             return Ok(None);
         }
 
         let tree = match Tree::parse(self.cfg.clone(), &new_data, self.content_type) {
             Ok(tree) => tree,
             Err(e) => {
-                debug!("FileWatcher: failed to parse updated data: {:#}, skip", e);
+                let msg = format!("{:#}", e);
+                data_lock.set_err(msg);
                 return Ok(None);
             }
         };
@@ -72,8 +109,8 @@ impl Data {
         self.data.replace(Some(data));
     }
 
-    fn set_err(&self, err: String) {
-        self.err.replace(Some(err));
+    fn set_err(&self, err: impl ToString) {
+        self.err.replace(Some(err.to_string()));
     }
 }
 
