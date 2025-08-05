@@ -30,7 +30,7 @@ enum Refresh {
     /// Quit the TUI and return to the shell
     Quit,
     /// Quit the TUI and edit text
-    Edit(Edit),
+    Edit(Box<Edit>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -77,7 +77,7 @@ pub struct App {
 }
 
 pub(super) enum ShowResult {
-    Edit(Edit),
+    Edit(Box<Edit>),
     Quit,
 }
 
@@ -220,7 +220,7 @@ impl App {
             if let Some(item) = self.tree_overview.get_value(id.as_str()) {
                 self.data_block.update_item(id, item, self.data_block_area);
             } else {
-                let text = format!("Cannot find data for '{}'", id);
+                let text = format!("Cannot find data for '{id}'");
                 self.popup(text, PopupLevel::Error);
             }
         } else {
@@ -441,7 +441,7 @@ impl App {
                     Some(edit) => edit,
                     None => return Refresh::Skip,
                 };
-                Refresh::Edit(edit)
+                Refresh::Edit(Box::new(edit))
             }
             Action::CopyName | Action::CopyValue => {
                 let text = match self.get_copy_text(action) {

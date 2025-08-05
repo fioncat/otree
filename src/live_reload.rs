@@ -50,7 +50,7 @@ impl FileWatcher {
         let path = self.path.clone();
         thread::spawn(move || {
             if let Err(e) = watch_file(path, data_clone) {
-                debug!("FileWatcher: watch file error: {:#}", e);
+                debug!("FileWatcher: watch file error: {e:#}");
             }
         });
     }
@@ -82,7 +82,7 @@ impl FileWatcher {
         let tree = match Tree::parse(self.cfg.clone(), &new_data, self.content_type) {
             Ok(tree) => tree,
             Err(e) => {
-                let msg = format!("{:#}", e);
+                let msg = format!("{e:#}");
                 data_lock.set_err(msg);
                 return Ok(None);
             }
