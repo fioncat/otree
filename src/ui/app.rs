@@ -590,8 +590,16 @@ impl App {
             return Some(item.name.clone());
         }
 
-        let parser = self.tree_overview.get_parser();
-        let data = parser.to_string(&item.value);
+        let data = match &item.value {
+            Value::String(s) => s.clone(),
+            Value::Number(n) => n.to_string(),
+            Value::Bool(b) => b.to_string(),
+            _ => {
+                let parser = self.tree_overview.get_parser();
+                parser.to_string(&item.value)
+            }
+        };
+
         Some(data)
     }
 }
