@@ -252,6 +252,15 @@ pub struct Keys {
     #[serde(default = "Keys::default_filter")]
     pub filter: Vec<String>,
 
+    #[serde(default = "Keys::default_filter_key")]
+    pub filter_key: Vec<String>,
+
+    #[serde(default = "Keys::default_filter_value")]
+    pub filter_value: Vec<String>,
+
+    #[serde(default = "Keys::default_filter_switch_ignore_case")]
+    pub filter_switch_ignore_case: Vec<String>,
+
     #[serde(default = "Keys::default_quit")]
     pub quit: Vec<String>,
 
@@ -281,6 +290,9 @@ generate_keys_default!(
     copy_name => ["y"],
     copy_value => ["Y"],
     filter => ["/"],
+    filter_key => ["?"],
+    filter_value => ["*"],
+    filter_switch_ignore_case => ["I"],
     quit => ["<ctrl-c>", "q"]
 );
 
@@ -306,6 +318,9 @@ generate_actions!(
     copy_name => CopyName,
     copy_value => CopyValue,
     filter => Filter,
+    filter_key => FilterKey,
+    filter_value => FilterValue,
+    filter_switch_ignore_case => FilterSwitchIgnoreCase,
     quit => Quit
 );
 

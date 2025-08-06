@@ -3,27 +3,50 @@ use std::rc::Rc;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::widgets::{Block, Borders};
 use ratatui::Frame;
+use serde_json::Value;
 use tui_textarea::{CursorMove, TextArea};
 
 use crate::config::keys::{Action, Key, KeyAction};
 use crate::config::Config;
+use crate::tree::ItemValue;
 
-pub(super) struct Filter {
+pub struct Filter {
     cfg: Rc<Config>,
     text_area: TextArea<'static>,
+    target: FilterTarget,
+    ignore_case: bool,
 }
 
-pub(super) enum FilterAction {
+pub enum FilterAction {
     Edit,
     Confirm,
     Skip,
     Quit,
 }
 
+pub struct FilterOptions {
+    pub text: String,
+    pub target: FilterTarget,
+    pub ignore_case: bool,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum FilterTarget {
+    Key,
+    Value,
+    All,
+}
+
 impl Filter {
-    pub fn new(cfg: Rc<Config>) -> Self {
+    pub fn new(cfg: Rc<Config>, target: FilterTarget) -> Self {
         let text_area = TextArea::default();
-        Self { cfg, text_area }
+        let ignore_case = cfg.filter.ignore_case;
+        Self {
+            cfg,
+            text_area,
+            target,
+            ignore_case,
+        }
     }
 
     pub fn on_key(&mut self, ka: KeyAction) -> FilterAction {
@@ -69,7 +92,23 @@ impl Filter {
         }
     }
 
-    pub fn get_text(&self) -> String {
+    pub fn get_options(&self) -> FilterOptions {
+        FilterOptions {
+            text: self.get_text(),
+            target: self.target,
+            ignore_case: self.ignore_case,
+        }
+    }
+
+    pub fn set_target(&mut self, target: FilterTarget) {
+        self.target = target;
+    }
+
+    pub fn switch_ignore_case(&mut self) {
+        self.ignore_case = !self.ignore_case;
+    }
+
+    fn get_text(&self) -> String {
         let lines = self.text_area.lines();
         if lines.is_empty() {
             return String::new();
@@ -79,6 +118,20 @@ impl Filter {
     }
 
     pub fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {
+        let mut hints = vec![];
+        if self.ignore_case {
+            hints.push("I");
+        }
+        match self.target {
+            FilterTarget::All => hints.push("*"),
+            FilterTarget::Key => hints.push("K"),
+            FilterTarget::Value => hints.push("V"),
+        }
+        let title = if hints.is_empty() {
+            String::from("Filter")
+        } else {
+            format!("Filter ({})", hints.join(","))
+        };
         let (border_style, border_type) = super::get_border_style(
             &self.cfg.colors.focus_border,
             &self.cfg.colors.filter.border,
@@ -90,9 +143,46 @@ impl Filter {
             .borders(Borders::ALL)
             .border_style(border_style)
             .title_alignment(Alignment::Center)
-            .title("Filter");
+            .title(title);
         self.text_area.set_block(block);
 
         frame.render_widget(&self.text_area, area);
+    }
+}
+
+impl FilterOptions {
+    pub fn filter(&self, item: &ItemValue) -> bool {
+        if matches!(self.target, FilterTarget::Key) {
+            return self.contains(item.name.as_str());
+        }
+
+        let value = match item.value {
+            Value::String(ref s) => s.to_string(),
+            Value::Number(ref n) => n.to_string(),
+            _ => String::new(),
+        };
+
+        match self.target {
+            FilterTarget::Value => self.contains(&value),
+            FilterTarget::All => {
+                if self.contains(item.name.as_str()) {
+                    return true;
+                }
+                self.contains(&value)
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn contains(&self, text: &str) -> bool {
+        if self.text.is_empty() || text.is_empty() {
+            return false;
+        }
+        if self.ignore_case {
+            text.to_lowercase()
+                .contains(self.text.to_lowercase().as_str())
+        } else {
+            text.contains(&self.text)
+        }
     }
 }

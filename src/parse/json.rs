@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use super::{Parser, SyntaxToken};
 
-pub(super) struct JsonParser {}
+pub struct JsonParser {}
 
 impl Parser for JsonParser {
     fn extension(&self) -> &'static str {
@@ -23,7 +23,7 @@ impl Parser for JsonParser {
     }
 }
 
-pub(super) fn highlight(value: &Value, indent: usize, has_next: bool) -> Vec<SyntaxToken> {
+pub fn highlight(value: &Value, indent: usize, has_next: bool) -> Vec<SyntaxToken> {
     let mut tokens = Vec::new();
 
     match value {

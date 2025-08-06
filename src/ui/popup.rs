@@ -10,11 +10,11 @@ use crate::config::Config;
 use crate::ui::app::ScrollDirection;
 
 #[derive(Debug, Clone, Copy)]
-pub(super) enum PopupLevel {
+pub enum PopupLevel {
     Error,
 }
 
-pub(super) struct Popup {
+pub struct Popup {
     data: Option<(String, PopupLevel)>,
 
     cfg: Rc<Config>,
@@ -23,7 +23,7 @@ pub(super) struct Popup {
 }
 
 impl Popup {
-    pub(super) fn new(cfg: Rc<Config>) -> Self {
+    pub fn new(cfg: Rc<Config>) -> Self {
         Self {
             data: None,
             cfg,
@@ -31,11 +31,11 @@ impl Popup {
         }
     }
 
-    pub(super) fn set_data(&mut self, data: String, level: PopupLevel) {
+    pub fn set_data(&mut self, data: String, level: PopupLevel) {
         self.data = Some((data, level));
     }
 
-    pub(super) fn on_key(&mut self, action: Action) -> bool {
+    pub fn on_key(&mut self, action: Action) -> bool {
         match action {
             Action::MoveDown => self.scroll_down(1),
             Action::MoveUp => self.scroll_up(1),
@@ -44,7 +44,7 @@ impl Popup {
         }
     }
 
-    pub(super) fn on_scroll(&mut self, direction: ScrollDirection) -> bool {
+    pub fn on_scroll(&mut self, direction: ScrollDirection) -> bool {
         match direction {
             ScrollDirection::Up => self.scroll_up(3),
             ScrollDirection::Down => self.scroll_down(3),
@@ -73,7 +73,7 @@ impl Popup {
         true
     }
 
-    pub(super) fn disable(&mut self) -> bool {
+    pub fn disable(&mut self) -> bool {
         if self.data.is_none() {
             return false;
         }
@@ -83,11 +83,11 @@ impl Popup {
         true
     }
 
-    pub(super) fn is_disabled(&self) -> bool {
+    pub fn is_disabled(&self) -> bool {
         self.data.is_none()
     }
 
-    pub(super) fn draw(&self, frame: &mut Frame) {
+    pub fn draw(&self, frame: &mut Frame) {
         let (text, level) = match self.data.as_ref() {
             Some(data) => data,
             None => return,

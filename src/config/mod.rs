@@ -94,6 +94,9 @@ pub struct Footer {
 pub struct Filter {
     #[serde(default = "Config::disable")]
     pub disable: bool,
+
+    #[serde(default = "Filter::default_ignore_case")]
+    pub ignore_case: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -274,7 +277,12 @@ impl Filter {
     fn default() -> Self {
         Self {
             disable: Config::disable(),
+            ignore_case: Filter::default_ignore_case(),
         }
+    }
+
+    fn default_ignore_case() -> bool {
+        false
     }
 }
 

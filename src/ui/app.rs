@@ -12,12 +12,11 @@ use serde_json::Value;
 use crate::clipboard::write_clipboard;
 use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
-use crate::debug;
 use crate::edit::Edit;
 use crate::live_reload::FileWatcher;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
-use crate::ui::filter::{Filter, FilterAction};
+use crate::ui::filter::{Filter, FilterAction, FilterTarget};
 use crate::ui::footer::{Footer, FooterText};
 use crate::ui::header::{Header, HeaderContext};
 use crate::ui::popup::{Popup, PopupLevel};
@@ -81,7 +80,7 @@ pub struct App {
     fw: Option<FileWatcher>,
 }
 
-pub(super) enum ShowResult {
+pub enum ShowResult {
     Edit(Box<Edit>),
     Quit,
 }
@@ -129,11 +128,10 @@ impl App {
         self.header = Some(Header::new(self.cfg.clone(), ctx));
     }
 
-    pub(super) fn show(
+    pub fn show(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<Stdout>>,
     ) -> Result<ShowResult> {
-        debug!("Start ui show loop, with config: {:?}", self.cfg);
         terminal.draw(|frame| self.draw(frame))?;
 
         loop {
@@ -422,8 +420,8 @@ impl App {
                     FilterAction::Skip => {}
                 };
                 if updated {
-                    let text = filter.get_text();
-                    self.tree_overview.filter(&text);
+                    let opts = filter.get_options();
+                    self.tree_overview.filter(opts);
                     return Refresh::Update;
                 }
             }
@@ -513,19 +511,43 @@ impl App {
                 self.foot_message = Some(copy_message);
                 Refresh::Update
             }
-            Action::Filter => {
+            Action::Filter | Action::FilterKey | Action::FilterValue => {
                 if self.cfg.filter.disable {
                     // Filter is disabled, do not handle the action
                     return Refresh::Skip;
                 }
 
-                if self.filter.is_none() {
-                    self.filter = Some(Filter::new(self.cfg.clone()));
-                    self.tree_overview.begin_filter();
-                }
+                let target = match action {
+                    Action::Filter => FilterTarget::All,
+                    Action::FilterKey => FilterTarget::Key,
+                    Action::FilterValue => FilterTarget::Value,
+                    _ => unreachable!(),
+                };
+
+                match self.filter.as_mut() {
+                    Some(filter) => {
+                        filter.set_target(target);
+                        let opts = filter.get_options();
+                        self.tree_overview.filter(opts);
+                    }
+                    None => {
+                        self.filter = Some(Filter::new(self.cfg.clone(), target));
+                        self.tree_overview.begin_filter();
+                    }
+                };
+
                 self.focus = ElementInFocus::Filter;
 
                 Refresh::Update
+            }
+            Action::FilterSwitchIgnoreCase => {
+                if let Some(filter) = self.filter.as_mut() {
+                    filter.switch_ignore_case();
+                    let opts = filter.get_options();
+                    self.tree_overview.filter(opts);
+                    return Refresh::Update;
+                }
+                Refresh::Skip
             }
             _ => {
                 // These actions are handled by the focused widget
