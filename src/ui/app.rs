@@ -17,6 +17,7 @@ use crate::edit::Edit;
 use crate::live_reload::FileWatcher;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
+use crate::ui::filter::Filter;
 use crate::ui::footer::{Footer, FooterText};
 use crate::ui::header::{Header, HeaderContext};
 use crate::ui::popup::{Popup, PopupLevel};
@@ -38,6 +39,7 @@ enum ElementInFocus {
     TreeOverview,
     DataBlock,
     Popup,
+    Filter,
     None,
 }
 
@@ -54,6 +56,9 @@ pub struct App {
 
     tree_overview: TreeOverview,
     tree_overview_area: Rect,
+
+    filter: Option<Filter>,
+    filter_area: Rect,
 
     data_block: DataBlock,
     data_block_area: Rect,
@@ -85,6 +90,8 @@ impl App {
     const HEADER_HEIGHT: u16 = 1;
     const FOOTER_HEIGHT: u16 = 1;
 
+    const FILTER_HEIGHT: u16 = 3;
+
     const POLL_EVENT_DURATION: Duration = Duration::from_millis(100);
 
     pub fn new(cfg: Rc<Config>, tree: Tree, fw: Option<FileWatcher>) -> Self {
@@ -93,12 +100,19 @@ impl App {
         } else {
             Some(Footer::new(cfg.clone()))
         };
+        let filter = if cfg.filter.disable {
+            None
+        } else {
+            Some(Filter::new(cfg.clone()))
+        };
         Self {
             cfg: cfg.clone(),
             focus: ElementInFocus::TreeOverview,
             last_focus: None,
             tree_overview: TreeOverview::new(cfg.clone(), tree),
             tree_overview_area: Rect::default(),
+            filter,
+            filter_area: Rect::default(),
             data_block: DataBlock::new(cfg.clone()),
             data_block_area: Rect::default(),
             layout_direction: cfg.layout.direction,
@@ -258,6 +272,11 @@ impl App {
             }
         }
 
+        if let Some(filter) = self.filter.as_mut() {
+            let filter_focus = matches!(self.focus, ElementInFocus::Filter);
+            filter.draw(frame, self.filter_area, filter_focus);
+        }
+
         let tree_focus = matches!(self.focus, ElementInFocus::TreeOverview);
         self.tree_overview
             .draw(frame, self.tree_overview_area, tree_focus);
@@ -363,18 +382,32 @@ impl App {
                 [self.tree_overview_area, self.data_block_area] = horizontal.areas(main_area);
             }
         }
+        if self.filter.is_some() {
+            // Show filter input text area
+            let vertical =
+                Layout::vertical([Constraint::Length(Self::FILTER_HEIGHT), Constraint::Min(0)]);
+            [self.filter_area, self.tree_overview_area] = vertical.areas(self.tree_overview_area);
+        }
     }
 
     fn can_switch_to_data_block(&self) -> bool {
         match self.focus {
             ElementInFocus::TreeOverview => self.tree_overview.get_selected().is_some(),
             ElementInFocus::None => true,
+            ElementInFocus::Filter => true,
             ElementInFocus::DataBlock => false,
             ElementInFocus::Popup => false,
         }
     }
 
     fn on_key(&mut self, key: KeyEvent) -> Refresh {
+        if matches!(self.focus, ElementInFocus::Filter) {
+            if let Some(filter) = self.filter.as_mut() {
+                filter.on_key(key);
+                return Refresh::Update;
+            }
+        }
+
         let action = self.cfg.keys.get_key_action(key);
         if action.is_none() {
             return Refresh::Skip;
@@ -460,13 +493,22 @@ impl App {
                 self.foot_message = Some(copy_message);
                 Refresh::Update
             }
+            Action::Filter => {
+                if self.filter.is_none() {
+                    // Skip handling if filter is disabled
+                    return Refresh::Skip;
+                }
+
+                self.focus = ElementInFocus::Filter;
+                Refresh::Update
+            }
             _ => {
                 // These actions are handled by the focused widget
                 if match self.focus {
                     ElementInFocus::TreeOverview => self.tree_overview.on_key(action),
                     ElementInFocus::DataBlock => self.data_block.on_key(action),
                     ElementInFocus::Popup => self.popup.on_key(action),
-                    ElementInFocus::None => false,
+                    ElementInFocus::None | ElementInFocus::Filter => false,
                 } {
                     Refresh::Update
                 } else {

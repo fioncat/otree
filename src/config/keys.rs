@@ -249,6 +249,9 @@ pub struct Keys {
     #[serde(default = "Keys::default_copy_value")]
     pub copy_value: Vec<String>,
 
+    #[serde(default = "Keys::default_filter")]
+    pub filter: Vec<String>,
+
     #[serde(default = "Keys::default_quit")]
     pub quit: Vec<String>,
 
@@ -277,6 +280,7 @@ generate_keys_default!(
     edit => ["e"],
     copy_name => ["y"],
     copy_value => ["Y"],
+    filter => ["/"],
     quit => ["<ctrl-c>", "q"]
 );
 
@@ -301,6 +305,7 @@ generate_actions!(
     edit => Edit,
     copy_name => CopyName,
     copy_value => CopyValue,
+    filter => Filter,
     quit => Quit
 );
 

@@ -1,5 +1,6 @@
 mod app;
 mod data_block;
+mod filter;
 mod footer;
 mod header;
 mod popup;

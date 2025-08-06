@@ -36,9 +36,21 @@ pub struct Colors {
 
     #[serde(default = "PopupColors::default")]
     pub popup: PopupColors,
+
+    #[serde(default = "FilterColors::default")]
+    pub filter: FilterColors,
 }
 
-generate_colors_parse!(Colors, header, footer, tree, data, focus_border, popup);
+generate_colors_parse!(
+    Colors,
+    header,
+    footer,
+    tree,
+    data,
+    focus_border,
+    popup,
+    filter
+);
 
 impl Colors {
     pub fn default() -> Self {
@@ -49,6 +61,7 @@ impl Colors {
             data: DataColors::default(),
             focus_border: Self::default_focus_boder(),
             popup: PopupColors::default(),
+            filter: FilterColors::default(),
         }
     }
 
@@ -260,6 +273,26 @@ impl PopupColors {
 
     fn default_error_text() -> Color {
         Color::new("red", "", false, false)
+    }
+}
+
+generate_colors_parse!(FilterColors, border);
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilterColors {
+    #[serde(default = "FilterColors::default_border")]
+    pub border: Color,
+}
+
+impl FilterColors {
+    fn default() -> Self {
+        Self {
+            border: Self::default_border(),
+        }
+    }
+
+    fn default_border() -> Color {
+        Color::new("blue", "", false, false)
     }
 }
 

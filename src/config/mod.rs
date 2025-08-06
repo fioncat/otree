@@ -30,6 +30,9 @@ pub struct Config {
     #[serde(default = "Footer::default")]
     pub footer: Footer,
 
+    #[serde(default = "Filter::default")]
+    pub filter: Filter,
+
     #[serde(default = "Config::empty_map")]
     pub palette: HashMap<String, String>,
 
@@ -83,6 +86,12 @@ pub struct Header {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Footer {
+    #[serde(default = "Config::disable")]
+    pub disable: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Filter {
     #[serde(default = "Config::disable")]
     pub disable: bool,
 }
@@ -171,6 +180,7 @@ impl Config {
             layout: Layout::default(),
             header: Header::default(),
             footer: Footer::default(),
+            filter: Filter::default(),
             palette: Self::empty_map(),
             colors: Colors::default(),
             types: Types::default(),
@@ -253,6 +263,14 @@ impl Header {
 }
 
 impl Footer {
+    fn default() -> Self {
+        Self {
+            disable: Config::disable(),
+        }
+    }
+}
+
+impl Filter {
     fn default() -> Self {
         Self {
             disable: Config::disable(),
