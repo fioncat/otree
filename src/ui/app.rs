@@ -17,13 +17,11 @@ use crate::edit::Edit;
 use crate::live_reload::FileWatcher;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
-use crate::ui::filter::Filter;
+use crate::ui::filter::{Filter, FilterAction};
 use crate::ui::footer::{Footer, FooterText};
 use crate::ui::header::{Header, HeaderContext};
 use crate::ui::popup::{Popup, PopupLevel};
 use crate::ui::tree_overview::TreeOverview;
-
-use super::filter::FilterAction;
 
 enum Refresh {
     /// Update the TUI
@@ -406,21 +404,28 @@ impl App {
         if matches!(self.focus, ElementInFocus::Filter) {
             if let Some(filter) = self.filter.as_mut() {
                 let filter_action = filter.on_key(ka);
+                let mut updated = false;
                 match filter_action {
                     FilterAction::Edit => {
-                        return Refresh::Update;
+                        updated = true;
                     }
                     FilterAction::Confirm => {
                         self.focus = ElementInFocus::TreeOverview;
-                        return Refresh::Update;
+                        updated = true;
                     }
                     FilterAction::Quit => {
                         self.filter = None;
                         self.focus = ElementInFocus::TreeOverview;
+                        self.tree_overview.end_filter();
                         return Refresh::Update;
                     }
                     FilterAction::Skip => {}
                 };
+                if updated {
+                    let text = filter.get_text();
+                    self.tree_overview.filter(&text);
+                    return Refresh::Update;
+                }
             }
         }
 
@@ -516,6 +521,7 @@ impl App {
 
                 if self.filter.is_none() {
                     self.filter = Some(Filter::new(self.cfg.clone()));
+                    self.tree_overview.begin_filter();
                 }
                 self.focus = ElementInFocus::Filter;
 
@@ -525,9 +531,19 @@ impl App {
                 // These actions are handled by the focused widget
                 if match self.focus {
                     ElementInFocus::TreeOverview => {
-                        if self.filter.is_some() && matches!(action, Action::Reset) {
-                            self.filter = None;
-                            return Refresh::Update;
+                        if self.filter.is_some() {
+                            match action {
+                                Action::Reset => {
+                                    self.filter = None;
+                                    self.tree_overview.end_filter();
+                                    return Refresh::Update;
+                                }
+                                Action::ChangeRoot => {
+                                    self.filter = None;
+                                    self.tree_overview.end_filter();
+                                }
+                                _ => {}
+                            }
                         }
                         self.tree_overview.on_key(action)
                     }
@@ -562,6 +578,11 @@ impl App {
             } else {
                 Refresh::Skip
             };
+        }
+
+        if self.filter.is_some() && Self::get_row_inside(column, row, self.filter_area).is_some() {
+            self.focus = ElementInFocus::Filter;
+            return Refresh::Update;
         }
 
         Refresh::Skip

@@ -4,8 +4,8 @@ use ratatui::layout::{Alignment, Position, Rect};
 use ratatui::widgets::{Block, Borders, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use serde_json::Value;
-use tui_tree_widget::Tree as TreeWidget;
 use tui_tree_widget::TreeState;
+use tui_tree_widget::{Tree as TreeWidget, TreeItem};
 
 use crate::config::keys::Action;
 use crate::config::Config;
@@ -17,6 +17,8 @@ pub(super) struct TreeOverview {
     cfg: Rc<Config>,
     state: Option<TreeState<String>>,
     tree: Option<Tree>,
+    filter_items: Option<Vec<TreeItem<'static, String>>>,
+    before_filter_state: Option<TreeState<String>>,
     last_switches: Vec<(Tree, TreeState<String>)>,
     root_switch: Option<(Tree, TreeState<String>)>,
     root_identifies: Vec<String>,
@@ -28,6 +30,8 @@ impl TreeOverview {
             cfg,
             state: Some(TreeState::default()),
             tree: Some(tree),
+            filter_items: None,
+            before_filter_state: None,
             last_switches: vec![],
             root_switch: None,
             root_identifies: vec![],
@@ -188,7 +192,12 @@ impl TreeOverview {
             .title_alignment(Alignment::Center)
             .title("Tree Overview");
         let mut state = self.state.take().unwrap();
-        let widget = TreeWidget::new(&self.tree().items)
+        let items = if let Some(filter_items) = &self.filter_items {
+            filter_items
+        } else {
+            &self.tree().items
+        };
+        let widget = TreeWidget::new(items)
             .unwrap()
             .experimental_scrollbar(Some(scrollbar))
             .highlight_style(self.cfg.colors.tree.selected.style)
@@ -196,6 +205,92 @@ impl TreeOverview {
 
         frame.render_stateful_widget(widget, area, &mut state);
         self.state = Some(state);
+    }
+
+    pub fn begin_filter(&mut self) {
+        let state = self.state.take().unwrap();
+        self.before_filter_state = Some(state);
+        self.state = Some(TreeState::default());
+    }
+
+    pub fn end_filter(&mut self) {
+        self.filter_items = None;
+        let selected = self.state().selected().to_vec();
+        let mut state = self.before_filter_state.take().unwrap();
+        state.select(selected);
+        self.state = Some(state);
+    }
+
+    pub fn filter(&mut self, text: &str) {
+        let mut state = self.state.take().unwrap();
+
+        let items = &self.tree().items;
+        let mut filtered = vec![];
+
+        for item in items.iter() {
+            if let Some(filtered_item) = self.filter_item(vec![], item, text, &mut state) {
+                filtered.push(filtered_item);
+            }
+        }
+
+        self.filter_items = Some(filtered);
+        self.state = Some(state);
+    }
+
+    fn filter_item(
+        &self,
+        mut id: Vec<String>,
+        item: &TreeItem<'static, String>,
+        text: &str,
+        state: &mut TreeState<String>,
+    ) -> Option<TreeItem<'static, String>> {
+        id.push(item.identifier().clone());
+        let key = id.join("/");
+        let item_value = self.tree().get_value(&key).unwrap();
+
+        let mut ok = false;
+        if item_value.name.contains(text) {
+            ok = true;
+        }
+
+        if item.children().is_empty() {
+            if ok {
+                return Some(item.clone());
+            }
+            return None;
+        }
+
+        let mut filtered_children = vec![];
+        for child in item.children() {
+            match self.filter_item(id.clone(), child, text, state) {
+                Some(child) => {
+                    filtered_children.push(child);
+                }
+                None => {
+                    continue;
+                }
+            }
+        }
+
+        if filtered_children.is_empty() {
+            if ok {
+                return Some(TreeItem::new_leaf(
+                    item.identifier().clone(),
+                    item.text().clone(),
+                ));
+            }
+            return None;
+        }
+
+        state.open(id.clone());
+        Some(
+            TreeItem::new(
+                item.identifier().clone(),
+                item.text().clone(),
+                filtered_children,
+            )
+            .unwrap(),
+        )
     }
 
     fn tree(&self) -> &Tree {
