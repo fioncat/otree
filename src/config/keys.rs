@@ -51,7 +51,7 @@ macro_rules! generate_actions {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Key {
+pub enum Key {
     Char(char),
 
     Ctrl(char),
@@ -266,8 +266,8 @@ generate_keys_default!(
     move_right => ["l", "<right>"],
     select_focus => ["<enter>"],
     select_parent => ["p"],
-    select_first => ["g"],
-    select_last => ["G"],
+    select_first => ["g", "<ctrl-a>"],
+    select_last => ["G", "<ctrl-l>"],
     close_parent => ["<backspace>"],
     change_root => ["r"],
     reset => ["<esc>"],
@@ -309,16 +309,26 @@ generate_actions!(
     quit => Quit
 );
 
+#[derive(Debug, Clone, Copy)]
+pub struct KeyAction {
+    pub key: Key,
+    pub action: Option<Action>,
+}
+
 impl Keys {
-    pub fn get_key_action(&self, event: KeyEvent) -> Option<Action> {
+    pub fn get_key_action(&self, event: KeyEvent) -> Option<KeyAction> {
         let event_key = Key::from_event(event)?;
+        let mut current_action = None;
         for (keys, action) in self.actions.iter() {
             for key in keys {
                 if *key == event_key {
-                    return Some(*action);
+                    current_action = Some(*action);
                 }
             }
         }
-        None
+        Some(KeyAction {
+            key: event_key,
+            action: current_action,
+        })
     }
 }

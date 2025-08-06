@@ -23,6 +23,8 @@ use crate::ui::header::{Header, HeaderContext};
 use crate::ui::popup::{Popup, PopupLevel};
 use crate::ui::tree_overview::TreeOverview;
 
+use super::filter::FilterAction;
+
 enum Refresh {
     /// Update the TUI
     Update,
@@ -100,18 +102,13 @@ impl App {
         } else {
             Some(Footer::new(cfg.clone()))
         };
-        let filter = if cfg.filter.disable {
-            None
-        } else {
-            Some(Filter::new(cfg.clone()))
-        };
         Self {
             cfg: cfg.clone(),
             focus: ElementInFocus::TreeOverview,
             last_focus: None,
             tree_overview: TreeOverview::new(cfg.clone(), tree),
             tree_overview_area: Rect::default(),
-            filter,
+            filter: None,
             filter_area: Rect::default(),
             data_block: DataBlock::new(cfg.clone()),
             data_block_area: Rect::default(),
@@ -401,18 +398,36 @@ impl App {
     }
 
     fn on_key(&mut self, key: KeyEvent) -> Refresh {
+        let ka = match self.cfg.keys.get_key_action(key) {
+            Some(ka) => ka,
+            None => return Refresh::Skip,
+        };
+
         if matches!(self.focus, ElementInFocus::Filter) {
             if let Some(filter) = self.filter.as_mut() {
-                filter.on_key(key);
-                return Refresh::Update;
+                let filter_action = filter.on_key(ka);
+                match filter_action {
+                    FilterAction::Edit => {
+                        return Refresh::Update;
+                    }
+                    FilterAction::Confirm => {
+                        self.focus = ElementInFocus::TreeOverview;
+                        return Refresh::Update;
+                    }
+                    FilterAction::Quit => {
+                        self.filter = None;
+                        self.focus = ElementInFocus::TreeOverview;
+                        return Refresh::Update;
+                    }
+                    FilterAction::Skip => {}
+                };
             }
         }
 
-        let action = self.cfg.keys.get_key_action(key);
-        if action.is_none() {
-            return Refresh::Skip;
-        }
-        let action = action.unwrap();
+        let action = match ka.action {
+            Some(action) => action,
+            None => return Refresh::Skip,
+        };
 
         match action {
             Action::Quit => Refresh::Quit,
@@ -494,18 +509,28 @@ impl App {
                 Refresh::Update
             }
             Action::Filter => {
-                if self.filter.is_none() {
-                    // Skip handling if filter is disabled
+                if self.cfg.filter.disable {
+                    // Filter is disabled, do not handle the action
                     return Refresh::Skip;
                 }
 
+                if self.filter.is_none() {
+                    self.filter = Some(Filter::new(self.cfg.clone()));
+                }
                 self.focus = ElementInFocus::Filter;
+
                 Refresh::Update
             }
             _ => {
                 // These actions are handled by the focused widget
                 if match self.focus {
-                    ElementInFocus::TreeOverview => self.tree_overview.on_key(action),
+                    ElementInFocus::TreeOverview => {
+                        if self.filter.is_some() && matches!(action, Action::Reset) {
+                            self.filter = None;
+                            return Refresh::Update;
+                        }
+                        self.tree_overview.on_key(action)
+                    }
                     ElementInFocus::DataBlock => self.data_block.on_key(action),
                     ElementInFocus::Popup => self.popup.on_key(action),
                     ElementInFocus::None | ElementInFocus::Filter => false,
