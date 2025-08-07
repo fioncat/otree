@@ -18,6 +18,10 @@ disable = false
 disable_highlight = false
 max_data_size = 30
 
+[filter]
+disable = false
+ignore_case = false
+
 [keys]
 move_up = ["k", "<up>"]
 move_down = ["j", "<down>"]
@@ -39,6 +43,10 @@ switch = ["<tab>"]
 edit = ["e"]
 copy_name = ["y"]
 copy_value = ["Y"]
+filter = ["/"]
+filter_key = ["?"]
+filter_value = ["*"]
+filter_switch_ignore_case = ["I"]
 quit = ["<ctrl-c>", "q"]
 
 [colors]
@@ -75,6 +83,9 @@ message = {fg = "green", bold = true}
 
 [colors.popup]
 error_text = {fg = "red"}
+
+[colors.filter]
+border = {fg = "blue"}
 
 [types]
 str = "str"

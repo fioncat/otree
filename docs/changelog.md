@@ -1,3 +1,15 @@
+## v0.5.0
+
+### Features
+
+- Support filtering by key or value. (#82)
+
+## v0.4.1
+
+### Features
+
+- when copying values, use pure text. (#80)
+
 ## v0.4.0
 
 ### Features
