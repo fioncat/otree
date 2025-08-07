@@ -7,22 +7,22 @@ use ratatui::Frame;
 
 use crate::config::Config;
 
-pub(super) enum FooterText<'a> {
+pub enum FooterText<'a> {
     Identify(&'a [String], Option<String>),
     Message(String),
     None,
 }
 
-pub(super) struct Footer {
+pub struct Footer {
     cfg: Rc<Config>,
 }
 
 impl Footer {
-    pub(super) fn new(cfg: Rc<Config>) -> Self {
+    pub fn new(cfg: Rc<Config>) -> Self {
         Self { cfg }
     }
 
-    pub(super) fn draw(&self, frame: &mut Frame, area: Rect, text: FooterText) {
+    pub fn draw(&self, frame: &mut Frame, area: Rect, text: FooterText) {
         let line = match text {
             FooterText::Identify(roots, identify) => {
                 let mut spans = Vec::with_capacity(roots.len() * 2 + 1);

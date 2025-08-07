@@ -12,7 +12,7 @@ use crate::config::Config;
 use crate::tree::ItemValue;
 use crate::ui::app::ScrollDirection;
 
-pub(super) struct DataBlock {
+pub struct DataBlock {
     cfg: Rc<Config>,
     item: Option<Rc<ItemValue>>,
 
@@ -33,7 +33,7 @@ pub(super) struct DataBlock {
 impl DataBlock {
     const SCROLL_RETAIN: usize = 5;
 
-    pub(super) fn new(cfg: Rc<Config>) -> Self {
+    pub fn new(cfg: Rc<Config>) -> Self {
         Self {
             cfg,
             item: None,
@@ -50,7 +50,7 @@ impl DataBlock {
         }
     }
 
-    pub(super) fn on_key(&mut self, action: Action) -> bool {
+    pub fn on_key(&mut self, action: Action) -> bool {
         match action {
             Action::MoveDown => self.scroll_down(1),
             Action::MoveUp => self.scroll_up(1),
@@ -62,14 +62,14 @@ impl DataBlock {
         }
     }
 
-    pub(super) fn on_scroll(&mut self, direction: ScrollDirection) -> bool {
+    pub fn on_scroll(&mut self, direction: ScrollDirection) -> bool {
         match direction {
             ScrollDirection::Up => self.scroll_up(3),
             ScrollDirection::Down => self.scroll_down(3),
         }
     }
 
-    pub(super) fn scroll_first(&mut self) -> bool {
+    pub fn scroll_first(&mut self) -> bool {
         let can_scroll = self.can_vertical_scroll || self.can_horizontal_scroll;
         let scroll_first = self.vertical_scroll == 0 && self.horizontal_scroll == 0;
 
@@ -86,7 +86,7 @@ impl DataBlock {
         true
     }
 
-    pub(super) fn scroll_last(&mut self) -> bool {
+    pub fn scroll_last(&mut self) -> bool {
         if !self.can_vertical_scroll || self.vertical_scroll == self.vertical_scroll_last {
             return false;
         }
@@ -99,7 +99,7 @@ impl DataBlock {
         true
     }
 
-    pub(super) fn scroll_down(&mut self, lines: usize) -> bool {
+    pub fn scroll_down(&mut self, lines: usize) -> bool {
         if !self.can_vertical_scroll || self.vertical_scroll == self.vertical_scroll_last {
             return false;
         }
@@ -112,7 +112,7 @@ impl DataBlock {
         true
     }
 
-    pub(super) fn scroll_up(&mut self, lines: usize) -> bool {
+    pub fn scroll_up(&mut self, lines: usize) -> bool {
         if !self.can_vertical_scroll || self.vertical_scroll == 0 {
             return false;
         }
@@ -122,7 +122,7 @@ impl DataBlock {
         true
     }
 
-    pub(super) fn scroll_right(&mut self, lines: usize) -> bool {
+    pub fn scroll_right(&mut self, lines: usize) -> bool {
         if !self.can_horizontal_scroll || self.horizontal_scroll == self.horizontal_scroll_last {
             return false;
         }
@@ -136,7 +136,7 @@ impl DataBlock {
         true
     }
 
-    pub(super) fn scroll_left(&mut self, lines: usize) -> bool {
+    pub fn scroll_left(&mut self, lines: usize) -> bool {
         if self.horizontal_scroll == 0 {
             return false;
         }
@@ -147,7 +147,7 @@ impl DataBlock {
         true
     }
 
-    pub(super) fn update_item(&mut self, identify: String, item: Rc<ItemValue>, area: Rect) {
+    pub fn update_item(&mut self, identify: String, item: Rc<ItemValue>, area: Rect) {
         if self.last_identify == identify {
             return;
         }
@@ -177,7 +177,7 @@ impl DataBlock {
         self.last_area = area;
     }
 
-    pub(super) fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.reset_scroll();
         self.item = None;
         self.last_identify = String::default();
@@ -198,7 +198,7 @@ impl DataBlock {
         self.horizontal_scroll_last = 0;
     }
 
-    pub(super) fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {
+    pub fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {
         let (border_style, border_type) = super::get_border_style(
             &self.cfg.colors.focus_border,
             &self.cfg.colors.data.border,

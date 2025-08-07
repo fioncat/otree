@@ -93,7 +93,7 @@ impl SyntaxToken {
     }
 
     #[cfg(test)]
-    pub(super) fn pure_text(tokens: &[SyntaxToken]) -> String {
+    pub fn pure_text(tokens: &[SyntaxToken]) -> String {
         let mut text = String::new();
         for token in tokens {
             let token = match token {
@@ -120,7 +120,7 @@ impl SyntaxToken {
 
 static STANDARD_FIELD_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap());
 
-pub(super) fn quote_field_name(name: &str) -> String {
+pub fn quote_field_name(name: &str) -> String {
     if STANDARD_FIELD_NAME_RE.is_match(name) {
         // This is a standard field name, we don't need to quote it.
         // Like: "version", "dev-dependencies"
@@ -132,13 +132,13 @@ pub(super) fn quote_field_name(name: &str) -> String {
     }
 }
 
-pub(super) enum StringValue {
+pub enum StringValue {
     String(String),
     MultiLines(Vec<String>),
 }
 
 impl StringValue {
-    pub(super) fn new(s: &str, must_quote: bool) -> Self {
+    pub fn new(s: &str, must_quote: bool) -> Self {
         if s.is_empty() {
             return StringValue::String("\"\"".to_string());
         }

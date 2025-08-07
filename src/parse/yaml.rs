@@ -5,7 +5,7 @@ use serde_json::Value;
 use super::syntax::{self, StringValue};
 use super::{Parser, SyntaxToken};
 
-pub(super) struct YamlParser {}
+pub struct YamlParser {}
 
 impl Parser for YamlParser {
     fn extension(&self) -> &'static str {

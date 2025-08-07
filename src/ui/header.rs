@@ -45,13 +45,13 @@ impl HeaderContext {
     }
 }
 
-pub(super) struct Header {
+pub struct Header {
     cfg: Rc<Config>,
     data: String,
 }
 
 impl Header {
-    pub(super) fn new(cfg: Rc<Config>, ctx: HeaderContext) -> Self {
+    pub fn new(cfg: Rc<Config>, ctx: HeaderContext) -> Self {
         let header_format = &cfg.clone().header.format;
         Self {
             cfg,
@@ -59,7 +59,7 @@ impl Header {
         }
     }
 
-    pub(super) fn draw(&self, frame: &mut Frame, area: Rect) {
+    pub fn draw(&self, frame: &mut Frame, area: Rect) {
         let span = Span::styled(self.data.as_str(), self.cfg.colors.header.style);
         // TODO: Allow user to customize alignment.
         let paragraph = Paragraph::new(span).alignment(Alignment::Center);

@@ -12,11 +12,11 @@ use serde_json::Value;
 use crate::clipboard::write_clipboard;
 use crate::config::keys::Action;
 use crate::config::{Config, LayoutDirection};
-use crate::debug;
 use crate::edit::Edit;
 use crate::live_reload::FileWatcher;
 use crate::tree::Tree;
 use crate::ui::data_block::DataBlock;
+use crate::ui::filter::{Filter, FilterAction, FilterTarget};
 use crate::ui::footer::{Footer, FooterText};
 use crate::ui::header::{Header, HeaderContext};
 use crate::ui::popup::{Popup, PopupLevel};
@@ -38,6 +38,7 @@ enum ElementInFocus {
     TreeOverview,
     DataBlock,
     Popup,
+    Filter,
     None,
 }
 
@@ -54,6 +55,9 @@ pub struct App {
 
     tree_overview: TreeOverview,
     tree_overview_area: Rect,
+
+    filter: Option<Filter>,
+    filter_area: Rect,
 
     data_block: DataBlock,
     data_block_area: Rect,
@@ -76,7 +80,7 @@ pub struct App {
     fw: Option<FileWatcher>,
 }
 
-pub(super) enum ShowResult {
+pub enum ShowResult {
     Edit(Box<Edit>),
     Quit,
 }
@@ -84,6 +88,8 @@ pub(super) enum ShowResult {
 impl App {
     const HEADER_HEIGHT: u16 = 1;
     const FOOTER_HEIGHT: u16 = 1;
+
+    const FILTER_HEIGHT: u16 = 3;
 
     const POLL_EVENT_DURATION: Duration = Duration::from_millis(100);
 
@@ -99,6 +105,8 @@ impl App {
             last_focus: None,
             tree_overview: TreeOverview::new(cfg.clone(), tree),
             tree_overview_area: Rect::default(),
+            filter: None,
+            filter_area: Rect::default(),
             data_block: DataBlock::new(cfg.clone()),
             data_block_area: Rect::default(),
             layout_direction: cfg.layout.direction,
@@ -120,11 +128,10 @@ impl App {
         self.header = Some(Header::new(self.cfg.clone(), ctx));
     }
 
-    pub(super) fn show(
+    pub fn show(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<Stdout>>,
     ) -> Result<ShowResult> {
-        debug!("Start ui show loop, with config: {:?}", self.cfg);
         terminal.draw(|frame| self.draw(frame))?;
 
         loop {
@@ -258,6 +265,11 @@ impl App {
             }
         }
 
+        if let Some(filter) = self.filter.as_mut() {
+            let filter_focus = matches!(self.focus, ElementInFocus::Filter);
+            filter.draw(frame, self.filter_area, filter_focus);
+        }
+
         let tree_focus = matches!(self.focus, ElementInFocus::TreeOverview);
         self.tree_overview
             .draw(frame, self.tree_overview_area, tree_focus);
@@ -363,23 +375,62 @@ impl App {
                 [self.tree_overview_area, self.data_block_area] = horizontal.areas(main_area);
             }
         }
+        if self.filter.is_some() {
+            // Show filter input text area
+            let vertical =
+                Layout::vertical([Constraint::Length(Self::FILTER_HEIGHT), Constraint::Min(0)]);
+            [self.filter_area, self.tree_overview_area] = vertical.areas(self.tree_overview_area);
+        }
     }
 
     fn can_switch_to_data_block(&self) -> bool {
         match self.focus {
             ElementInFocus::TreeOverview => self.tree_overview.get_selected().is_some(),
             ElementInFocus::None => true,
+            ElementInFocus::Filter => true,
             ElementInFocus::DataBlock => false,
             ElementInFocus::Popup => false,
         }
     }
 
     fn on_key(&mut self, key: KeyEvent) -> Refresh {
-        let action = self.cfg.keys.get_key_action(key);
-        if action.is_none() {
-            return Refresh::Skip;
+        let ka = match self.cfg.keys.get_key_action(key) {
+            Some(ka) => ka,
+            None => return Refresh::Skip,
+        };
+
+        if matches!(self.focus, ElementInFocus::Filter) {
+            if let Some(filter) = self.filter.as_mut() {
+                let filter_action = filter.on_key(ka);
+                let mut updated = false;
+                match filter_action {
+                    FilterAction::Edit => {
+                        updated = true;
+                    }
+                    FilterAction::Confirm => {
+                        self.focus = ElementInFocus::TreeOverview;
+                        updated = true;
+                    }
+                    FilterAction::Quit => {
+                        self.filter = None;
+                        self.focus = ElementInFocus::TreeOverview;
+                        self.tree_overview.end_filter();
+                        return Refresh::Update;
+                    }
+                    FilterAction::Skip => {}
+                };
+                if updated {
+                    let opts = filter.get_options();
+                    self.tree_overview.filter(opts);
+                    return Refresh::Update;
+                }
+            }
         }
-        let action = action.unwrap();
+
+        let action = match ka.action {
+            Some(action) => action,
+            None => return Refresh::Skip,
+        };
 
         match action {
             Action::Quit => Refresh::Quit,
@@ -460,13 +511,67 @@ impl App {
                 self.foot_message = Some(copy_message);
                 Refresh::Update
             }
+            Action::Filter | Action::FilterKey | Action::FilterValue => {
+                if self.cfg.filter.disable {
+                    // Filter is disabled, do not handle the action
+                    return Refresh::Skip;
+                }
+
+                let target = match action {
+                    Action::Filter => FilterTarget::All,
+                    Action::FilterKey => FilterTarget::Key,
+                    Action::FilterValue => FilterTarget::Value,
+                    _ => unreachable!(),
+                };
+
+                match self.filter.as_mut() {
+                    Some(filter) => {
+                        filter.set_target(target);
+                        let opts = filter.get_options();
+                        self.tree_overview.filter(opts);
+                    }
+                    None => {
+                        self.filter = Some(Filter::new(self.cfg.clone(), target));
+                        self.tree_overview.begin_filter();
+                    }
+                };
+
+                self.focus = ElementInFocus::Filter;
+
+                Refresh::Update
+            }
+            Action::FilterSwitchIgnoreCase => {
+                if let Some(filter) = self.filter.as_mut() {
+                    filter.switch_ignore_case();
+                    let opts = filter.get_options();
+                    self.tree_overview.filter(opts);
+                    return Refresh::Update;
+                }
+                Refresh::Skip
+            }
             _ => {
                 // These actions are handled by the focused widget
                 if match self.focus {
-                    ElementInFocus::TreeOverview => self.tree_overview.on_key(action),
+                    ElementInFocus::TreeOverview => {
+                        if self.filter.is_some() {
+                            match action {
+                                Action::Reset => {
+                                    self.filter = None;
+                                    self.tree_overview.end_filter();
+                                    return Refresh::Update;
+                                }
+                                Action::ChangeRoot => {
+                                    self.filter = None;
+                                    self.tree_overview.end_filter();
+                                }
+                                _ => {}
+                            }
+                        }
+                        self.tree_overview.on_key(action)
+                    }
                     ElementInFocus::DataBlock => self.data_block.on_key(action),
                     ElementInFocus::Popup => self.popup.on_key(action),
-                    ElementInFocus::None => false,
+                    ElementInFocus::None | ElementInFocus::Filter => false,
                 } {
                     Refresh::Update
                 } else {
@@ -495,6 +600,11 @@ impl App {
             } else {
                 Refresh::Skip
             };
+        }
+
+        if self.filter.is_some() && Self::get_row_inside(column, row, self.filter_area).is_some() {
+            self.focus = ElementInFocus::Filter;
+            return Refresh::Update;
         }
 
         Refresh::Skip

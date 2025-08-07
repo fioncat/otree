@@ -4,7 +4,7 @@ use serde_json::Value;
 use super::json;
 use super::{Parser, SyntaxToken};
 
-pub(super) struct JsonlParser;
+pub struct JsonlParser;
 
 impl Parser for JsonlParser {
     fn extension(&self) -> &'static str {

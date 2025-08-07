@@ -48,13 +48,13 @@ For all available actions and their default key bindings, please refer to: [All 
 
 For how to configure TUI colors, please refer to: [Colors Document](docs/colors.md).
 
-## Features
+## Roadmap
 
 - [x] UI: Header (v0.1)
 - [x] UI: Tree Overview (v0.1)
 - [x] UI: Data Block (v0.1)
 - [x] UI: Footer to show current root and identify (and other messages) (v0.2)
-- [ ] UI: Filter Input
+- [x] UI: Filter Input (v0.5)
 - [x] UI: Popup widget to show error or help messages (v0.2)
 - [x] Action: Change current selected item as root (v0.1)
 - [x] Action: Back to previous root (v0.1)
@@ -74,7 +74,7 @@ For how to configure TUI colors, please refer to: [Colors Document](docs/colors.
 - [x] Action: Clipboard support, copy current item's content (might need to call external program like `wl-copy`, `pbcopy`) (v0.2)
 - [x] Syntax highlighting in data block (v0.2)
 - [x] Allow user to customize TUI colors and key bindings (and other things you can imagine) (v0.1)
-- [ ] **Filter items! (Like [jnv](https://github.com/ynqa/jnv))**
+- [x] **Filter items! (Like [jnv](https://github.com/ynqa/jnv))** (v0.5)
 - [x] With `--debug` flag, write some debug logs to a file (v0.4)
 
 If you have any great ideas, please create an issue, thanks!

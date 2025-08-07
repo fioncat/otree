@@ -6,7 +6,7 @@ use super::json::highlight as json_highlight;
 use super::syntax::{self, StringValue};
 use super::{Parser, SyntaxToken};
 
-pub(super) struct TomlParser {}
+pub struct TomlParser {}
 
 impl Parser for TomlParser {
     fn extension(&self) -> &'static str {

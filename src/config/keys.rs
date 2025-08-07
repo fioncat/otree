@@ -51,7 +51,7 @@ macro_rules! generate_actions {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Key {
+pub enum Key {
     Char(char),
 
     Ctrl(char),
@@ -249,6 +249,18 @@ pub struct Keys {
     #[serde(default = "Keys::default_copy_value")]
     pub copy_value: Vec<String>,
 
+    #[serde(default = "Keys::default_filter")]
+    pub filter: Vec<String>,
+
+    #[serde(default = "Keys::default_filter_key")]
+    pub filter_key: Vec<String>,
+
+    #[serde(default = "Keys::default_filter_value")]
+    pub filter_value: Vec<String>,
+
+    #[serde(default = "Keys::default_filter_switch_ignore_case")]
+    pub filter_switch_ignore_case: Vec<String>,
+
     #[serde(default = "Keys::default_quit")]
     pub quit: Vec<String>,
 
@@ -263,8 +275,8 @@ generate_keys_default!(
     move_right => ["l", "<right>"],
     select_focus => ["<enter>"],
     select_parent => ["p"],
-    select_first => ["g"],
-    select_last => ["G"],
+    select_first => ["g", "<ctrl-a>"],
+    select_last => ["G", "<ctrl-l>"],
     close_parent => ["<backspace>"],
     change_root => ["r"],
     reset => ["<esc>"],
@@ -277,6 +289,10 @@ generate_keys_default!(
     edit => ["e"],
     copy_name => ["y"],
     copy_value => ["Y"],
+    filter => ["/"],
+    filter_key => ["?"],
+    filter_value => ["*"],
+    filter_switch_ignore_case => ["I"],
     quit => ["<ctrl-c>", "q"]
 );
 
@@ -301,19 +317,33 @@ generate_actions!(
     edit => Edit,
     copy_name => CopyName,
     copy_value => CopyValue,
+    filter => Filter,
+    filter_key => FilterKey,
+    filter_value => FilterValue,
+    filter_switch_ignore_case => FilterSwitchIgnoreCase,
     quit => Quit
 );
 
+#[derive(Debug, Clone, Copy)]
+pub struct KeyAction {
+    pub key: Key,
+    pub action: Option<Action>,
+}
+
 impl Keys {
-    pub fn get_key_action(&self, event: KeyEvent) -> Option<Action> {
+    pub fn get_key_action(&self, event: KeyEvent) -> Option<KeyAction> {
         let event_key = Key::from_event(event)?;
+        let mut current_action = None;
         for (keys, action) in self.actions.iter() {
             for key in keys {
                 if *key == event_key {
-                    return Some(*action);
+                    current_action = Some(*action);
                 }
             }
         }
-        None
+        Some(KeyAction {
+            key: event_key,
+            action: current_action,
+        })
     }
 }
