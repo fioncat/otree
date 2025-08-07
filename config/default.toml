@@ -47,6 +47,7 @@ filter = ["/"]
 filter_key = ["?"]
 filter_value = ["*"]
 filter_switch_ignore_case = ["I"]
+show_help = ["H"]
 quit = ["<ctrl-c>", "q"]
 
 [colors]
@@ -83,6 +84,8 @@ message = {fg = "green", bold = true}
 
 [colors.popup]
 error_text = {fg = "red"}
+help_name = {fg = "yellow"}
+help_value = {fg = "green", bold = true}
 
 [colors.filter]
 border = {fg = "blue"}

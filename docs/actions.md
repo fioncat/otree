@@ -26,6 +26,7 @@
 | filter_key                | `?`                       | Enter the filter mode (key)                                  |
 | filter_value              | `*`                       | Enter the filter mode (value)                                |
 | filter_switch_ignore_case | `I`                       | Change the filter's ignore case mode                         |
+| show_help                 | `H`                       | Show help message                                            |
 | quit                      | `<ctrl-c>`, `q`           | Quit program                                                 |
 
 All available keys:
