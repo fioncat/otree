@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::rc::Rc;
 
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
@@ -9,13 +10,13 @@ use crate::config::keys::Action;
 use crate::config::Config;
 use crate::ui::app::ScrollDirection;
 
-#[derive(Debug, Clone, Copy)]
-pub enum PopupLevel {
-    Error,
+pub struct PopupData {
+    pub title: Cow<'static, str>,
+    pub text: Text<'static>,
 }
 
 pub struct Popup {
-    data: Option<(String, PopupLevel)>,
+    data: Option<PopupData>,
 
     cfg: Rc<Config>,
 
@@ -31,8 +32,8 @@ impl Popup {
         }
     }
 
-    pub fn set_data(&mut self, data: String, level: PopupLevel) {
-        self.data = Some((data, level));
+    pub fn set_data(&mut self, data: PopupData) {
+        self.data = Some(data);
     }
 
     pub fn on_key(&mut self, action: Action) -> bool {
@@ -88,7 +89,7 @@ impl Popup {
     }
 
     pub fn draw(&self, frame: &mut Frame) {
-        let (text, level) = match self.data.as_ref() {
+        let data = match self.data.as_ref() {
             Some(data) => data,
             None => return,
         };
@@ -96,21 +97,14 @@ impl Popup {
         let border_color = &self.cfg.colors.focus_border;
         let (border_style, border_type) = super::get_border_style(border_color, border_color, true);
 
-        let (title, text_style) = match level {
-            PopupLevel::Error => ("error", self.cfg.colors.popup.error_text.style),
-        };
-
         let block = Block::new()
             .border_type(border_type)
             .borders(Borders::ALL)
             .border_style(border_style)
             .title_alignment(Alignment::Center)
-            .title(title);
+            .title(data.title.as_ref());
 
-        let text = Text::from(text.as_str());
-
-        let widget = Paragraph::new(text)
-            .style(text_style)
+        let widget = Paragraph::new(data.text.clone())
             .block(block)
             .wrap(Wrap { trim: false })
             .scroll((self.scroll as u16, 0));

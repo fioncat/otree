@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::io::Stdout;
 use std::rc::Rc;
 use std::time::Duration;
@@ -6,6 +7,7 @@ use anyhow::Result;
 use crossterm::event::{Event, KeyEvent, MouseButton, MouseEventKind};
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout, Position, Rect};
+use ratatui::text::{Line, Span, Text};
 use ratatui::{Frame, Terminal};
 use serde_json::Value;
 
@@ -19,7 +21,7 @@ use crate::ui::data_block::DataBlock;
 use crate::ui::filter::{Filter, FilterAction, FilterTarget};
 use crate::ui::footer::{Footer, FooterText};
 use crate::ui::header::{Header, HeaderContext};
-use crate::ui::popup::{Popup, PopupLevel};
+use crate::ui::popup::{Popup, PopupData};
 use crate::ui::tree_overview::TreeOverview;
 
 enum Refresh {
@@ -92,6 +94,8 @@ impl App {
     const FILTER_HEIGHT: u16 = 3;
 
     const POLL_EVENT_DURATION: Duration = Duration::from_millis(100);
+
+    const HELP_URL: &'static str = "https://github.com/fioncat/otree/blob/main/docs/actions.md";
 
     pub fn new(cfg: Rc<Config>, tree: Tree, fw: Option<FileWatcher>) -> Self {
         let footer = if cfg.footer.disable {
@@ -193,8 +197,7 @@ impl App {
         let maybe_tree = match fw.parse_tree() {
             Ok(tree) => tree,
             Err(e) => {
-                let message = format!("Failed to watch file events: {e:#}");
-                self.popup(message, PopupLevel::Error);
+                self.popup_error(format!("Failed to watch file events: {e:#}"));
                 return Ok(Refresh::Update);
             }
         };
@@ -227,8 +230,7 @@ impl App {
             if let Some(item) = self.tree_overview.get_value(id.as_str()) {
                 self.data_block.update_item(id, item, self.data_block_area);
             } else {
-                let text = format!("Cannot find data for '{id}'");
-                self.popup(text, PopupLevel::Error);
+                self.popup_error(format!("Cannot find data for '{id}'"));
             }
         } else {
             self.data_block.reset();
@@ -283,8 +285,14 @@ impl App {
         }
     }
 
-    fn popup(&mut self, text: impl ToString, level: PopupLevel) {
-        self.popup.set_data(text.to_string(), level);
+    fn popup_error(&mut self, hint: impl ToString) {
+        let error_style = self.cfg.colors.popup.error_text.style;
+        let text = Text::styled(hint.to_string(), error_style);
+        self.popup(Cow::Borrowed("error"), text);
+    }
+
+    fn popup(&mut self, title: Cow<'static, str>, text: Text<'static>) {
+        self.popup.set_data(PopupData { title, text });
         if !matches!(self.focus, ElementInFocus::Popup | ElementInFocus::None) {
             self.before_popup_focus = self.focus;
         }
@@ -433,7 +441,13 @@ impl App {
         };
 
         match action {
-            Action::Quit => Refresh::Quit,
+            Action::Quit => {
+                if matches!(self.focus, ElementInFocus::Popup) {
+                    self.disable_popup();
+                    return Refresh::Update;
+                }
+                Refresh::Quit
+            }
             Action::Switch => match self.focus {
                 ElementInFocus::TreeOverview if self.can_switch_to_data_block() => {
                     self.focus = ElementInFocus::DataBlock;
@@ -501,8 +515,7 @@ impl App {
                 };
 
                 if let Err(err) = write_clipboard(&text) {
-                    let message = format!("Failed to copy text to clipboard: {err:#}");
-                    self.popup(message, PopupLevel::Error);
+                    self.popup_error(format!("Failed to copy text to clipboard: {err:#}"));
                     return Refresh::Update;
                 }
 
@@ -548,6 +561,10 @@ impl App {
                     return Refresh::Update;
                 }
                 Refresh::Skip
+            }
+            Action::ShowHelp => {
+                self.popup_help();
+                Refresh::Update
             }
             _ => {
                 // These actions are handled by the focused widget
@@ -711,5 +728,60 @@ impl App {
         };
 
         Some(data)
+    }
+
+    fn popup_help(&mut self) {
+        let keys_value = match serde_json::to_value(&self.cfg.keys) {
+            Ok(value) => value,
+            Err(e) => {
+                self.popup_error(format!("Failed to serialize keys: {e:#}"));
+                return;
+            }
+        };
+
+        let fields = match keys_value {
+            Value::Object(o) => o,
+            // The keys MUST be an object
+            _ => unreachable!(),
+        };
+
+        let name_style = self.cfg.colors.popup.help_name.style;
+        let value_style = self.cfg.colors.popup.help_value.style;
+
+        // We are using serde_json with feature "preserve_order", so we can iterate over
+        // the fields in the order they were defined.
+        let mut lines = Vec::with_capacity(fields.len());
+        lines.push(Line::from("All available actions:"));
+        lines.push(Line::from(""));
+        for (name, value) in fields {
+            let keys = match value {
+                // All fields in keys should be `Vec<String>`
+                Value::Array(arr) => arr
+                    .into_iter()
+                    .map(|v| match v {
+                        Value::String(s) => s,
+                        _ => unreachable!(),
+                    })
+                    .collect::<Vec<String>>(),
+                _ => unreachable!(),
+            };
+            let value = Span::styled(keys.join(" "), value_style);
+            let line = vec![
+                Span::raw("   "),
+                Span::styled(name, name_style),
+                Span::raw(" => "),
+                value,
+            ];
+            lines.push(Line::from(line));
+        }
+
+        lines.push(Line::from(""));
+        lines.push(Line::from(format!(
+            "Refer to {} for more information",
+            Self::HELP_URL
+        )));
+
+        let text = Text::from(lines);
+        self.popup(Cow::Borrowed("Help"), text);
     }
 }

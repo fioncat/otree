@@ -260,19 +260,35 @@ impl FooterColors {
 pub struct PopupColors {
     #[serde(default = "PopupColors::default_error_text")]
     pub error_text: Color,
+
+    #[serde(default = "PopupColors::default_help_name")]
+    pub help_name: Color,
+
+    #[serde(default = "PopupColors::default_help_value")]
+    pub help_value: Color,
 }
 
-generate_colors_parse!(PopupColors, error_text);
+generate_colors_parse!(PopupColors, error_text, help_name, help_value);
 
 impl PopupColors {
     fn default() -> Self {
         Self {
             error_text: Self::default_error_text(),
+            help_name: Self::default_help_name(),
+            help_value: Self::default_help_value(),
         }
     }
 
     fn default_error_text() -> Color {
         Color::new("red", "", false, false)
+    }
+
+    fn default_help_name() -> Color {
+        Color::new("yellow", "", false, false)
+    }
+
+    fn default_help_value() -> Color {
+        Color::new("green", "", true, false)
     }
 }
 

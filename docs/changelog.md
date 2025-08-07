@@ -2,7 +2,8 @@
 
 ### Features
 
-- Support filtering by key or value. (#82)
+- Support filter action (default binding to `/`). (#82)
+- Support help action (default binding to `H`). (#83)
 
 ## v0.4.1
 

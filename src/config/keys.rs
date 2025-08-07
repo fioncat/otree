@@ -261,6 +261,9 @@ pub struct Keys {
     #[serde(default = "Keys::default_filter_switch_ignore_case")]
     pub filter_switch_ignore_case: Vec<String>,
 
+    #[serde(default = "Keys::default_show_help")]
+    pub show_help: Vec<String>,
+
     #[serde(default = "Keys::default_quit")]
     pub quit: Vec<String>,
 
@@ -293,6 +296,7 @@ generate_keys_default!(
     filter_key => ["?"],
     filter_value => ["*"],
     filter_switch_ignore_case => ["I"],
+    show_help => ["H"],
     quit => ["<ctrl-c>", "q"]
 );
 
@@ -321,6 +325,7 @@ generate_actions!(
     filter_key => FilterKey,
     filter_value => FilterValue,
     filter_switch_ignore_case => FilterSwitchIgnoreCase,
+    show_help => ShowHelp,
     quit => Quit
 );
 
