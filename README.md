@@ -56,20 +56,19 @@ For how to configure TUI colors, please refer to: [Colors Document](docs/colors.
 - [x] UI: Footer to show current root and identify (and other messages) (v0.2)
 - [x] UI: Filter Input (v0.5)
 - [x] UI: Popup widget to show error or help messages (v0.2)
+- [ ] UI: Highlight filtering keywords
 - [x] Action: Change current selected item as root (v0.1)
 - [x] Action: Back to previous root (v0.1)
 - [x] Action: Scale up/down tree widget (v0.1)
 - [x] Action: Mouse click actions
 - [x] Action: Mouse scroll actions
-- [ ] Action: Mouse select actions
 - [x] Action: Open current selected item in editor **ReadOnly** (v0.2)
 - [x] Action: Switch between tree overview and data block (v0.1)
 - [x] Action: Jump to parent item (v0.1)
 - [x] Action: Jump to parent item and close (v0.1)
-- [ ] Action: Expand selected item's children
-- [ ] Action: Expand all items
+- [x] Action: Expand selected item's children (v0.5)
+- [x] Action: Expand all items (v0.5)
 - [x] Action: Close all opened items (v0.1)
-- [ ] Action: Filter items, highlight searching keywords
 - [x] Action: Popup to show help messages (v0.5)
 - [x] Action: Clipboard support, copy current item's content (might need to call external program like `wl-copy`, `pbcopy`) (v0.2)
 - [x] Syntax highlighting in data block (v0.2)

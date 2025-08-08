@@ -2,8 +2,9 @@
 
 ### Features
 
-- Support filter action (default binding to `/`). (#82)
-- Support help action (default binding to `H`). (#83)
+- Add `filter` (filter by keys and values, default binding to `/`), `filter_key` (filter by key, default binding to `?`) and `filter_value` (filter by values, default binding to `*`) actions to filter items. (#82)
+- Add `show_help` (default binding to `H`) action to show help message (all actions and their bindings) in popup widget. (#83)
+- Add `expand_children` (default binding to `x`) and `expand_all` (default binding to `X`) actions. (#84)
 
 ## v0.4.1
 
