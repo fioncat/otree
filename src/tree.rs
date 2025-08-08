@@ -272,7 +272,7 @@ impl Tree {
 }
 
 impl Data {
-    pub fn render(&self, cfg: &Config) -> Text {
+    pub fn render(&self, cfg: &Config) -> Text<'_> {
         match &self.display {
             Display::Highlight(tokens) => SyntaxToken::render(cfg, tokens),
             Display::Raw(text) => Text::from(text.as_ref()),

@@ -63,6 +63,8 @@ message = { fg = "green", bold = true }
 
 [colors.popup]
 error_text = { fg = "red" }
+help_name = {fg = "yellow"}
+help_value = {fg = "green", bold = true}
 
 [colors.filter]
 border = {fg = "blue"}

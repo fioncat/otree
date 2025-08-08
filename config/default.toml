@@ -47,6 +47,8 @@ filter = ["/"]
 filter_key = ["?"]
 filter_value = ["*"]
 filter_switch_ignore_case = ["I"]
+expand_children = ["x"]
+expand_all = ["X"]
 show_help = ["H"]
 quit = ["<ctrl-c>", "q"]
 

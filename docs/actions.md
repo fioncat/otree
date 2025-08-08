@@ -26,6 +26,8 @@
 | filter_key                | `?`                       | Enter the filter mode (key)                                  |
 | filter_value              | `*`                       | Enter the filter mode (value)                                |
 | filter_switch_ignore_case | `I`                       | Change the filter's ignore case mode                         |
+| expand_children           | `x`                       | Expand all selected item's children                          |
+| expand_all                | `X`                       | Expand all items                                             |
 | show_help                 | `H`                       | Show help message                                            |
 | quit                      | `<ctrl-c>`, `q`           | Quit program                                                 |
 
