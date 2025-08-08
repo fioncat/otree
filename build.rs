@@ -76,15 +76,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         env::var("TARGET").unwrap()
     );
 
-    if let Ok(value) = env::var("BUILD_OTREE_WITH_GIT_INFO") {
-        if value == "true" {
-            return fetch_git_info();
-        }
+    // 始终尝试获取 git 信息，失败时使用默认值
+    if let Err(_) = fetch_git_info() {
+        let cargo_version = env!("CARGO_PKG_VERSION");
+        println!("cargo:rustc-env=OTREE_VERSION={cargo_version}");
+        println!("cargo:rustc-env=OTREE_BUILD_TYPE=stable");
+        println!("cargo:rustc-env=OTREE_SHA=<unknown>");
     }
 
-    let cargo_version = env!("CARGO_PKG_VERSION");
-    println!("cargo:rustc-env=OTREE_VERSION={cargo_version}");
-    println!("cargo:rustc-env=OTREE_BUILD_TYPE=stable");
-    println!("cargo:rustc-env=OTREE_SHA=<unknown>");
     Ok(())
 }
