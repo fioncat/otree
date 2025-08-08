@@ -71,6 +71,8 @@ impl TreeOverview {
             Action::SelectFirst => self.state_mut().select_first(),
             Action::SelectLast => self.state_mut().select_last(),
             Action::ChangeRoot => self.change_root(),
+            Action::ExpandChildren => self.expand_children(),
+            Action::ExpandAll => self.expand_all(),
             Action::Reset => self.reset(),
             _ => false,
         }
@@ -159,6 +161,69 @@ impl TreeOverview {
         let parent: Vec<_> = selected.iter().take(selected.len() - 1).cloned().collect();
 
         Some(parent)
+    }
+
+    fn expand_children(&mut self) -> bool {
+        let selected = self.state().selected();
+        if selected.is_empty() {
+            return false;
+        }
+        let selected = selected.join("/");
+
+        let mut state = self.state.take().unwrap();
+
+        for item in self.tree().items.iter() {
+            let id = item.identifier();
+            if id == selected.as_str() && !item.children().is_empty() {
+                if state.opened().contains(&vec![item.identifier().clone()]) {
+                    Self::close_all_recursively(vec![], item, &mut state);
+                } else {
+                    Self::expand_all_recursively(vec![], item, &mut state);
+                }
+                self.state = Some(state);
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn expand_all(&mut self) -> bool {
+        let mut state = self.state.take().unwrap();
+        for item in self.tree().items.iter() {
+            if state.opened().contains(&vec![item.identifier().clone()]) {
+                Self::close_all_recursively(vec![], item, &mut state);
+            } else {
+                Self::expand_all_recursively(vec![], item, &mut state);
+            }
+        }
+        self.state = Some(state);
+        true
+    }
+
+    fn expand_all_recursively(
+        mut id: Vec<String>,
+        item: &TreeItem<'static, String>,
+        state: &mut TreeState<String>,
+    ) {
+        id.push(item.identifier().clone());
+        state.open(id.clone());
+
+        for child in item.children() {
+            Self::expand_all_recursively(id.clone(), child, state);
+        }
+    }
+
+    fn close_all_recursively(
+        mut id: Vec<String>,
+        item: &TreeItem<'static, String>,
+        state: &mut TreeState<String>,
+    ) {
+        id.push(item.identifier().clone());
+        state.close(&id);
+        for child in item.children() {
+            Self::close_all_recursively(id.clone(), child, state);
+        }
     }
 
     pub fn on_click(&mut self, column: u16, row: u16) {
