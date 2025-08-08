@@ -76,8 +76,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         env::var("TARGET").unwrap()
     );
 
-    // 始终尝试获取 git 信息，失败时使用默认值
-    if let Err(_) = fetch_git_info() {
+    if fetch_git_info().is_err() {
         let cargo_version = env!("CARGO_PKG_VERSION");
         println!("cargo:rustc-env=OTREE_VERSION={cargo_version}");
         println!("cargo:rustc-env=OTREE_BUILD_TYPE=stable");
