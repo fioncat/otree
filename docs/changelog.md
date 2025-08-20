@@ -1,3 +1,9 @@
+## v0.5.1
+
+### Fixes
+
+- Fix panic when using action `expand_children` for empty object. (#87)
+
 ## v0.5.0
 
 ### Features
