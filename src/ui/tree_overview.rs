@@ -185,6 +185,7 @@ impl TreeOverview {
             }
         }
 
+        self.state = Some(state);
         false
     }
 
