@@ -1,0 +1,9 @@
+empty_object = {}
+empty_list = []
+
+# TOML does not have `null`
+
+nested_array = [
+    {},
+    [],
+]

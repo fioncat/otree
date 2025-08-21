@@ -1,0 +1,10 @@
+{
+  "empty_object": {},
+  "empty_list": [],
+  "null": null,
+  "nested_array": [
+    {},
+    null,
+    []
+  ]
+}

@@ -1,0 +1,7 @@
+empty_object: {}
+empty_list: []
+null_value: null
+nested_array:
+  - {}
+  - []
+  - null
