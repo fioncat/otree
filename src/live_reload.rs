@@ -36,16 +36,22 @@ impl FileWatcher {
             err: RefCell::new(None),
         }));
 
-        Self {
+        let fw = Self {
             path,
             cfg,
             content_type,
             max_data_size,
             data,
-        }
+        };
+
+        // No point in having a filewatcher if it isn't started.
+        // Otherwise it shouldn't even be accessible.
+        // Hence: RAII (Resource Access Is Initialization)
+        fw.start();
+        fw
     }
 
-    pub fn start(&self) {
+    fn start(&self) {
         let data_clone = self.data.clone();
         let path = self.path.clone();
         thread::spawn(move || {

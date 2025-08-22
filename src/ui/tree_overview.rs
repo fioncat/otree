@@ -323,12 +323,11 @@ impl TreeOverview {
             return None;
         }
 
-        let mut filtered_children = vec![];
-        for child in item.children() {
-            if let Some(child) = self.filter_item(id.clone(), child, opts, state) {
-                filtered_children.push(child);
-            }
-        }
+        let filtered_children: Vec<_> = item
+            .children()
+            .iter()
+            .filter_map(|child| self.filter_item(id.clone(), child, opts, state))
+            .collect();
 
         if filtered_children.is_empty() {
             if ok {

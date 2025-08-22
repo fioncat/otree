@@ -86,10 +86,12 @@ fn run() -> Result<()> {
         Some(path) => {
             let path = PathBuf::from(path);
             if args.live_reload {
-                // TODO: simplify this by having ::new imply ::start
-                let _fw = FileWatcher::new(path.clone(), cfg.clone(), content_type, max_data_size);
-                _fw.start();
-                fw = Some(_fw);
+                fw = Some(FileWatcher::new(
+                    path.clone(),
+                    cfg.clone(),
+                    content_type,
+                    max_data_size,
+                ));
             }
             fs::read(path).context("read file")?
         }
