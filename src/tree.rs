@@ -23,6 +23,7 @@ pub struct ItemValue {
     pub name: String,
     pub value: Value,
 
+    pub arr_name: Option<String>,
     pub data: Data,
 }
 
@@ -68,7 +69,7 @@ impl Tree {
             Value::Array(arr) => {
                 let mut items = Vec::with_capacity(arr.len());
                 for (idx, value) in arr.into_iter().enumerate() {
-                    let item = tree.build_item(vec![], idx.to_string(), value);
+                    let item = tree.build_item(vec![], idx.to_string(), value, None);
                     items.push(item);
                 }
                 items
@@ -76,13 +77,13 @@ impl Tree {
             Value::Object(obj) => {
                 let mut items = Vec::with_capacity(obj.len());
                 for (field, value) in obj {
-                    let item = tree.build_item(vec![], field, value);
+                    let item = tree.build_item(vec![], field, value, None);
                     items.push(item);
                 }
                 items
             }
             _ => {
-                vec![tree.build_item(vec![], String::from("root"), value)]
+                vec![tree.build_item(vec![], String::from("root"), value, None)]
             }
         };
         tree.items = items;
@@ -102,6 +103,7 @@ impl Tree {
         parent: Vec<String>,
         name: String,
         value: Value,
+        arr_name: Option<String>,
     ) -> TreeItem<'static, String> {
         let path = if parent.is_empty() {
             name.clone()
@@ -119,6 +121,7 @@ impl Tree {
                 ),
                 ItemValue {
                     name: raw_name,
+                    arr_name,
                     value: raw_value,
                     data: Data::null(self.cfg.as_ref()),
                 },
@@ -130,6 +133,7 @@ impl Tree {
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
                         name: raw_name,
+                        arr_name,
                         value: raw_value,
                         data: Data::string(self.cfg.as_ref(), s),
                     },
@@ -142,6 +146,7 @@ impl Tree {
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
                         name: raw_name,
+                        arr_name,
                         value: raw_value,
                         data: Data::number(self.cfg.as_ref(), num.to_string()),
                     },
@@ -154,6 +159,7 @@ impl Tree {
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
                         name: raw_name,
+                        arr_name,
                         value: raw_value,
                         data: Data::bool(self.cfg.as_ref(), b),
                     },
@@ -165,19 +171,22 @@ impl Tree {
                     arr.len(),
                     if arr.len() > 1 { "items" } else { "item" }
                 );
-                let text = self.build_item_text(name, FieldType::Arr, Cow::Owned(description));
+                let data_name = arr_name.as_deref().unwrap_or(&name);
                 let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(self.parser.to_string(&raw_value)))
+                    Data::raw(Cow::Owned(self.parser.to_string(data_name, &raw_value)))
                 } else {
-                    Data::highlight(self.parser.syntax_highlight(&raw_value))
+                    Data::highlight(self.parser.syntax_highlight(data_name, &raw_value))
                 };
+                let arr_name = Some(name.clone());
+                let text = self.build_item_text(name, FieldType::Arr, Cow::Owned(description));
 
                 let mut children = Vec::with_capacity(arr.len());
                 for (idx, item) in arr.into_iter().enumerate() {
                     let mut child_parent = parent.to_vec();
                     child_parent.push(raw_name.clone());
 
-                    let child = self.build_item(child_parent, idx.to_string(), item);
+                    let child =
+                        self.build_item(child_parent, idx.to_string(), item, arr_name.clone());
                     children.push(child);
                 }
 
@@ -185,6 +194,7 @@ impl Tree {
                     TreeItem::new(raw_name.clone(), text, children).unwrap(),
                     ItemValue {
                         name: raw_name,
+                        arr_name,
                         value: raw_value,
                         data,
                     },
@@ -196,25 +206,27 @@ impl Tree {
                     obj.len(),
                     if obj.len() > 1 { "fields" } else { "field" }
                 );
-                let text = self.build_item_text(name, FieldType::Obj, Cow::Owned(description));
+                let data_name = arr_name.as_deref().unwrap_or(&name);
                 let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(self.parser.to_string(&raw_value)))
+                    Data::raw(Cow::Owned(self.parser.to_string(data_name, &raw_value)))
                 } else {
-                    Data::highlight(self.parser.syntax_highlight(&raw_value))
+                    Data::highlight(self.parser.syntax_highlight(data_name, &raw_value))
                 };
+                let text = self.build_item_text(name, FieldType::Obj, Cow::Owned(description));
 
                 let mut children = Vec::with_capacity(obj.len());
                 for (field, item) in obj {
                     let mut child_parent = parent.to_vec();
                     child_parent.push(raw_name.clone());
 
-                    let child = self.build_item(child_parent, field, item);
+                    let child = self.build_item(child_parent, field, item, None);
                     children.push(child);
                 }
                 (
                     TreeItem::new(raw_name.clone(), text, children).unwrap(),
                     ItemValue {
                         name: raw_name,
+                        arr_name,
                         value: raw_value,
                         data,
                     },

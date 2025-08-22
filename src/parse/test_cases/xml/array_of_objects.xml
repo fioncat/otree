@@ -1,16 +1,16 @@
 <orders>
-    <order>
-        <id>1001</id>
-        <product>
-            <name>Laptop</name>
-            <price>1200</price>
-        </product>
-    </order>
-    <order>
-        <id>1002</id>
-        <product>
-            <name>Phone</name>
-            <price>800</price>
-        </product>
-    </order>
+  <order>
+    <id>1001</id>
+    <product>
+      <name>Laptop</name>
+      <price>1200</price>
+    </product>
+  </order>
+  <order>
+    <id>1002</id>
+    <product>
+      <name>Phone</name>
+      <price>800</price>
+    </product>
+  </order>
 </orders>

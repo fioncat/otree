@@ -39,6 +39,7 @@ text = { fg = "text" }
 border = { fg = "blue" }
 symbol = { fg = "text" }
 name = { fg = "flamingo" }
+tag = { fg = "blue", bold = true }
 str = { fg = "green" }
 num = { fg = "peach" }
 null = { fg = "blue", italic = true }

@@ -88,6 +88,9 @@ pub struct DataColors {
     #[serde(default = "DataColors::default_name")]
     pub name: Color,
 
+    #[serde(default = "DataColors::default_tag")]
+    pub tag: Color,
+
     #[serde(default = "DataColors::default_str")]
     pub str: Color,
 
@@ -104,7 +107,7 @@ pub struct DataColors {
     pub section: Color,
 }
 
-generate_colors_parse!(DataColors, text, border, symbol, name, str, num, null, bool, section);
+generate_colors_parse!(DataColors, text, border, symbol, name, tag, str, num, null, bool, section);
 
 impl DataColors {
     fn default() -> Self {
@@ -113,6 +116,7 @@ impl DataColors {
             border: Self::default_border(),
             symbol: Color::default(),
             name: Self::default_name(),
+            tag: Self::default_tag(),
             str: Self::default_str(),
             num: Self::default_num(),
             null: Self::default_null(),
@@ -127,6 +131,10 @@ impl DataColors {
 
     fn default_name() -> Color {
         Color::new("yellow", "", false, true)
+    }
+
+    fn default_tag() -> Color {
+        Color::new("blue", "", true, false)
     }
 
     fn default_str() -> Color {
