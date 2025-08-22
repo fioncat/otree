@@ -53,6 +53,7 @@ impl AttrMap for Map<String, Value> {
     }
 }
 
+#[derive(Default)]
 struct NodeValues {
     node: Map<String, Value>,
     nodes: Vec<Map<String, Value>>,
@@ -62,12 +63,7 @@ struct NodeValues {
 
 impl NodeValues {
     fn new() -> Self {
-        Self {
-            values: Vec::new(),
-            node: Map::new(),
-            nodes: Vec::new(),
-            nodes_are_map: Vec::new(),
-        }
+        Self::default()
     }
 
     fn insert(&mut self, key: String, value: Value) {
@@ -150,16 +146,18 @@ impl NodeValues {
         // trim any values left, removing empty strings
         self.values = self
             .values
-            .clone()
-            .into_iter()
+            .drain(..)
             .filter_map(|value| {
-                if value.is_string() {
-                    let trimmed = value.as_str().unwrap_or_default().trim();
+                let value = if let Value::String(text) = value {
+                    let trimmed = text.trim();
                     if trimmed.is_empty() {
                         return None;
                     }
-                    return Some(Value::String(trimmed.to_string()));
-                }
+                    Value::String(trimmed.to_string())
+                } else {
+                    value
+                };
+
                 Some(value)
             })
             .collect();
@@ -172,7 +170,7 @@ impl NodeValues {
     }
 }
 
-fn read<R: BufRead>(reader: &mut Reader<R>, _depth: u64) -> Result<Value> {
+fn read<R: BufRead>(reader: &mut Reader<R>, depth: u64) -> Result<Value> {
     let mut buf = Vec::new();
     let mut nodes = NodeValues::new();
 
@@ -180,7 +178,7 @@ fn read<R: BufRead>(reader: &mut Reader<R>, _depth: u64) -> Result<Value> {
         match reader.read_event_into(&mut buf)? {
             Event::Start(ref e) => {
                 let name = String::from_utf8(e.name().into_inner().to_vec())?;
-                let mut child = read(reader, _depth + 1)?;
+                let mut child = read(reader, depth + 1)?;
                 let mut attrs = Map::new();
 
                 for a in e.attributes() {
@@ -202,11 +200,8 @@ fn read<R: BufRead>(reader: &mut Reader<R>, _depth: u64) -> Result<Value> {
 
                 if let Some(mut existing) = nodes.remove_entry(&name) {
                     let mut ents: Vec<Value> = Vec::new();
-                    if existing.is_array() {
-                        let existing = existing.as_array_mut().unwrap();
-                        while !existing.is_empty() {
-                            ents.push(existing.remove(0));
-                        }
+                    if let Value::Array(ref mut existing) = existing {
+                        ents.append(existing);
                     } else {
                         ents.push(existing);
                     }
@@ -263,19 +258,18 @@ fn highlight(value: Value, field_name: String, indent: usize) -> Vec<SyntaxToken
         for (child_key, child_value) in obj {
             if child_key.starts_with('@') {
                 let attr = child_key.trim_start_matches('@').to_string();
-                let value = match child_value {
-                    Value::String(s) => s.clone(),
-                    _ => unreachable!("xml parser should only return string attributes"),
+                let Value::String(value) = child_value.clone() else {
+                    unreachable!("xml parser should only return string attributes")
                 };
                 attrs.push((attr, value));
                 continue;
             }
 
             if child_key == "#text" {
-                text = Some(match child_value {
-                    Value::String(s) => s.clone(),
-                    _ => unreachable!("xml parser should only return string text nodes"),
-                });
+                let Value::String(inner) = child_value.clone() else {
+                    unreachable!("xml parser should only return string text nodes")
+                };
+                text = Some(inner);
                 continue;
             }
 
