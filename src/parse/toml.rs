@@ -63,13 +63,15 @@ fn toml_value_to_json(toml_value: TomlValue) -> Value {
 
 fn highlight(
     value: &Value,
-    section: Option<String>,
+    section: Option<&str>,
     from_arr: bool,
     arr_complex: bool,
 ) -> Vec<SyntaxToken> {
     let mut tokens = Vec::new();
+    let section = section.as_ref();
+
     if from_arr {
-        if let Some(section) = section.as_ref() {
+        if let Some(section) = section {
             tokens.push(SyntaxToken::Break);
             tokens.push(SyntaxToken::Section(format!("[[{section}]]")));
             tokens.push(SyntaxToken::Break);
@@ -94,7 +96,7 @@ fn highlight(
                     }
                     tokens.push(SyntaxToken::String(String::from("'''")));
                 }
-                _ => tokens.push(SyntaxToken::String(format!("{s:?}"))),
+                StringValue::MultiLines(_) => tokens.push(SyntaxToken::String(format!("{s:?}"))),
             }
         }
         Value::Number(num) => tokens.push(SyntaxToken::Number(num.to_string())),
@@ -105,7 +107,7 @@ fn highlight(
 
         Value::Object(obj) => {
             if !from_arr {
-                if let Some(section) = section.as_ref() {
+                if let Some(section) = section {
                     tokens.push(SyntaxToken::Break);
                     tokens.push(SyntaxToken::Section(format!("[{section}]")));
                     tokens.push(SyntaxToken::Break);
@@ -135,7 +137,7 @@ fn highlight(
                     None => field,
                 };
 
-                let value_tokens = highlight(value, Some(child_section), false, true);
+                let value_tokens = highlight(value, Some(&child_section), false, true);
                 tokens.extend(value_tokens);
             }
 
@@ -154,7 +156,7 @@ fn highlight(
             debug_assert!(section.is_some());
 
             for value in arr {
-                let value_tokens = highlight(value, section.clone(), true, false);
+                let value_tokens = highlight(value, section.copied(), true, false);
                 tokens.extend(value_tokens);
             }
 

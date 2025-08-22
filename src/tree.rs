@@ -68,7 +68,7 @@ impl Tree {
             Value::Array(arr) => {
                 let mut items = Vec::with_capacity(arr.len());
                 for (idx, value) in arr.into_iter().enumerate() {
-                    let item = tree.build_item(vec![], idx.to_string(), value, None);
+                    let item = tree.build_item(&[], idx.to_string(), value, None);
                     items.push(item);
                 }
                 items
@@ -76,13 +76,13 @@ impl Tree {
             Value::Object(obj) => {
                 let mut items = Vec::with_capacity(obj.len());
                 for (field, value) in obj {
-                    let item = tree.build_item(vec![], field, value, None);
+                    let item = tree.build_item(&[], field, value, None);
                     items.push(item);
                 }
                 items
             }
             _ => {
-                vec![tree.build_item(vec![], String::from("root"), value, None)]
+                vec![tree.build_item(&[], String::from("root"), value, None)]
             }
         };
         tree.items = items;
@@ -99,10 +99,10 @@ impl Tree {
 
     fn build_item(
         &mut self,
-        parent: Vec<String>,
+        parent: &[String],
         name: String,
         value: Value,
-        arr_name: Option<String>,
+        arr_name: Option<&str>,
     ) -> TreeItem<'static, String> {
         let path = if parent.is_empty() {
             name.clone()
@@ -166,7 +166,7 @@ impl Tree {
                     arr.len(),
                     if arr.len() > 1 { "items" } else { "item" }
                 );
-                let data_name = arr_name.as_deref().unwrap_or(&name);
+                let data_name = arr_name.unwrap_or(&name);
                 let tokens = self.parser.syntax_highlight(data_name, &raw_value);
                 let data = if self.cfg.data.disable_highlight {
                     Data::raw(Cow::Owned(SyntaxToken::pure_text(&tokens)))
@@ -182,7 +182,7 @@ impl Tree {
                     child_parent.push(raw_name.clone());
 
                     let child =
-                        self.build_item(child_parent, idx.to_string(), item, arr_name.clone());
+                        self.build_item(&child_parent, idx.to_string(), item, arr_name.as_deref());
                     children.push(child);
                 }
 
@@ -201,7 +201,7 @@ impl Tree {
                     obj.len(),
                     if obj.len() > 1 { "fields" } else { "field" }
                 );
-                let data_name = arr_name.as_deref().unwrap_or(&name);
+                let data_name = arr_name.unwrap_or(&name);
                 let tokens = self.parser.syntax_highlight(data_name, &raw_value);
                 let data = if self.cfg.data.disable_highlight {
                     Data::raw(Cow::Owned(SyntaxToken::pure_text(&tokens)))
@@ -215,7 +215,7 @@ impl Tree {
                     let mut child_parent = parent.to_vec();
                     child_parent.push(raw_name.clone());
 
-                    let child = self.build_item(child_parent, field, item, None);
+                    let child = self.build_item(&child_parent, field, item, None);
                     children.push(child);
                 }
                 (
@@ -279,7 +279,7 @@ impl Tree {
 }
 
 impl ItemValue {
-    pub fn plain_text<'a>(&'a self) -> Cow<'a, str> {
+    pub fn plain_text(&self) -> Cow<'_, str> {
         match self.data.display {
             Display::Raw(ref text) => Cow::Borrowed(text.as_ref()),
             Display::Highlight(ref tokens) => {

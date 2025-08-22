@@ -79,9 +79,8 @@ impl TreeOverview {
     }
 
     fn change_root(&mut self) -> bool {
-        let id = match self.get_selected() {
-            Some(id) => id,
-            None => return false,
+        let Some(id) = self.get_selected() else {
+            return false;
         };
 
         let value = match self.tree().get_value(id.as_str()) {
@@ -172,7 +171,7 @@ impl TreeOverview {
 
         let mut state = self.state.take().unwrap();
 
-        for item in self.tree().items.iter() {
+        for item in &self.tree().items {
             let id = item.identifier();
             if id == selected.as_str() && !item.children().is_empty() {
                 if state.opened().contains(&vec![item.identifier().clone()]) {
@@ -191,7 +190,7 @@ impl TreeOverview {
 
     fn expand_all(&mut self) -> bool {
         let mut state = self.state.take().unwrap();
-        for item in self.tree().items.iter() {
+        for item in &self.tree().items {
             if state.opened().contains(&vec![item.identifier().clone()]) {
                 Self::close_all_recursively(vec![], item, &mut state);
             } else {
@@ -288,14 +287,14 @@ impl TreeOverview {
         self.state = Some(state);
     }
 
-    pub fn filter(&mut self, opts: FilterOptions) {
+    pub fn filter(&mut self, opts: &FilterOptions) {
         let mut state = self.state.take().unwrap();
 
         let items = &self.tree().items;
         let mut filtered = vec![];
 
-        for item in items.iter() {
-            if let Some(filtered_item) = self.filter_item(vec![], item, &opts, &mut state) {
+        for item in items {
+            if let Some(filtered_item) = self.filter_item(vec![], item, opts, &mut state) {
                 filtered.push(filtered_item);
             }
         }
@@ -326,13 +325,8 @@ impl TreeOverview {
 
         let mut filtered_children = vec![];
         for child in item.children() {
-            match self.filter_item(id.clone(), child, opts, state) {
-                Some(child) => {
-                    filtered_children.push(child);
-                }
-                None => {
-                    continue;
-                }
+            if let Some(child) = self.filter_item(id.clone(), child, opts, state) {
+                filtered_children.push(child);
             }
         }
 

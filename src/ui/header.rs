@@ -19,7 +19,7 @@ pub struct HeaderContext {
 impl HeaderContext {
     pub fn new(source: Option<String>, content_type: ContentType, size: usize) -> Self {
         let version = format!("otree {}", env!("CARGO_PKG_VERSION"));
-        let source = source.map(Cow::Owned).unwrap_or(Cow::Borrowed("stdin"));
+        let source = source.map_or(Cow::Borrowed("stdin"), Cow::Owned);
         let content_type = match content_type {
             ContentType::Toml => "toml",
             ContentType::Yaml => "yaml",
@@ -52,7 +52,7 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn new(cfg: Rc<Config>, ctx: HeaderContext) -> Self {
+    pub fn new(cfg: Rc<Config>, ctx: &HeaderContext) -> Self {
         let header_format = &cfg.clone().header.format;
         Self {
             cfg,

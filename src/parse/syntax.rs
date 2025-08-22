@@ -1,4 +1,5 @@
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
+
 use ratatui::text::{Line, Span, Text};
 use regex::Regex;
 
@@ -122,7 +123,8 @@ impl SyntaxToken {
     }
 }
 
-static STANDARD_FIELD_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap());
+static STANDARD_FIELD_NAME_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap());
 
 pub fn quote_field_name(name: &str) -> String {
     if STANDARD_FIELD_NAME_RE.is_match(name) {

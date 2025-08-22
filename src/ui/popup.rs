@@ -89,9 +89,8 @@ impl Popup {
     }
 
     pub fn draw(&self, frame: &mut Frame) {
-        let data = match self.data.as_ref() {
-            Some(data) => data,
-            None => return,
+        let Some(data) = self.data.as_ref() else {
+            return;
         };
 
         let border_color = &self.cfg.colors.focus_border;

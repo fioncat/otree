@@ -130,9 +130,8 @@ impl Key {
         let raw_key = key;
 
         let key = key.strip_prefix('<').unwrap();
-        let key = match key.strip_suffix('>') {
-            Some(key) => key,
-            None => bail!("invalid key '{raw_key}', should be ends with '>'"),
+        let Some(key) = key.strip_suffix('>') else {
+            bail!("invalid key '{raw_key}', should be ends with '>'")
         };
 
         if let Some(key) = key.strip_prefix("ctrl-") {
@@ -152,9 +151,8 @@ impl Key {
         }
 
         if let Some(key) = key.strip_prefix('f') {
-            let n = match key.parse::<u8>() {
-                Ok(n) => n,
-                Err(_) => bail!("invalid key '{raw_key}', should be '<fN>'"),
+            let Ok(n) = key.parse::<u8>() else {
+                bail!("invalid key '{raw_key}', should be '<fN>'")
             };
 
             if n == 0 || n > 12 {
@@ -349,7 +347,7 @@ impl Keys {
     pub fn get_key_action(&self, event: KeyEvent) -> Option<KeyAction> {
         let event_key = Key::from_event(event)?;
         let mut current_action = None;
-        for (keys, action) in self.actions.iter() {
+        for (keys, action) in &self.actions {
             for key in keys {
                 if *key == event_key {
                     current_action = Some(*action);

@@ -25,9 +25,8 @@ use crate::tree::Tree;
 use crate::ui::{App, HeaderContext};
 
 fn run() -> Result<()> {
-    let args = match CommandArgs::parse()? {
-        Some(args) => args,
-        None => return Ok(()),
+    let Some(args) = CommandArgs::parse()? else {
+        return Ok(());
     };
 
     let mut cfg = if args.ignore_config {
@@ -87,6 +86,7 @@ fn run() -> Result<()> {
         Some(path) => {
             let path = PathBuf::from(path);
             if args.live_reload {
+                // TODO: simplify this by having ::new imply ::start
                 let _fw = FileWatcher::new(path.clone(), cfg.clone(), content_type, max_data_size);
                 _fw.start();
                 fw = Some(_fw);
@@ -113,18 +113,15 @@ fn run() -> Result<()> {
 
     if !cfg.header.disable {
         let header_ctx = HeaderContext::new(args.path, content_type, data.len());
-        app.set_header(header_ctx);
+        app.set_header(&header_ctx);
     }
 
     ui::start(app)
 }
 
 fn main() {
-    match run() {
-        Ok(_) => {}
-        Err(err) => {
-            eprintln!("Error: {err:#}");
-            process::exit(1);
-        }
+    if let Err(err) = run() {
+        eprintln!("Error: {err:#}");
+        process::exit(1);
     }
 }

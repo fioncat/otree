@@ -14,7 +14,7 @@ pub struct Edit {
 }
 
 impl Edit {
-    pub fn new(cfg: &Config, identify: String, data: String, extension: &'static str) -> Self {
+    pub fn new(cfg: &Config, identify: &str, data: String, extension: &'static str) -> Self {
         let mut cmd = Command::new(&cfg.editor.program);
         cmd.stdin(Stdio::inherit());
         cmd.stdout(Stdio::inherit());
@@ -24,7 +24,7 @@ impl Edit {
         let path = PathBuf::from(&cfg.editor.dir).join(format!("otree_{name}.{extension}"));
         let path = format!("{}", path.display());
 
-        for arg in cfg.editor.args.iter() {
+        for arg in &cfg.editor.args {
             if !arg.contains("{file}") {
                 cmd.arg(arg);
                 continue;
@@ -38,7 +38,7 @@ impl Edit {
     }
 
     pub fn run(mut self) {
-        if let Err(err) = self._run() {
+        if let Err(err) = self.run_inner() {
             eprintln!("Edit error: {err:#}");
             eprintln!();
             eprintln!("Press any key to continue...");
@@ -50,7 +50,7 @@ impl Edit {
         }
     }
 
-    fn _run(&mut self) -> Result<()> {
+    fn run_inner(&mut self) -> Result<()> {
         self.write_file().context("write edit file")?;
 
         let result = self.edit_file().context("edit file");

@@ -44,6 +44,7 @@ enum ElementInFocus {
     None,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum ScrollDirection {
     Up,
     Down,
@@ -97,6 +98,7 @@ impl App {
 
     const HELP_URL: &'static str = "https://github.com/fioncat/otree/blob/main/docs/actions.md";
 
+    #[expect(clippy::needless_pass_by_value)]
     pub fn new(cfg: Rc<Config>, tree: Tree, fw: Option<FileWatcher>) -> Self {
         let footer = if cfg.footer.disable {
             None
@@ -128,7 +130,7 @@ impl App {
         }
     }
 
-    pub fn set_header(&mut self, ctx: HeaderContext) {
+    pub fn set_header(&mut self, ctx: &HeaderContext) {
         self.header = Some(Header::new(self.cfg.clone(), ctx));
     }
 
@@ -153,7 +155,7 @@ impl App {
                 Refresh::Update => {
                     terminal.draw(|frame| self.draw(frame))?;
                 }
-                Refresh::Skip => continue,
+                Refresh::Skip => (),
                 Refresh::Edit(edit) => return Ok(ShowResult::Edit(edit)),
                 Refresh::Quit => return Ok(ShowResult::Quit),
             }
@@ -161,6 +163,8 @@ impl App {
     }
 
     fn refresh(&mut self) -> Result<Refresh> {
+        // maybe crossterm adds new events in future, chances are we don't care
+        #[expect(clippy::match_wildcard_for_single_variants)]
         let refresh = match crossterm::event::read()? {
             Event::Key(key) => self.on_key(key),
             Event::Mouse(mouse) => match mouse.kind {
@@ -194,15 +198,7 @@ impl App {
             return Ok(Refresh::Update);
         }
 
-        let maybe_tree = match fw.parse_tree() {
-            Ok(tree) => tree,
-            Err(e) => {
-                self.popup_error(format!("Failed to watch file events: {e:#}"));
-                return Ok(Refresh::Update);
-            }
-        };
-
-        match maybe_tree {
+        match fw.parse_tree() {
             Some(tree) => {
                 self.reload_tree(tree);
                 self.foot_message = Some(String::from("File updated, tree reloaded"));
@@ -285,6 +281,7 @@ impl App {
         }
     }
 
+    #[expect(clippy::needless_pass_by_value)] // ergonomy + cold path
     fn popup_error(&mut self, hint: impl ToString) {
         let error_style = self.cfg.colors.popup.error_text.style;
         let text = Text::styled(hint.to_string(), error_style);
@@ -394,17 +391,14 @@ impl App {
     fn can_switch_to_data_block(&self) -> bool {
         match self.focus {
             ElementInFocus::TreeOverview => self.tree_overview.get_selected().is_some(),
-            ElementInFocus::None => true,
-            ElementInFocus::Filter => true,
-            ElementInFocus::DataBlock => false,
-            ElementInFocus::Popup => false,
+            ElementInFocus::None | ElementInFocus::Filter => true,
+            ElementInFocus::DataBlock | ElementInFocus::Popup => false,
         }
     }
 
     fn on_key(&mut self, key: KeyEvent) -> Refresh {
-        let ka = match self.cfg.keys.get_key_action(key) {
-            Some(ka) => ka,
-            None => return Refresh::Skip,
+        let Some(ka) = self.cfg.keys.get_key_action(key) else {
+            return Refresh::Skip;
         };
 
         if matches!(self.focus, ElementInFocus::Filter) {
@@ -426,18 +420,17 @@ impl App {
                         return Refresh::Update;
                     }
                     FilterAction::Skip => {}
-                };
+                }
                 if updated {
                     let opts = filter.get_options();
-                    self.tree_overview.filter(opts);
+                    self.tree_overview.filter(&opts);
                     return Refresh::Update;
                 }
             }
         }
 
-        let action = match ka.action {
-            Some(action) => action,
-            None => return Refresh::Skip,
+        let Some(action) = ka.action else {
+            return Refresh::Skip;
         };
 
         match action {
@@ -462,10 +455,10 @@ impl App {
             Action::ChangeLayout => {
                 match self.layout_direction {
                     LayoutDirection::Vertical => {
-                        self.layout_direction = LayoutDirection::Horizontal
+                        self.layout_direction = LayoutDirection::Horizontal;
                     }
                     LayoutDirection::Horizontal => {
-                        self.layout_direction = LayoutDirection::Vertical
+                        self.layout_direction = LayoutDirection::Vertical;
                     }
                 }
                 Refresh::Update
@@ -502,16 +495,14 @@ impl App {
                     return Refresh::Skip;
                 }
 
-                let edit = match self.build_edit() {
-                    Some(edit) => edit,
-                    None => return Refresh::Skip,
+                let Some(edit) = self.build_edit() else {
+                    return Refresh::Skip;
                 };
                 Refresh::Edit(Box::new(edit))
             }
             Action::CopyName | Action::CopyValue => {
-                let text = match self.get_copy_text(action) {
-                    Some(text) => text,
-                    None => return Refresh::Skip,
+                let Some(text) = self.get_copy_text(action) else {
+                    return Refresh::Skip;
                 };
 
                 if let Err(err) = write_clipboard(&text) {
@@ -541,13 +532,13 @@ impl App {
                     Some(filter) => {
                         filter.set_target(target);
                         let opts = filter.get_options();
-                        self.tree_overview.filter(opts);
+                        self.tree_overview.filter(&opts);
                     }
                     None => {
                         self.filter = Some(Filter::new(self.cfg.clone(), target));
                         self.tree_overview.begin_filter();
                     }
-                };
+                }
 
                 self.focus = ElementInFocus::Filter;
 
@@ -557,7 +548,7 @@ impl App {
                 if let Some(filter) = self.filter.as_mut() {
                     filter.switch_ignore_case();
                     let opts = filter.get_options();
-                    self.tree_overview.filter(opts);
+                    self.tree_overview.filter(&opts);
                     return Refresh::Update;
                 }
                 Refresh::Skip
@@ -700,13 +691,13 @@ impl App {
         };
 
         if let Some(simple_value) = simple_value {
-            return Some(Edit::new(self.cfg.as_ref(), identify, simple_value, "txt"));
+            return Some(Edit::new(self.cfg.as_ref(), &identify, simple_value, "txt"));
         }
 
         let parser = self.tree_overview.get_parser();
         let data = item.plain_text().into_owned();
         let extension = parser.extension();
-        Some(Edit::new(self.cfg.as_ref(), identify, data, extension))
+        Some(Edit::new(self.cfg.as_ref(), &identify, data, extension))
     }
 
     fn get_copy_text(&self, action: Action) -> Option<String> {
@@ -736,10 +727,8 @@ impl App {
             }
         };
 
-        let fields = match keys_value {
-            Value::Object(o) => o,
-            // The keys MUST be an object
-            _ => unreachable!(),
+        let Value::Object(fields) = keys_value else {
+            unreachable!("The keys MUST be an object")
         };
 
         let name_style = self.cfg.colors.popup.help_name.style;

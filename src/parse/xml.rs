@@ -26,7 +26,7 @@ impl Parser for XmlParser {
     }
 
     fn syntax_highlight(&self, name: &str, value: &Value) -> Vec<SyntaxToken> {
-        highlight(value.clone(), name.to_string(), 0)
+        highlight(value.clone(), name, 0)
     }
 }
 
@@ -152,9 +152,8 @@ impl NodeValues {
                     let trimmed = text.trim();
                     if trimmed.is_empty() {
                         return None;
-                    } else {
-                        value = Value::String(trimmed.to_string());
                     }
+                    value = Value::String(trimmed.to_string());
                 }
 
                 Some(value)
@@ -169,6 +168,7 @@ impl NodeValues {
     }
 }
 
+#[expect(clippy::only_used_in_recursion)] // want to use depth at some point
 fn read<R: BufRead>(reader: &mut Reader<R>, depth: u64) -> Result<Value> {
     let mut buf = Vec::new();
     let mut nodes = NodeValues::new();
@@ -246,7 +246,7 @@ fn read<R: BufRead>(reader: &mut Reader<R>, depth: u64) -> Result<Value> {
     Ok(nodes.get_value())
 }
 
-fn highlight(value: Value, field_name: String, indent: usize) -> Vec<SyntaxToken> {
+fn highlight(value: Value, field_name: &str, indent: usize) -> Vec<SyntaxToken> {
     let mut tokens = Vec::new();
 
     if let Value::Object(obj) = value {
@@ -298,12 +298,12 @@ fn highlight(value: Value, field_name: String, indent: usize) -> Vec<SyntaxToken
                 tokens.push(SyntaxToken::Break);
             }
             for (child_key, child_value) in child_obj {
-                let child_indent = if !field_name.is_empty() {
-                    indent + 1
-                } else {
+                let child_indent = if field_name.is_empty() {
                     indent
+                } else {
+                    indent + 1
                 };
-                let child_tokens = highlight(child_value, child_key, child_indent);
+                let child_tokens = highlight(child_value, &child_key, child_indent);
                 tokens.extend(child_tokens);
             }
             if !field_name.is_empty() {
@@ -329,7 +329,7 @@ fn highlight(value: Value, field_name: String, indent: usize) -> Vec<SyntaxToken
         }
         Value::Array(arr) => {
             for child_item in arr {
-                let child_tokens = highlight(child_item, field_name.clone(), indent);
+                let child_tokens = highlight(child_item, field_name, indent);
                 tokens.extend(child_tokens);
             }
         }

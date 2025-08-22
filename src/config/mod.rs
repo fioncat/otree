@@ -143,7 +143,7 @@ impl Config {
 
     fn validate_palette(&self) -> Result<()> {
         use ratatui::style::Color;
-        for (key, color) in self.palette.iter() {
+        for (key, color) in &self.palette {
             if let Err(err) = color.parse::<Color>() {
                 return Err(err).with_context(|| format!("validate palette color '{key}'"));
             }
