@@ -2,6 +2,7 @@ mod json;
 mod jsonl;
 mod syntax;
 mod toml;
+mod xml;
 mod yaml;
 
 pub use syntax::SyntaxToken;
@@ -15,6 +16,7 @@ pub enum ContentType {
     Json,
     Yaml,
     Toml,
+    Xml,
 
     /// Useful for some logs file: https://jsonlines.org/
     Jsonl,
@@ -36,6 +38,7 @@ impl ContentType {
             Self::Json => Box::new(json::JsonParser {}),
             Self::Yaml => Box::new(yaml::YamlParser {}),
             Self::Toml => Box::new(toml::TomlParser {}),
+            Self::Xml => Box::new(xml::XmlParser {}),
             Self::Jsonl => Box::new(jsonl::JsonlParser {}),
         }
     }

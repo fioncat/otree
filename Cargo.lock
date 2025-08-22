@@ -750,6 +750,7 @@ dependencies = [
  "notify",
  "once_cell",
  "paste",
+ "quick-xml",
  "ratatui",
  "regex",
  "serde",
@@ -804,6 +805,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "02b3e5e68a3a1a02aad3ec490a98007cbc13c37cbe84a3cd7b8e406d76e7f778"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "quick-xml"
+version = "0.38.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d200a41a7797e6461bd04e4e95c3347053a731c32c87f066f2f0dda22dbdbba8"
+dependencies = [
+ "memchr",
+ "serde",
 ]
 
 [[package]]
