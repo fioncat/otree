@@ -2,7 +2,7 @@
 
 ![screenshot](assets/screenshot.png)
 
-A command line tool to view objects (JSON/YAML/TOML) in TUI tree widget.
+A command line tool to view objects (JSON/YAML/TOML/XML) in TUI tree widget.
 
 ## Install
 
@@ -38,6 +38,7 @@ Open a JSON/YAML/TOML file in TUI tree viewer:
 otree /path/to/file.json
 otree /path/to/file.yaml
 otree /path/to/file.toml
+otree /path/to/file.xml
 ```
 
 For more command usage, please run `otree --help`.
