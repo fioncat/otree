@@ -188,13 +188,16 @@ fn read<R: BufRead>(reader: &mut Reader<R>, depth: u64) -> Result<Value> {
                     let key = format!("@{key}");
                     let value = Value::String(value);
 
-                    // If the child is already an object, that's where the insert
-                    // should happen
-                    if child.is_object() {
-                        child.as_object_mut().unwrap().insert(key, value);
-                    } else {
-                        attrs.insert(key, value);
-                    }
+                    attrs.insert(key, value);
+                }
+
+                // If the child is already an object, that's where attributes should end up in
+                if child.is_object() {
+                    // We want to have them at the start though, while still being listed
+                    // Since serde_json::Map doesn't really expose that much of indexmap::Map,
+                    // we'll just hack up our own semi-splice *sigh*
+                    let child = child.as_object_mut().unwrap();
+                    *child = take(&mut attrs).into_iter().chain(take(child)).collect();
                 }
 
                 if let Some(mut existing) = nodes.remove_entry(&name) {
