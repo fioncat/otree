@@ -178,18 +178,18 @@ fn read<R: BufRead>(reader: &mut Reader<R>, depth: u64) -> Result<Value> {
             Event::Start(ref e) => {
                 let name = String::from_utf8(e.name().into_inner().to_vec())?;
                 let mut child = read(reader, depth + 1)?;
-                let mut attrs = Map::new();
+                let mut attrs: Map<_, _> = e
+                    .attributes()
+                    .map(|attr| {
+                        let attr = attr?;
+                        let (key, value) = (
+                            String::from_utf8(attr.key.into_inner().to_vec())?,
+                            String::from_utf8(attr.value.to_vec())?,
+                        );
 
-                for a in e.attributes() {
-                    let a = a?;
-                    let key = String::from_utf8(a.key.into_inner().to_vec())?;
-                    let value = String::from_utf8(a.value.to_vec())?;
-
-                    let key = format!("@{key}");
-                    let value = Value::String(value);
-
-                    attrs.insert(key, value);
-                }
+                        Ok((format!("@{key}"), Value::String(value)))
+                    })
+                    .collect::<Result<_>>()?;
 
                 // If the child is already an object, that's where attributes should end up in
                 if child.is_object() {
@@ -201,19 +201,15 @@ fn read<R: BufRead>(reader: &mut Reader<R>, depth: u64) -> Result<Value> {
                 }
 
                 if let Some(mut existing) = nodes.remove_entry(&name) {
-                    let mut ents: Vec<Value> = Vec::new();
+                    let mut ents = Vec::new();
                     if let Value::Array(ref mut existing) = existing {
                         ents.append(existing);
                     } else {
                         ents.push(existing);
                     }
 
-                    // nodes with attributes need to be handled special
-                    if let Some(attrs) = attrs.insert_text(&child) {
-                        ents.push(attrs);
-                    } else {
-                        ents.push(child);
-                    }
+                    attrs.insert_text(&child);
+                    ents.push(child);
 
                     nodes.insert(name, Value::Array(ents));
                 } else if let Some(attrs) = attrs.insert_text(&child) {
