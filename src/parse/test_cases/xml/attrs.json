@@ -1,0 +1,57 @@
+{
+  "company": {
+    "@name": "TechCorp",
+    "@location": "NYC",
+    "departments": {
+      "@type": "array",
+      "@count": "2",
+      "department": [
+        {
+          "@id": "d1",
+          "@active": "true",
+          "name": "Engineering",
+          "employees": {
+            "@type": "array",
+            "employee": [
+              {
+                "@id": "e101",
+                "@role": "developer",
+                "name": "Alice",
+                "age": {
+                  "@unit": "years",
+                  "#text": "29"
+                }
+              },
+              {
+                "@id": "e102",
+                "@role": "tester",
+                "name": "Bob",
+                "age": {
+                  "@unit": "years",
+                  "#text": "32"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "@id": "d2",
+          "@active": "false",
+          "name": "HR",
+          "employees": {
+            "@type": "array",
+            "employee": {
+              "@id": "e201",
+              "@role": "manager",
+              "name": "Charlie",
+              "age": {
+                "@unit": "years",
+                "#text": "40"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

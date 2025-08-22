@@ -256,3 +256,37 @@ fn read<R: BufRead>(reader: &mut Reader<R>, _depth: u64) -> Result<Value> {
 
     Ok(nodes.get_value())
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_parse() {
+        let test_cases = [
+            (
+                include_str!("test_cases/xml/object.xml"),
+                include_str!("test_cases/xml/object.json"),
+            ),
+            (
+                include_str!("test_cases/xml/array.xml"),
+                include_str!("test_cases/xml/array.json"),
+            ),
+            (
+                include_str!("test_cases/xml/array_of_objects.xml"),
+                include_str!("test_cases/xml/array_of_objects.json"),
+            ),
+            (
+                include_str!("test_cases/xml/attrs.xml"),
+                include_str!("test_cases/xml/attrs.json"),
+            ),
+        ];
+
+        let parser = XmlParser {};
+        for (xml_data, json_data) in test_cases {
+            let value = parser.parse(xml_data).unwrap();
+            let expected: Value = serde_json::from_str(json_data).unwrap();
+            assert_eq!(value, expected);
+        }
+    }
+}

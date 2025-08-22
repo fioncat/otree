@@ -1,0 +1,20 @@
+{
+  "orders": {
+    "order": [
+      {
+        "id": "1001",
+        "product": {
+          "name": "Laptop",
+          "price": "1200"
+        }
+      },
+      {
+        "id": "1002",
+        "product": {
+          "name": "Phone",
+          "price": "800"
+        }
+      }
+    ]
+  }
+}
