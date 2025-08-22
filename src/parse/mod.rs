@@ -27,11 +27,6 @@ pub trait Parser {
 
     fn parse(&self, data: &str) -> Result<Value>;
 
-    fn to_string(&self, name: &str, value: &Value) -> String {
-        let tokens = self.syntax_highlight(name, value);
-        SyntaxToken::pure_text(&tokens)
-    }
-
     fn syntax_highlight(&self, name: &str, value: &Value) -> Vec<SyntaxToken>;
 }
 

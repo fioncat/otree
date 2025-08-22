@@ -690,7 +690,6 @@ impl App {
     fn build_edit(&self) -> Option<Edit> {
         let identify = self.tree_overview.get_selected()?;
         let item = self.tree_overview.get_value(identify.as_str())?;
-        let data_name = item.arr_name.as_deref().unwrap_or(&item.name);
 
         let simple_value = match &item.value {
             Value::String(s) => Some(s.clone()),
@@ -705,7 +704,7 @@ impl App {
         }
 
         let parser = self.tree_overview.get_parser();
-        let data = parser.to_string(data_name, &item.value);
+        let data = item.plain_text().into_owned();
         let extension = parser.extension();
         Some(Edit::new(self.cfg.as_ref(), identify, data, extension))
     }
@@ -713,7 +712,6 @@ impl App {
     fn get_copy_text(&self, action: Action) -> Option<String> {
         let identify = self.tree_overview.get_selected()?;
         let item = self.tree_overview.get_value(identify.as_str())?;
-        let data_name = item.arr_name.as_deref().unwrap_or(&item.name);
 
         if matches!(action, Action::CopyName) {
             return Some(item.name.clone());
@@ -723,10 +721,7 @@ impl App {
             Value::String(s) => s.clone(),
             Value::Number(n) => n.to_string(),
             Value::Bool(b) => b.to_string(),
-            _ => {
-                let parser = self.tree_overview.get_parser();
-                parser.to_string(data_name, &item.value)
-            }
+            _ => item.plain_text().into_owned(),
         };
 
         Some(data)

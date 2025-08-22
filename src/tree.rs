@@ -23,7 +23,6 @@ pub struct ItemValue {
     pub name: String,
     pub value: Value,
 
-    pub arr_name: Option<String>,
     pub data: Data,
 }
 
@@ -121,7 +120,6 @@ impl Tree {
                 ),
                 ItemValue {
                     name: raw_name,
-                    arr_name,
                     value: raw_value,
                     data: Data::null(self.cfg.as_ref()),
                 },
@@ -133,7 +131,6 @@ impl Tree {
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
                         name: raw_name,
-                        arr_name,
                         value: raw_value,
                         data: Data::string(self.cfg.as_ref(), s),
                     },
@@ -146,7 +143,6 @@ impl Tree {
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
                         name: raw_name,
-                        arr_name,
                         value: raw_value,
                         data: Data::number(self.cfg.as_ref(), num.to_string()),
                     },
@@ -159,7 +155,6 @@ impl Tree {
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
                         name: raw_name,
-                        arr_name,
                         value: raw_value,
                         data: Data::bool(self.cfg.as_ref(), b),
                     },
@@ -172,10 +167,11 @@ impl Tree {
                     if arr.len() > 1 { "items" } else { "item" }
                 );
                 let data_name = arr_name.as_deref().unwrap_or(&name);
+                let tokens = self.parser.syntax_highlight(data_name, &raw_value);
                 let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(self.parser.to_string(data_name, &raw_value)))
+                    Data::raw(Cow::Owned(SyntaxToken::pure_text(&tokens)))
                 } else {
-                    Data::highlight(self.parser.syntax_highlight(data_name, &raw_value))
+                    Data::highlight(tokens)
                 };
                 let arr_name = Some(name.clone());
                 let text = self.build_item_text(name, FieldType::Arr, Cow::Owned(description));
@@ -194,7 +190,6 @@ impl Tree {
                     TreeItem::new(raw_name.clone(), text, children).unwrap(),
                     ItemValue {
                         name: raw_name,
-                        arr_name,
                         value: raw_value,
                         data,
                     },
@@ -207,10 +202,11 @@ impl Tree {
                     if obj.len() > 1 { "fields" } else { "field" }
                 );
                 let data_name = arr_name.as_deref().unwrap_or(&name);
+                let tokens = self.parser.syntax_highlight(data_name, &raw_value);
                 let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(self.parser.to_string(data_name, &raw_value)))
+                    Data::raw(Cow::Owned(SyntaxToken::pure_text(&tokens)))
                 } else {
-                    Data::highlight(self.parser.syntax_highlight(data_name, &raw_value))
+                    Data::highlight(tokens)
                 };
                 let text = self.build_item_text(name, FieldType::Obj, Cow::Owned(description));
 
@@ -226,7 +222,6 @@ impl Tree {
                     TreeItem::new(raw_name.clone(), text, children).unwrap(),
                     ItemValue {
                         name: raw_name,
-                        arr_name,
                         value: raw_value,
                         data,
                     },
@@ -280,6 +275,18 @@ impl Tree {
             Span::styled(description, self.cfg.colors.tree.value.style),
         ]);
         Text::from(line)
+    }
+}
+
+impl ItemValue {
+    pub fn plain_text<'a>(&'a self) -> Cow<'a, str> {
+        match self.data.display {
+            Display::Raw(ref text) => Cow::Borrowed(text.as_ref()),
+            Display::Highlight(ref tokens) => {
+                let text = SyntaxToken::pure_text(tokens);
+                Cow::Owned(text)
+            }
+        }
     }
 }
 
