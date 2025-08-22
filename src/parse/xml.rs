@@ -147,16 +147,15 @@ impl NodeValues {
         self.values = self
             .values
             .drain(..)
-            .filter_map(|value| {
-                let value = if let Value::String(text) = value {
+            .filter_map(|mut value| {
+                if let Value::String(text) = value {
                     let trimmed = text.trim();
                     if trimmed.is_empty() {
                         return None;
+                    } else {
+                        value = Value::String(trimmed.to_string());
                     }
-                    Value::String(trimmed.to_string())
-                } else {
-                    value
-                };
+                }
 
                 Some(value)
             })
