@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::rc::Rc;
 
 use ratatui::layout::{Alignment, Position, Rect};
@@ -19,6 +20,7 @@ pub struct TreeOverview {
     state: Option<TreeState<String>>,
     tree: Option<Tree>,
     filter_items: Option<Vec<TreeItem<'static, String>>>,
+    filter_cache: Option<HashSet<String>>,
     before_filter_state: Option<TreeState<String>>,
     last_switches: Vec<(Tree, TreeState<String>)>,
     root_switch: Option<(Tree, TreeState<String>)>,
@@ -34,6 +36,7 @@ impl TreeOverview {
             state: Some(TreeState::default()),
             tree: Some(tree),
             filter_items: None,
+            filter_cache: None,
             before_filter_state: None,
             last_switches: vec![],
             root_switch: None,
@@ -304,14 +307,18 @@ impl TreeOverview {
 
         let items = &self.tree().items;
         let mut filtered = vec![];
+        let mut filter_cache = HashSet::new();
 
         for item in items {
-            if let Some(filtered_item) = self.filter_item(vec![], item, opts, &mut state) {
+            if let Some(filtered_item) =
+                self.filter_item(vec![], item, opts, &mut state, &mut filter_cache)
+            {
                 filtered.push(filtered_item);
             }
         }
 
         self.filter_items = Some(filtered);
+        self.filter_cache = Some(filter_cache);
         self.state = Some(state);
     }
 
@@ -321,19 +328,24 @@ impl TreeOverview {
         item: &TreeItem<'static, String>,
         opts: &FilterOptions,
         state: &mut TreeState<String>,
+        cache: &mut HashSet<String>,
     ) -> Option<TreeItem<'static, String>> {
         id.push(item.identifier().clone());
         let key = id.join("/");
         let item_value = self.tree().get_value(&key).unwrap();
         let text = item_value.build_highlighted_text(&self.cfg, &opts.text, opts.ignore_case);
 
-        let ok = opts.filter(&item_value);
+        let mut matched = opts.filter(&item_value);
+        if matched {
+            Self::open_parent(&id, state);
+            cache.insert(key);
+        }
+        if !self.cfg.filter.exclude_mode {
+            matched = true;
+        }
 
         if item.children().is_empty() {
-            if ok || !self.cfg.filter.exclude_mode {
-                if ok {
-                    Self::open_parent(&id, state);
-                }
+            if matched {
                 return Some(TreeItem::new_leaf(item.identifier().clone(), text));
             }
             return None;
@@ -342,11 +354,11 @@ impl TreeOverview {
         let filtered_children: Vec<_> = item
             .children()
             .iter()
-            .filter_map(|child| self.filter_item(id.clone(), child, opts, state))
+            .filter_map(|child| self.filter_item(id.clone(), child, opts, state, cache))
             .collect();
 
         if filtered_children.is_empty() {
-            if ok {
+            if matched {
                 return Some(TreeItem::new_leaf(item.identifier().clone(), text));
             }
             return None;
