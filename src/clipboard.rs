@@ -48,8 +48,7 @@ pub fn write_clipboard(text: &str) -> Result<()> {
     if !status.success() {
         let code = status
             .code()
-            .map(|code| code.to_string())
-            .unwrap_or("<unknown>".to_string());
+            .map_or("<unknown>".to_string(), |code| code.to_string());
         bail!("clipboard program exited with bad status {code}",);
     }
 

@@ -26,7 +26,7 @@ impl Parser for XmlParser {
     }
 
     fn syntax_highlight(&self, name: &str, value: &Value) -> Vec<SyntaxToken> {
-        highlight(value.clone(), name.to_string(), 0)
+        highlight(value.clone(), name, 0)
     }
 }
 
@@ -53,6 +53,7 @@ impl AttrMap for Map<String, Value> {
     }
 }
 
+#[derive(Default)]
 struct NodeValues {
     node: Map<String, Value>,
     nodes: Vec<Map<String, Value>>,
@@ -62,12 +63,7 @@ struct NodeValues {
 
 impl NodeValues {
     fn new() -> Self {
-        Self {
-            values: Vec::new(),
-            node: Map::new(),
-            nodes: Vec::new(),
-            nodes_are_map: Vec::new(),
-        }
+        Self::default()
     }
 
     fn insert(&mut self, key: String, value: Value) {
@@ -150,16 +146,16 @@ impl NodeValues {
         // trim any values left, removing empty strings
         self.values = self
             .values
-            .clone()
-            .into_iter()
-            .filter_map(|value| {
-                if value.is_string() {
-                    let trimmed = value.as_str().unwrap_or_default().trim();
+            .drain(..)
+            .filter_map(|mut value| {
+                if let Value::String(text) = value {
+                    let trimmed = text.trim();
                     if trimmed.is_empty() {
                         return None;
                     }
-                    return Some(Value::String(trimmed.to_string()));
+                    value = Value::String(trimmed.to_string());
                 }
+
                 Some(value)
             })
             .collect();
@@ -172,7 +168,8 @@ impl NodeValues {
     }
 }
 
-fn read<R: BufRead>(reader: &mut Reader<R>, _depth: u64) -> Result<Value> {
+#[expect(clippy::only_used_in_recursion)] // want to use depth at some point
+fn read<R: BufRead>(reader: &mut Reader<R>, depth: u64) -> Result<Value> {
     let mut buf = Vec::new();
     let mut nodes = NodeValues::new();
 
@@ -180,43 +177,39 @@ fn read<R: BufRead>(reader: &mut Reader<R>, _depth: u64) -> Result<Value> {
         match reader.read_event_into(&mut buf)? {
             Event::Start(ref e) => {
                 let name = String::from_utf8(e.name().into_inner().to_vec())?;
-                let mut child = read(reader, _depth + 1)?;
-                let mut attrs = Map::new();
+                let mut child = read(reader, depth + 1)?;
+                let mut attrs: Map<_, _> = e
+                    .attributes()
+                    .map(|attr| {
+                        let attr = attr?;
+                        let (key, value) = (
+                            String::from_utf8(attr.key.into_inner().to_vec())?,
+                            String::from_utf8(attr.value.to_vec())?,
+                        );
 
-                for a in e.attributes() {
-                    let a = a?;
-                    let key = String::from_utf8(a.key.into_inner().to_vec())?;
-                    let value = String::from_utf8(a.value.to_vec())?;
+                        Ok((format!("@{key}"), Value::String(value)))
+                    })
+                    .collect::<Result<_>>()?;
 
-                    let key = format!("@{key}");
-                    let value = Value::String(value);
-
-                    // If the child is already an object, that's where the insert
-                    // should happen
-                    if child.is_object() {
-                        child.as_object_mut().unwrap().insert(key, value);
-                    } else {
-                        attrs.insert(key, value);
-                    }
+                // If the child is already an object, that's where attributes should end up in
+                if child.is_object() {
+                    // We want to have them at the start though, while still being listed
+                    // Since serde_json::Map doesn't really expose that much of indexmap::Map,
+                    // we'll just hack up our own semi-splice *sigh*
+                    let child = child.as_object_mut().unwrap();
+                    *child = take(&mut attrs).into_iter().chain(take(child)).collect();
                 }
 
                 if let Some(mut existing) = nodes.remove_entry(&name) {
-                    let mut ents: Vec<Value> = Vec::new();
-                    if existing.is_array() {
-                        let existing = existing.as_array_mut().unwrap();
-                        while !existing.is_empty() {
-                            ents.push(existing.remove(0));
-                        }
+                    let mut ents = Vec::new();
+                    if let Value::Array(ref mut existing) = existing {
+                        ents.append(existing);
                     } else {
                         ents.push(existing);
                     }
 
-                    // nodes with attributes need to be handled special
-                    if let Some(attrs) = attrs.insert_text(&child) {
-                        ents.push(attrs);
-                    } else {
-                        ents.push(child);
-                    }
+                    attrs.insert_text(&child);
+                    ents.push(child);
 
                     nodes.insert(name, Value::Array(ents));
                 } else if let Some(attrs) = attrs.insert_text(&child) {
@@ -252,7 +245,7 @@ fn read<R: BufRead>(reader: &mut Reader<R>, _depth: u64) -> Result<Value> {
     Ok(nodes.get_value())
 }
 
-fn highlight(value: Value, field_name: String, indent: usize) -> Vec<SyntaxToken> {
+fn highlight(value: Value, field_name: &str, indent: usize) -> Vec<SyntaxToken> {
     let mut tokens = Vec::new();
 
     if let Value::Object(obj) = value {
@@ -263,19 +256,18 @@ fn highlight(value: Value, field_name: String, indent: usize) -> Vec<SyntaxToken
         for (child_key, child_value) in obj {
             if child_key.starts_with('@') {
                 let attr = child_key.trim_start_matches('@').to_string();
-                let value = match child_value {
-                    Value::String(s) => s.clone(),
-                    _ => unreachable!("xml parser should only return string attributes"),
+                let Value::String(value) = child_value.clone() else {
+                    unreachable!("xml parser should only return string attributes")
                 };
                 attrs.push((attr, value));
                 continue;
             }
 
             if child_key == "#text" {
-                text = Some(match child_value {
-                    Value::String(s) => s.clone(),
-                    _ => unreachable!("xml parser should only return string text nodes"),
-                });
+                let Value::String(inner) = child_value.clone() else {
+                    unreachable!("xml parser should only return string text nodes")
+                };
+                text = Some(inner);
                 continue;
             }
 
@@ -305,12 +297,12 @@ fn highlight(value: Value, field_name: String, indent: usize) -> Vec<SyntaxToken
                 tokens.push(SyntaxToken::Break);
             }
             for (child_key, child_value) in child_obj {
-                let child_indent = if !field_name.is_empty() {
-                    indent + 1
-                } else {
+                let child_indent = if field_name.is_empty() {
                     indent
+                } else {
+                    indent + 1
                 };
-                let child_tokens = highlight(child_value, child_key, child_indent);
+                let child_tokens = highlight(child_value, &child_key, child_indent);
                 tokens.extend(child_tokens);
             }
             if !field_name.is_empty() {
@@ -336,7 +328,7 @@ fn highlight(value: Value, field_name: String, indent: usize) -> Vec<SyntaxToken
         }
         Value::Array(arr) => {
             for child_item in arr {
-                let child_tokens = highlight(child_item, field_name.clone(), indent);
+                let child_tokens = highlight(child_item, field_name, indent);
                 tokens.extend(child_tokens);
             }
         }

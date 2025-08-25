@@ -7,7 +7,7 @@ use vergen::{BuildBuilder, CargoBuilder, Emitter, RustcBuilder, SysinfoBuilder};
 
 fn uncommitted_count() -> Result<usize, Box<dyn Error>> {
     let output = exec_git(&["status", "-s"])?;
-    let lines = output.trim().split('\n');
+    let lines = output.lines();
     Ok(lines.filter(|line| !line.trim().is_empty()).count())
 }
 

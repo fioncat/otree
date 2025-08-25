@@ -22,9 +22,8 @@ pub fn set_file(file: String) {
 
 pub fn write_logs(mut msg: String) -> Result<()> {
     msg.push('\n');
-    let file = match FILE.get() {
-        Some(file) => file,
-        None => return Ok(()),
+    let Some(file) = FILE.get() else {
+        return Ok(());
     };
 
     let mut file = fs::OpenOptions::new()
