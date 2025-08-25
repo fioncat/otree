@@ -32,6 +32,14 @@ pub struct CommandArgs {
     #[clap(long)]
     pub disable_footer: bool,
 
+    /// Disable the filter.
+    #[clap(long)]
+    pub disable_filter: bool,
+
+    /// Ignore case when filtering.
+    #[clap(long)]
+    pub filter_ignore_case: Option<bool>,
+
     /// The header format.
     #[clap(short = 'f', long)]
     pub header_format: Option<String>,
@@ -133,6 +141,14 @@ impl CommandArgs {
 
         if self.disable_footer {
             cfg.footer.disable = true;
+        }
+
+        if self.disable_filter {
+            cfg.filter.disable = true;
+        }
+
+        if let Some(ignore_case) = self.filter_ignore_case {
+            cfg.filter.ignore_case = ignore_case;
         }
 
         if self.disable_highlight {
