@@ -3,11 +3,10 @@
 ### Features
 
 - **Highlighting for filter keywords** (#94)
-  The default filter behavior has changed: instead of hiding unmatched items, all items are now displayed, with matches highlighted. This makes it easier to distinguish filtered results without losing context.
+  - The default filter behavior has changed: instead of hiding unmatched items, all items are now displayed, with matches highlighted. This makes it easier to distinguish filtered results without losing context.
   - If you prefer the old behavior (hiding unmatched items), you can enable it by setting `filter.exclude_mode = true`.
 
-- **Filter navigation actions** (#95)
-  In filter mode, you can now quickly jump between matches using the new actions:
+- **Filter navigation actions** (#95). In filter mode, you can now quickly jump between matches using the new actions:
   - `filter_next_match` (default key: `n`)
   - `filter_prev_match` (default key: `N`)
 
