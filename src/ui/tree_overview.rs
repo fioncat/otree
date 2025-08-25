@@ -1,7 +1,8 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use ratatui::layout::{Alignment, Position, Rect};
+use ratatui::text::Span;
 use ratatui::widgets::{Block, Borders, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use serde_json::Value;
@@ -20,7 +21,8 @@ pub struct TreeOverview {
     state: Option<TreeState<String>>,
     tree: Option<Tree>,
     filter_items: Option<Vec<TreeItem<'static, String>>>,
-    filter_cache: Option<HashSet<String>>,
+    filter_cache: Option<HashMap<String, usize>>,
+    filter_nav_pos: Option<usize>,
     before_filter_state: Option<TreeState<String>>,
     last_switches: Vec<(Tree, TreeState<String>)>,
     root_switch: Option<(Tree, TreeState<String>)>,
@@ -29,6 +31,7 @@ pub struct TreeOverview {
 
 impl TreeOverview {
     const DEFAULT_HIGHLIGHT_SYMBOL: &'static str = "→ ";
+    const MAX_FILTER_COUNT_DISPLAY: usize = 9999;
 
     pub fn new(cfg: Rc<Config>, tree: Tree) -> Self {
         Self {
@@ -37,6 +40,7 @@ impl TreeOverview {
             tree: Some(tree),
             filter_items: None,
             filter_cache: None,
+            filter_nav_pos: None,
             before_filter_state: None,
             last_switches: vec![],
             root_switch: None,
@@ -78,6 +82,8 @@ impl TreeOverview {
             Action::ChangeRoot => self.change_root(),
             Action::ExpandChildren => self.expand_children(),
             Action::ExpandAll => self.expand_all(),
+            Action::FilterNextMatch => self.nav_filter_match(false),
+            Action::FilterPrevMatch => self.nav_filter_match(true),
             Action::Reset => self.reset(),
             _ => false,
         }
@@ -261,7 +267,7 @@ impl TreeOverview {
             .borders(Borders::ALL)
             .border_style(border_style)
             .title_alignment(Alignment::Center)
-            .title("Tree Overview");
+            .title(self.build_title());
         let mut state = self.state.take().unwrap();
         let items = if let Some(filter_items) = &self.filter_items {
             filter_items
@@ -288,6 +294,28 @@ impl TreeOverview {
         self.state = Some(state);
     }
 
+    fn build_title(&self) -> Vec<Span<'static>> {
+        let mut spans = vec![Span::raw("Tree Overview")];
+        if self.filter_cache.is_none() {
+            return spans;
+        }
+        let filter_count = self.filter_cache.as_ref().unwrap().len();
+        let filter_count = if filter_count > Self::MAX_FILTER_COUNT_DISPLAY {
+            format!(">{}", Self::MAX_FILTER_COUNT_DISPLAY)
+        } else {
+            filter_count.to_string()
+        };
+        let filter_pos = if let Some(pos) = self.filter_nav_pos {
+            pos.to_string()
+        } else {
+            "-".to_string()
+        };
+        spans.push(Span::raw(" "));
+        spans.push(Span::raw(format!("[{filter_pos}/{filter_count}]",)));
+
+        spans
+    }
+
     pub fn begin_filter(&mut self) {
         let state = self.state.take().unwrap();
         self.before_filter_state = Some(state);
@@ -296,6 +324,8 @@ impl TreeOverview {
 
     pub fn end_filter(&mut self) {
         self.filter_items = None;
+        self.filter_cache = None;
+        self.filter_nav_pos = None;
         let selected = self.state().selected().to_vec();
         let mut state = self.before_filter_state.take().unwrap();
         state.select(selected);
@@ -307,18 +337,25 @@ impl TreeOverview {
 
         let items = &self.tree().items;
         let mut filtered = vec![];
-        let mut filter_cache = HashSet::new();
+        let mut filter_cache = HashMap::new();
+        let mut count = 0;
 
         for item in items {
-            if let Some(filtered_item) =
-                self.filter_item(vec![], item, opts, &mut state, &mut filter_cache)
-            {
+            if let Some(filtered_item) = self.filter_item(
+                vec![],
+                item,
+                opts,
+                &mut state,
+                &mut count,
+                &mut filter_cache,
+            ) {
                 filtered.push(filtered_item);
             }
         }
 
         self.filter_items = Some(filtered);
         self.filter_cache = Some(filter_cache);
+        self.filter_nav_pos = None;
         self.state = Some(state);
     }
 
@@ -328,7 +365,8 @@ impl TreeOverview {
         item: &TreeItem<'static, String>,
         opts: &FilterOptions,
         state: &mut TreeState<String>,
-        cache: &mut HashSet<String>,
+        count: &mut usize,
+        cache: &mut HashMap<String, usize>,
     ) -> Option<TreeItem<'static, String>> {
         id.push(item.identifier().clone());
         let key = id.join("/");
@@ -338,7 +376,8 @@ impl TreeOverview {
         let mut matched = opts.filter(&item_value);
         if matched {
             Self::open_parent(&id, state);
-            cache.insert(key);
+            *count += 1;
+            cache.insert(key, *count);
         }
         if !self.cfg.filter.exclude_mode {
             matched = true;
@@ -354,7 +393,7 @@ impl TreeOverview {
         let filtered_children: Vec<_> = item
             .children()
             .iter()
-            .filter_map(|child| self.filter_item(id.clone(), child, opts, state, cache))
+            .filter_map(|child| self.filter_item(id.clone(), child, opts, state, count, cache))
             .collect();
 
         if filtered_children.is_empty() {
@@ -365,6 +404,67 @@ impl TreeOverview {
         }
 
         Some(TreeItem::new(item.identifier().clone(), text, filtered_children).unwrap())
+    }
+
+    fn nav_filter_match(&mut self, rev: bool) -> bool {
+        let mut iter = self.tree().identifies.iter();
+        let mut iter_rev = self.tree().identifies.iter().rev();
+
+        let Some(ref filter_cache) = self.filter_cache else {
+            return false;
+        };
+
+        let mut found = None;
+
+        if let Some(ref selected) = self.get_selected() {
+            let mut selected_iter = self.tree().identifies.iter();
+            let mut selected_iter_rev = self.tree().identifies.iter().rev();
+
+            let mut begin_match = false;
+            loop {
+                let next = if rev {
+                    selected_iter_rev.next()
+                } else {
+                    selected_iter.next()
+                };
+                let Some(item) = next else {
+                    break;
+                };
+                if begin_match && filter_cache.contains_key(item) {
+                    found = Some(item.clone());
+                    break;
+                }
+                if item == selected {
+                    begin_match = true;
+                }
+            }
+        }
+
+        if found.is_none() {
+            loop {
+                let next = if rev { iter_rev.next() } else { iter.next() };
+                let Some(item) = next else {
+                    break;
+                };
+                if filter_cache.contains_key(item) {
+                    found = Some(item.clone());
+                    break;
+                }
+            }
+        }
+
+        let Some(found) = found else {
+            return false;
+        };
+
+        if let Some(pos) = filter_cache.get(&found) {
+            self.filter_nav_pos = Some(*pos);
+        }
+
+        let id: Vec<_> = found.split('/').map(String::from).collect();
+        Self::open_parent(&id, self.state_mut());
+        self.state_mut().select(id);
+        true
     }
 
     fn open_parent(id: &[String], state: &mut TreeState<String>) {
