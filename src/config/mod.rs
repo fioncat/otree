@@ -15,6 +15,9 @@ use self::types::Types;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
+    #[serde(default = "Tree::default")]
+    pub tree: Tree,
+
     #[serde(default = "Editor::default")]
     pub editor: Editor,
 
@@ -44,6 +47,15 @@ pub struct Config {
 
     #[serde(default = "Keys::default")]
     pub keys: Keys,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Tree {
+    #[serde(default = "Config::disable")]
+    pub disable_selected_highlight: bool,
+
+    #[serde(default = "String::new")]
+    pub selected_symbol: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,6 +109,9 @@ pub struct Filter {
 
     #[serde(default = "Filter::default_ignore_case")]
     pub ignore_case: bool,
+
+    #[serde(default = "Filter::default_exclude_mode")]
+    pub exclude_mode: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -178,6 +193,7 @@ impl Config {
 
     pub fn default() -> Self {
         Self {
+            tree: Tree::default(),
             editor: Editor::default(),
             data: Data::default(),
             layout: Layout::default(),
@@ -207,6 +223,15 @@ impl Config {
 
     fn empty_map() -> HashMap<String, String> {
         HashMap::new()
+    }
+}
+
+impl Tree {
+    fn default() -> Self {
+        Self {
+            disable_selected_highlight: Config::disable(),
+            selected_symbol: String::new(),
+        }
     }
 }
 
@@ -278,10 +303,15 @@ impl Filter {
         Self {
             disable: Config::disable(),
             ignore_case: Filter::default_ignore_case(),
+            exclude_mode: Filter::default_exclude_mode(),
         }
     }
 
     fn default_ignore_case() -> bool {
+        false
+    }
+
+    fn default_exclude_mode() -> bool {
         false
     }
 }

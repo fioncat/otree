@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use anyhow::Result;
+use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use serde_json::Value;
 use tui_tree_widget::TreeItem;
@@ -23,7 +24,16 @@ pub struct ItemValue {
     pub name: String,
     pub value: Value,
 
+    pub field_type: FieldType,
+    pub description: Cow<'static, str>,
+
     pub data: Data,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct HighlightKeyword<'a> {
+    pub text: &'a str,
+    pub ignore_case: bool,
 }
 
 pub struct Data {
@@ -38,7 +48,7 @@ pub enum Display {
 }
 
 #[derive(Debug, Clone, Copy)]
-enum FieldType {
+pub enum FieldType {
     Null,
     Num,
     Bool,
@@ -116,46 +126,78 @@ impl Tree {
             Value::Null => (
                 TreeItem::new_leaf(
                     raw_name.clone(),
-                    self.build_item_text(name, FieldType::Null, Cow::Borrowed("null")),
+                    Self::build_item_text(
+                        &self.cfg,
+                        name,
+                        FieldType::Null,
+                        Cow::Borrowed("null"),
+                        None,
+                    ),
                 ),
                 ItemValue {
                     name: raw_name,
                     value: raw_value,
+                    field_type: FieldType::Null,
+                    description: Cow::Borrowed("null"),
                     data: Data::null(self.cfg.as_ref()),
                 },
             ),
             Value::String(s) => {
                 let description = format!("= {s:?}");
-                let text = self.build_item_text(name, FieldType::Str, Cow::Owned(description));
+                let text = Self::build_item_text(
+                    &self.cfg,
+                    name,
+                    FieldType::Str,
+                    Cow::Owned(description.clone()),
+                    None,
+                );
                 (
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
                         name: raw_name,
                         value: raw_value,
+                        field_type: FieldType::Str,
+                        description: Cow::Owned(description),
                         data: Data::string(self.cfg.as_ref(), s),
                     },
                 )
             }
             Value::Number(num) => {
                 let description = format!("= {num}");
-                let text = self.build_item_text(name, FieldType::Num, Cow::Owned(description));
+                let text = Self::build_item_text(
+                    &self.cfg,
+                    name,
+                    FieldType::Num,
+                    Cow::Owned(description.clone()),
+                    None,
+                );
                 (
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
                         name: raw_name,
                         value: raw_value,
+                        field_type: FieldType::Num,
+                        description: Cow::Owned(description),
                         data: Data::number(self.cfg.as_ref(), num.to_string()),
                     },
                 )
             }
             Value::Bool(b) => {
                 let description = if b { "= true" } else { "= false" };
-                let text = self.build_item_text(name, FieldType::Bool, Cow::Borrowed(description));
+                let text = Self::build_item_text(
+                    &self.cfg,
+                    name,
+                    FieldType::Bool,
+                    Cow::Borrowed(description),
+                    None,
+                );
                 (
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
                         name: raw_name,
                         value: raw_value,
+                        field_type: FieldType::Bool,
+                        description: Cow::Borrowed(description),
                         data: Data::bool(self.cfg.as_ref(), b),
                     },
                 )
@@ -174,7 +216,13 @@ impl Tree {
                     Data::highlight(tokens)
                 };
                 let arr_name = Some(name.clone());
-                let text = self.build_item_text(name, FieldType::Arr, Cow::Owned(description));
+                let text = Self::build_item_text(
+                    &self.cfg,
+                    name,
+                    FieldType::Arr,
+                    Cow::Owned(description.clone()),
+                    None,
+                );
 
                 let mut children = Vec::with_capacity(arr.len());
                 for (idx, item) in arr.into_iter().enumerate() {
@@ -191,6 +239,8 @@ impl Tree {
                     ItemValue {
                         name: raw_name,
                         value: raw_value,
+                        field_type: FieldType::Arr,
+                        description: Cow::Owned(description),
                         data,
                     },
                 )
@@ -208,7 +258,13 @@ impl Tree {
                 } else {
                     Data::highlight(tokens)
                 };
-                let text = self.build_item_text(name, FieldType::Obj, Cow::Owned(description));
+                let text = Self::build_item_text(
+                    &self.cfg,
+                    name,
+                    FieldType::Obj,
+                    Cow::Owned(description.clone()),
+                    None,
+                );
 
                 let mut children = Vec::with_capacity(obj.len());
                 for (field, item) in obj {
@@ -223,6 +279,8 @@ impl Tree {
                     ItemValue {
                         name: raw_name,
                         value: raw_value,
+                        field_type: FieldType::Obj,
+                        description: Cow::Owned(description),
                         data,
                     },
                 )
@@ -235,46 +293,93 @@ impl Tree {
     }
 
     fn build_item_text(
-        &self,
+        cfg: &Config,
         name: String,
         field_type: FieldType,
         description: Cow<'static, str>,
+        keyword: Option<HighlightKeyword>,
     ) -> Text<'static> {
         // TODO: We can share field type to save memory.
         let (type_str, type_style) = match field_type {
-            FieldType::Null => (
-                self.cfg.types.null.clone(),
-                self.cfg.colors.tree.type_null.style,
-            ),
-            FieldType::Num => (
-                self.cfg.types.num.clone(),
-                self.cfg.colors.tree.type_num.style,
-            ),
-            FieldType::Bool => (
-                self.cfg.types.bool.clone(),
-                self.cfg.colors.tree.type_bool.style,
-            ),
-            FieldType::Str => (
-                self.cfg.types.str.clone(),
-                self.cfg.colors.tree.type_str.style,
-            ),
-            FieldType::Obj => (
-                self.cfg.types.obj.clone(),
-                self.cfg.colors.tree.type_obj.style,
-            ),
-            FieldType::Arr => (
-                self.cfg.types.arr.clone(),
-                self.cfg.colors.tree.type_arr.style,
-            ),
+            FieldType::Null => (cfg.types.null.clone(), cfg.colors.tree.type_null.style),
+            FieldType::Num => (cfg.types.num.clone(), cfg.colors.tree.type_num.style),
+            FieldType::Bool => (cfg.types.bool.clone(), cfg.colors.tree.type_bool.style),
+            FieldType::Str => (cfg.types.str.clone(), cfg.colors.tree.type_str.style),
+            FieldType::Obj => (cfg.types.obj.clone(), cfg.colors.tree.type_obj.style),
+            FieldType::Arr => (cfg.types.arr.clone(), cfg.colors.tree.type_arr.style),
         };
-        let line = Line::from(vec![
-            Span::styled(name, self.cfg.colors.tree.name.style),
-            Span::raw(" "),
-            Span::styled(type_str, type_style),
-            Span::raw(" "),
-            Span::styled(description, self.cfg.colors.tree.value.style),
-        ]);
-        Text::from(line)
+        let mut spans = vec![];
+        if let Some(keyword) = keyword {
+            spans.extend(Self::highlight_keyword(
+                name,
+                keyword,
+                cfg.colors.tree.name.style,
+                cfg.colors.tree.filter_keyword.style,
+            ));
+        } else {
+            spans.push(Span::styled(name, cfg.colors.tree.name.style));
+        }
+
+        spans.push(Span::raw(" "));
+        spans.push(Span::styled(type_str, type_style));
+        spans.push(Span::raw(" "));
+
+        if let Some(keyword) = keyword {
+            spans.extend(Self::highlight_keyword(
+                description.to_string(),
+                keyword,
+                cfg.colors.tree.value.style,
+                cfg.colors.tree.filter_keyword.style,
+            ));
+        } else {
+            spans.push(Span::styled(description, cfg.colors.tree.value.style));
+        }
+
+        Text::from(Line::from(spans))
+    }
+
+    fn highlight_keyword(
+        text: String,
+        keyword: HighlightKeyword,
+        normal_style: Style,
+        highlight_style: Style,
+    ) -> Vec<Span<'static>> {
+        if keyword.text.is_empty() {
+            return vec![Span::styled(text, normal_style)];
+        }
+
+        let mut spans = Vec::new();
+        let text_compare = if keyword.ignore_case {
+            Cow::Owned(text.to_lowercase())
+        } else {
+            Cow::Borrowed(&text)
+        };
+        let keyword_compare = if keyword.ignore_case {
+            Cow::Owned(keyword.text.to_lowercase())
+        } else {
+            Cow::Borrowed(keyword.text)
+        };
+        let mut last_end = 0;
+
+        for (start, _) in text_compare.match_indices(keyword_compare.as_ref()) {
+            if start > last_end {
+                spans.push(Span::styled(
+                    text[last_end..start].to_string(),
+                    normal_style,
+                ));
+            }
+
+            let end = start + keyword_compare.len();
+            spans.push(Span::styled(text[start..end].to_string(), highlight_style));
+
+            last_end = end;
+        }
+
+        if last_end < text.len() {
+            spans.push(Span::styled(text[last_end..].to_string(), normal_style));
+        }
+
+        spans
     }
 }
 
@@ -287,6 +392,24 @@ impl ItemValue {
                 Cow::Owned(text)
             }
         }
+    }
+
+    pub fn build_highlighted_text(
+        &self,
+        cfg: &Config,
+        keyword: &str,
+        ignore_case: bool,
+    ) -> Text<'static> {
+        Tree::build_item_text(
+            cfg,
+            self.name.clone(),
+            self.field_type,
+            self.description.clone(),
+            Some(HighlightKeyword {
+                text: keyword,
+                ignore_case,
+            }),
+        )
     }
 }
 
