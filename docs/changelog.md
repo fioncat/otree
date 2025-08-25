@@ -8,8 +8,6 @@
 
 All items on the [readmap](https://github.com/fioncat/otree/tree/main?tab=readme-ov-file#roadmap) have been completed! 👏
 
-### Features
-
 ## v0.5.2
 
 ### Features
