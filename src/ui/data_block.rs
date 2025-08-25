@@ -223,7 +223,10 @@ impl DataBlock {
             .block(block)
             // TODO: figure out if this cast actually causes problems
             // example: json array with 2^16 entries
-            .scroll((self.vertical_scroll as u16, self.horizontal_scroll as u16));
+            .scroll((
+                u16::try_from(self.vertical_scroll).unwrap_or_default(),
+                u16::try_from(self.horizontal_scroll).unwrap_or_default(),
+            ));
 
         frame.render_widget(widget, area);
 
