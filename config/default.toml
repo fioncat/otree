@@ -1,3 +1,7 @@
+[tree]
+disable_selected_highlight = false
+selected_symbol = ""
+
 [editor]
 program = "vim"
 args = ["{file}"]
@@ -60,6 +64,7 @@ focus_border = {fg = "magenta", bold = true}
 border = {fg = "blue"}
 selected = {fg = "black", bg = "light-green"}
 name = {}
+filter_keyword = { fg = "black", bg = "yellow" }
 type_str = {fg = "cyan", bold = true, italic = true}
 type_null = {fg = "cyan", bold = true, italic = true}
 type_bool = {fg = "cyan", bold = true, italic = true}

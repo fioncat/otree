@@ -26,6 +26,8 @@ pub struct TreeOverview {
 }
 
 impl TreeOverview {
+    const DEFAULT_HIGHLIGHT_SYMBOL: &'static str = "→ ";
+
     pub fn new(cfg: Rc<Config>, tree: Tree) -> Self {
         Self {
             cfg,
@@ -266,8 +268,18 @@ impl TreeOverview {
         let widget = TreeWidget::new(items)
             .unwrap()
             .experimental_scrollbar(Some(scrollbar))
-            .highlight_style(self.cfg.colors.tree.selected.style)
             .block(block);
+
+        let mut widget = if self.cfg.tree.disable_selected_highlight {
+            widget.highlight_symbol(Self::DEFAULT_HIGHLIGHT_SYMBOL)
+        } else {
+            widget.highlight_style(self.cfg.colors.tree.selected.style)
+        };
+
+        let symbol = self.cfg.tree.selected_symbol.as_str();
+        if !symbol.is_empty() {
+            widget = widget.highlight_symbol(symbol);
+        }
 
         frame.render_stateful_widget(widget, area, &mut state);
         self.state = Some(state);
@@ -288,7 +300,7 @@ impl TreeOverview {
     }
 
     pub fn filter(&mut self, opts: &FilterOptions) {
-        let mut state = self.state.take().unwrap();
+        let mut state = TreeState::default();
 
         let items = &self.tree().items;
         let mut filtered = vec![];
@@ -313,12 +325,16 @@ impl TreeOverview {
         id.push(item.identifier().clone());
         let key = id.join("/");
         let item_value = self.tree().get_value(&key).unwrap();
+        let text = item_value.build_highlighted_text(&self.cfg, &opts.text, opts.ignore_case);
 
         let ok = opts.filter(&item_value);
 
         if item.children().is_empty() {
-            if ok {
-                return Some(item.clone());
+            if ok || !self.cfg.filter.exclude_mode {
+                if ok {
+                    Self::open_parent(&id, state);
+                }
+                return Some(TreeItem::new_leaf(item.identifier().clone(), text));
             }
             return None;
         }
@@ -331,23 +347,24 @@ impl TreeOverview {
 
         if filtered_children.is_empty() {
             if ok {
-                return Some(TreeItem::new_leaf(
-                    item.identifier().clone(),
-                    item.text().clone(),
-                ));
+                return Some(TreeItem::new_leaf(item.identifier().clone(), text));
             }
             return None;
         }
 
-        state.open(id.clone());
-        Some(
-            TreeItem::new(
-                item.identifier().clone(),
-                item.text().clone(),
-                filtered_children,
-            )
-            .unwrap(),
-        )
+        Some(TreeItem::new(item.identifier().clone(), text, filtered_children).unwrap())
+    }
+
+    fn open_parent(id: &[String], state: &mut TreeState<String>) {
+        if id.is_empty() {
+            return;
+        }
+        let mut to_open = id.to_vec();
+        to_open.pop();
+        while !to_open.is_empty() {
+            state.open(to_open.clone());
+            to_open.pop();
+        }
     }
 
     fn tree(&self) -> &Tree {

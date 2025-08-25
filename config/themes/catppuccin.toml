@@ -48,7 +48,8 @@ section = { fg = "blue", bold = true }
 
 [colors.tree]
 border = { fg = "blue" }
-selected = { fg = "base", bg = "lavender" }
+filter_keyword = { fg = "maroon", bg = "surface2" }
+selected = { bg = "surface0" }
 type_str = { fg = "green", bold = true, italic = true }
 type_null = { fg = "blue", bold = true, italic = true }
 type_bool = { fg = "peach", bold = true, italic = true }

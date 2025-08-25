@@ -57,7 +57,7 @@ For how to configure TUI colors, please refer to: [Colors Document](docs/colors.
 - [x] UI: Footer to show current root and identify (and other messages) (v0.2)
 - [x] UI: Filter Input (v0.5)
 - [x] UI: Popup widget to show error or help messages (v0.2)
-- [ ] UI: Highlight filtering keywords
+- [x] UI: Highlight filtering keywords (v0.6)
 - [x] Action: Change current selected item as root (v0.1)
 - [x] Action: Back to previous root (v0.1)
 - [x] Action: Scale up/down tree widget (v0.1)

@@ -36,9 +36,21 @@ pub struct CommandArgs {
     #[clap(long)]
     pub disable_filter: bool,
 
+    /// Disable highlight the selected item in tree.
+    #[clap(long)]
+    pub tree_disable_selected_highlight: bool,
+
+    /// The symbol to indicate the selected item in tree.
+    #[clap(long)]
+    pub tree_selected_symbol: Option<String>,
+
     /// Ignore case when filtering.
     #[clap(long)]
-    pub filter_ignore_case: Option<bool>,
+    pub filter_ignore_case: bool,
+
+    /// Hide items that do not match the filter.
+    #[clap(long)]
+    pub filter_exclude_mode: bool,
 
     /// The header format.
     #[clap(short = 'f', long)]
@@ -147,8 +159,20 @@ impl CommandArgs {
             cfg.filter.disable = true;
         }
 
-        if let Some(ignore_case) = self.filter_ignore_case {
-            cfg.filter.ignore_case = ignore_case;
+        if self.tree_disable_selected_highlight {
+            cfg.tree.disable_selected_highlight = true;
+        }
+
+        if let Some(ref symbol) = self.tree_selected_symbol {
+            cfg.tree.selected_symbol.clone_from(symbol);
+        }
+
+        if self.filter_ignore_case {
+            cfg.filter.ignore_case = true;
+        }
+
+        if self.filter_exclude_mode {
+            cfg.filter.exclude_mode = true;
         }
 
         if self.disable_highlight {
