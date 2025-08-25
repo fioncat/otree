@@ -1,4 +1,5 @@
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
+
 use ratatui::text::{Line, Span, Text};
 use regex::Regex;
 
@@ -8,6 +9,8 @@ pub enum SyntaxToken {
     Symbol(&'static str),
 
     Name(String),
+
+    Tag(String),
 
     String(String),
     Number(String),
@@ -28,6 +31,7 @@ impl SyntaxToken {
             let (token, style) = match token {
                 Self::Symbol(sym) => (*sym, cfg.colors.data.symbol.style),
                 Self::Name(name) => (name.as_str(), cfg.colors.data.name.style),
+                Self::Tag(tag) => (tag.as_str(), cfg.colors.data.tag.style),
                 Self::String(str) => (str.as_str(), cfg.colors.data.str.style),
                 Self::Number(num) => (num.as_str(), cfg.colors.data.num.style),
                 Self::Null(null) => (*null, cfg.colors.data.null.style),
@@ -66,6 +70,7 @@ impl SyntaxToken {
             match token {
                 Self::Symbol(sym) => current_columns += sym.len(),
                 Self::Name(name) => current_columns += name.len(),
+                Self::Tag(tag) => current_columns += tag.len(),
                 Self::String(str) => current_columns += str.len(),
                 Self::Number(num) => current_columns += num.len(),
                 Self::Null(null) => current_columns += null.len(),
@@ -92,13 +97,13 @@ impl SyntaxToken {
         (rows, max_columns)
     }
 
-    #[cfg(test)]
     pub fn pure_text(tokens: &[SyntaxToken]) -> String {
         let mut text = String::new();
         for token in tokens {
             let token = match token {
                 Self::Symbol(sym) => sym,
                 Self::Name(name) => name.as_str(),
+                Self::Tag(tag) => tag.as_str(),
                 Self::String(str) => str.as_str(),
                 Self::Number(num) => num.as_str(),
                 Self::Null(null) => null,
@@ -118,7 +123,8 @@ impl SyntaxToken {
     }
 }
 
-static STANDARD_FIELD_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap());
+static STANDARD_FIELD_NAME_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap());
 
 pub fn quote_field_name(name: &str) -> String {
     if STANDARD_FIELD_NAME_RE.is_match(name) {

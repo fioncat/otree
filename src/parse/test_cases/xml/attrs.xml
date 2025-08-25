@@ -1,0 +1,26 @@
+<company name="TechCorp" location="NYC">
+  <departments type="array" count="2">
+    <department id="d1" active="true">
+      <name>Engineering</name>
+      <employees type="array">
+        <employee id="e101" role="developer">
+          <name>Alice</name>
+          <age unit="years">29</age>
+        </employee>
+        <employee id="e102" role="tester">
+          <name>Bob</name>
+          <age unit="years">32</age>
+        </employee>
+      </employees>
+    </department>
+    <department id="d2" active="false">
+      <name>HR</name>
+      <employees type="array">
+        <employee id="e201" role="manager">
+          <name>Charlie</name>
+          <age unit="years">40</age>
+        </employee>
+      </employees>
+    </department>
+  </departments>
+</company>

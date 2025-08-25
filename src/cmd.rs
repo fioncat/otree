@@ -5,6 +5,7 @@ use clap::Parser;
 use crate::config::{Config, LayoutDirection};
 use crate::parse::ContentType;
 
+#[expect(clippy::struct_excessive_bools)] // bearable, just commandline args constructed once
 #[derive(Parser, Debug)]
 #[command(disable_version_flag = true)]
 pub struct CommandArgs {
@@ -16,8 +17,9 @@ pub struct CommandArgs {
     #[clap(long)]
     pub config: Option<String>,
 
+    #[expect(clippy::doc_link_with_quotes)] // false positive, it's just a list
     /// The data content type. If the file extension is one of
-    /// ["json", "yaml", "yml", "toml", "jsonl"], this can be automatically inferred. In other
+    /// ["json", "yaml", "yml", "xml", "toml", "jsonl"], this can be automatically inferred. In other
     /// cases, this is required.
     #[clap(short = 't', long)]
     pub content_type: Option<ContentType>,

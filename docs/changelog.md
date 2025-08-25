@@ -1,3 +1,44 @@
+## v0.5.2
+
+### Features
+
+Add new XML parser!
+
+XML will be parsed in the same way as [yq](https://github.com/mikefarah/yq).
+
+In short:
+
+- If an XML element contains attributes, they will be represented in the tree as String items, with their keys prefixed by `"@"` for distinction.
+- If an XML element has attributes, then even if its value is a string, it will be expanded into an object. The element's text value will be stored in a special field called `"#text"`.
+
+For example:
+
+```xml
+<outer attr="value">
+  <inner>1</inner>
+  <inner attr="value">2</inner>
+  <inner>3</inner>
+</outer>
+```
+
+Will be parsed as:
+
+```json
+{
+  "outer": {
+    "inner": [
+      "1",
+      {
+        "@property": "value",
+        "#text": "2"
+      },
+      "3"
+    ]
+  },
+  "@property": "value"
+}
+```
+
 ## v0.5.1
 
 ### Fixes

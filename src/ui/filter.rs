@@ -55,9 +55,8 @@ impl Filter {
             return FilterAction::Edit;
         }
 
-        let action = match ka.action {
-            Some(a) => a,
-            None => return FilterAction::Skip,
+        let Some(action) = ka.action else {
+            return FilterAction::Skip;
         };
         match action {
             Action::SelectFocus | Action::Switch => {
@@ -157,7 +156,7 @@ impl FilterOptions {
         }
 
         let value = match item.value {
-            Value::String(ref s) => s.to_string(),
+            Value::String(ref s) => s.clone(),
             Value::Number(ref n) => n.to_string(),
             _ => String::new(),
         };
@@ -170,7 +169,7 @@ impl FilterOptions {
                 }
                 self.contains(&value)
             }
-            _ => unreachable!(),
+            FilterTarget::Key => unreachable!(),
         }
     }
 

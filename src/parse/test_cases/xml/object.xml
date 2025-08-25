@@ -1,0 +1,14 @@
+<root>
+  <user>
+    <id>1</id>
+    <name>Alice</name>
+  </user>
+  <user>
+    <id>2</id>
+    <name>Bob</name>
+    <profile>
+      <age>30</age>
+      <email>bob@example.com</email>
+    </profile>
+  </user>
+</root>

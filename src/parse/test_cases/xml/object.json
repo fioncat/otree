@@ -1,0 +1,18 @@
+{
+  "root": {
+    "user": [
+      {
+        "id": "1",
+        "name": "Alice"
+      },
+      {
+        "id": "2",
+        "name": "Bob",
+        "profile": {
+          "age": "30",
+          "email": "bob@example.com"
+        }
+      }
+    ]
+  }
+}

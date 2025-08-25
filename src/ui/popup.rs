@@ -89,9 +89,8 @@ impl Popup {
     }
 
     pub fn draw(&self, frame: &mut Frame) {
-        let data = match self.data.as_ref() {
-            Some(data) => data,
-            None => return,
+        let Some(data) = self.data.as_ref() else {
+            return;
         };
 
         let border_color = &self.cfg.colors.focus_border;
@@ -107,7 +106,7 @@ impl Popup {
         let widget = Paragraph::new(data.text.clone())
             .block(block)
             .wrap(Wrap { trim: false })
-            .scroll((self.scroll as u16, 0));
+            .scroll((u16::try_from(self.scroll).unwrap_or_default(), 0));
 
         let area = Self::centered_rect(50, 50, frame.area());
         frame.render_widget(Clear, area); // this clears out the background

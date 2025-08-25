@@ -68,7 +68,7 @@ impl Tree {
             Value::Array(arr) => {
                 let mut items = Vec::with_capacity(arr.len());
                 for (idx, value) in arr.into_iter().enumerate() {
-                    let item = tree.build_item(vec![], idx.to_string(), value);
+                    let item = tree.build_item(&[], idx.to_string(), value, None);
                     items.push(item);
                 }
                 items
@@ -76,13 +76,13 @@ impl Tree {
             Value::Object(obj) => {
                 let mut items = Vec::with_capacity(obj.len());
                 for (field, value) in obj {
-                    let item = tree.build_item(vec![], field, value);
+                    let item = tree.build_item(&[], field, value, None);
                     items.push(item);
                 }
                 items
             }
             _ => {
-                vec![tree.build_item(vec![], String::from("root"), value)]
+                vec![tree.build_item(&[], String::from("root"), value, None)]
             }
         };
         tree.items = items;
@@ -99,9 +99,10 @@ impl Tree {
 
     fn build_item(
         &mut self,
-        parent: Vec<String>,
+        parent: &[String],
         name: String,
         value: Value,
+        arr_name: Option<&str>,
     ) -> TreeItem<'static, String> {
         let path = if parent.is_empty() {
             name.clone()
@@ -165,19 +166,23 @@ impl Tree {
                     arr.len(),
                     if arr.len() > 1 { "items" } else { "item" }
                 );
-                let text = self.build_item_text(name, FieldType::Arr, Cow::Owned(description));
+                let data_name = arr_name.unwrap_or(&name);
+                let tokens = self.parser.syntax_highlight(data_name, &raw_value);
                 let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(self.parser.to_string(&raw_value)))
+                    Data::raw(Cow::Owned(SyntaxToken::pure_text(&tokens)))
                 } else {
-                    Data::highlight(self.parser.syntax_highlight(&raw_value))
+                    Data::highlight(tokens)
                 };
+                let arr_name = Some(name.clone());
+                let text = self.build_item_text(name, FieldType::Arr, Cow::Owned(description));
 
                 let mut children = Vec::with_capacity(arr.len());
                 for (idx, item) in arr.into_iter().enumerate() {
                     let mut child_parent = parent.to_vec();
                     child_parent.push(raw_name.clone());
 
-                    let child = self.build_item(child_parent, idx.to_string(), item);
+                    let child =
+                        self.build_item(&child_parent, idx.to_string(), item, arr_name.as_deref());
                     children.push(child);
                 }
 
@@ -196,19 +201,21 @@ impl Tree {
                     obj.len(),
                     if obj.len() > 1 { "fields" } else { "field" }
                 );
-                let text = self.build_item_text(name, FieldType::Obj, Cow::Owned(description));
+                let data_name = arr_name.unwrap_or(&name);
+                let tokens = self.parser.syntax_highlight(data_name, &raw_value);
                 let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(self.parser.to_string(&raw_value)))
+                    Data::raw(Cow::Owned(SyntaxToken::pure_text(&tokens)))
                 } else {
-                    Data::highlight(self.parser.syntax_highlight(&raw_value))
+                    Data::highlight(tokens)
                 };
+                let text = self.build_item_text(name, FieldType::Obj, Cow::Owned(description));
 
                 let mut children = Vec::with_capacity(obj.len());
                 for (field, item) in obj {
                     let mut child_parent = parent.to_vec();
                     child_parent.push(raw_name.clone());
 
-                    let child = self.build_item(child_parent, field, item);
+                    let child = self.build_item(&child_parent, field, item, None);
                     children.push(child);
                 }
                 (
@@ -268,6 +275,18 @@ impl Tree {
             Span::styled(description, self.cfg.colors.tree.value.style),
         ]);
         Text::from(line)
+    }
+}
+
+impl ItemValue {
+    pub fn plain_text(&self) -> Cow<'_, str> {
+        match self.data.display {
+            Display::Raw(ref text) => Cow::Borrowed(text.as_ref()),
+            Display::Highlight(ref tokens) => {
+                let text = SyntaxToken::pure_text(tokens);
+                Cow::Owned(text)
+            }
+        }
     }
 }
 

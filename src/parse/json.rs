@@ -14,11 +14,7 @@ impl Parser for JsonParser {
         serde_json::from_str(data).context("parse JSON")
     }
 
-    fn to_string(&self, value: &Value) -> String {
-        serde_json::to_string_pretty(value).expect("serialize JSON")
-    }
-
-    fn syntax_highlight(&self, value: &Value) -> Vec<SyntaxToken> {
+    fn syntax_highlight(&self, _name: &str, value: &Value) -> Vec<SyntaxToken> {
         highlight(value, 0, false)
     }
 }
@@ -112,7 +108,7 @@ mod test {
         let parser = JsonParser {};
         for (raw, expect) in test_cases {
             let value = parser.parse(raw).unwrap();
-            let tokens = parser.syntax_highlight(&value);
+            let tokens = parser.syntax_highlight("", &value);
             let result = SyntaxToken::pure_text(&tokens);
             assert_eq!(result, expect);
 

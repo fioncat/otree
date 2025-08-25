@@ -221,7 +221,12 @@ impl DataBlock {
         let widget = Paragraph::new(text)
             .style(self.cfg.colors.data.text.style)
             .block(block)
-            .scroll((self.vertical_scroll as u16, self.horizontal_scroll as u16));
+            // TODO: figure out if this cast actually causes problems
+            // example: json array with 2^16 entries
+            .scroll((
+                u16::try_from(self.vertical_scroll).unwrap_or_default(),
+                u16::try_from(self.horizontal_scroll).unwrap_or_default(),
+            ));
 
         frame.render_widget(widget, area);
 
