@@ -2,11 +2,16 @@
 
 ### Features
 
-- Support highlighting filter keyword. (#94)
-- The default behavior of the filter has changed; it no longer excludes items that don't match. With highlighting support, all items are displayed, and you can use the highlighting to distinguish filter items. If you still want to exclude items, set the `filter.exclude_mode` configuration option to true.
-- In filter mode, support navigating to filtered items by actions `filter_next_match` (default bindings to `n`) and `filter_prev_match` (default bindings to `N`). (#95)
+- **Highlighting for filter keywords** (#94)
+  The default filter behavior has changed: instead of hiding unmatched items, all items are now displayed, with matches highlighted. This makes it easier to distinguish filtered results without losing context.
+  - If you prefer the old behavior (hiding unmatched items), you can enable it by setting `filter.exclude_mode = true`.
 
-All items on the [readmap](https://github.com/fioncat/otree/tree/main?tab=readme-ov-file#roadmap) have been completed! 👏
+- **Filter navigation actions** (#95)
+  In filter mode, you can now quickly jump between matches using the new actions:
+  - `filter_next_match` (default key: `n`)
+  - `filter_prev_match` (default key: `N`)
+
+- 🎉 All items in the [roadmap](https://github.com/fioncat/otree?tab=readme-ov-file#roadmap) have been completed!
 
 ## v0.5.2
 
