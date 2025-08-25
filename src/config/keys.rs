@@ -256,6 +256,12 @@ pub struct Keys {
     #[serde(default = "Keys::default_filter_value")]
     pub filter_value: Vec<String>,
 
+    #[serde(default = "Keys::default_filter_next_match")]
+    pub filter_next_match: Vec<String>,
+
+    #[serde(default = "Keys::default_filter_prev_match")]
+    pub filter_prev_match: Vec<String>,
+
     #[serde(default = "Keys::default_filter_switch_ignore_case")]
     pub filter_switch_ignore_case: Vec<String>,
 
@@ -299,6 +305,8 @@ generate_keys_default!(
     filter => ["/"],
     filter_key => ["?"],
     filter_value => ["*"],
+    filter_next_match => ["n"],
+    filter_prev_match => ["N"],
     filter_switch_ignore_case => ["I"],
     expand_children => ["x"],
     expand_all => ["X"],
@@ -330,6 +338,8 @@ generate_actions!(
     filter => Filter,
     filter_key => FilterKey,
     filter_value => FilterValue,
+    filter_next_match => FilterNextMatch,
+    filter_prev_match => FilterPrevMatch,
     filter_switch_ignore_case => FilterSwitchIgnoreCase,
     expand_children => ExpandChildren,
     expand_all => ExpandAll,

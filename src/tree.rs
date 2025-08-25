@@ -17,6 +17,8 @@ pub struct Tree {
     pub items: Vec<TreeItem<'static, String>>,
     pub values: HashMap<String, Rc<ItemValue>>,
 
+    pub identifies: Vec<String>,
+
     cfg: Rc<Config>,
 }
 
@@ -69,6 +71,7 @@ impl Tree {
             parser,
             items: vec![],
             values: HashMap::new(),
+            identifies: vec![],
             cfg,
         };
 
@@ -119,6 +122,7 @@ impl Tree {
         } else {
             format!("{}/{name}", parent.join("/"))
         };
+        self.identifies.push(path.clone());
 
         let raw_value = value.clone();
         let raw_name = name.clone();
