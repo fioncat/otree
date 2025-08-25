@@ -1161,7 +1161,8 @@ dependencies = [
 [[package]]
 name = "tui-tree-widget"
 version = "0.23.1"
-source = "git+https://github.com/fioncat/tui-rs-tree-widget?branch=main#407fd9005271d93ae2411ec0231a51e7f5e070f9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c14c4488e071617f5b5922222193cdf6725835e492c6229557af85d3c1a4e903"
 dependencies = [
  "ratatui",
  "unicode-width 0.2.0",
