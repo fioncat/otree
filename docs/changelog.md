@@ -4,6 +4,7 @@
 
 - Improve footer display when the terminal width is narrow. (#96)
 - Show section name when using toml objects and arrays. (#98)
+- Support [hcl](https://github.com/hashicorp/hcl). (#99)
 - Upgrade various dependencies.
 
 ## v0.6.0
