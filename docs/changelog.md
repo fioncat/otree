@@ -5,6 +5,9 @@
 - Improve footer display when the terminal width is narrow. (#96)
 - Show section name when using toml objects and arrays. (#98)
 - Support [hcl](https://github.com/hashicorp/hcl). (#99)
+- Add `--to` or `-o` command line option, to convert current data to another schema. (#100)
+  - For example, convert current data from JSON to TOML: `otree /path/to/file.json -o toml`.
+  - This will print TOML content to stdout.
 - Upgrade various dependencies.
 
 ## v0.6.0
