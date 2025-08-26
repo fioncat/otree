@@ -10,6 +10,10 @@ impl Parser for JsonParser {
         "json"
     }
 
+    fn allow_array_root(&self) -> bool {
+        true
+    }
+
     fn parse(&self, data: &str) -> Result<Value> {
         serde_json::from_str(data).context("parse JSON")
     }

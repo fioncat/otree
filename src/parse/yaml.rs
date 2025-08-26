@@ -12,6 +12,10 @@ impl Parser for YamlParser {
         "yaml"
     }
 
+    fn allow_array_root(&self) -> bool {
+        true
+    }
+
     fn parse(&self, data: &str) -> Result<Value> {
         let mut values = Vec::with_capacity(1);
         for document in serde_yml::Deserializer::from_str(data) {

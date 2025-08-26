@@ -16,6 +16,10 @@ impl Parser for XmlParser {
         "xml"
     }
 
+    fn allow_array_root(&self) -> bool {
+        false
+    }
+
     fn parse(&self, data: &str) -> Result<Value> {
         let mut reader = Reader::from_str(data);
 

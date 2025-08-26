@@ -5,7 +5,7 @@ use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::{fs, thread};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 use notify::{EventKind, RecursiveMode, Watcher};
 
 use crate::config::Config;
@@ -91,12 +91,12 @@ impl FileWatcher {
 }
 
 struct Data {
-    data: RefCell<Option<String>>,
+    data: RefCell<Option<Vec<u8>>>,
     err: RefCell<Option<String>>,
 }
 
 impl Data {
-    fn get_data(&self) -> Option<String> {
+    fn get_data(&self) -> Option<Vec<u8>> {
         self.data.borrow_mut().take()
     }
 
@@ -104,7 +104,7 @@ impl Data {
         self.err.borrow_mut().take()
     }
 
-    fn set_data(&self, data: String) {
+    fn set_data(&self, data: Vec<u8>) {
         self.data.replace(Some(data));
     }
 
@@ -128,9 +128,8 @@ fn watch_file(path: &Path, data: Arc<Mutex<Data>>) -> Result<()> {
         match event.kind {
             EventKind::Create(_) | EventKind::Modify(_) => {
                 let bytes = fs::read(path)?;
-                let s = String::from_utf8(bytes).context("read file as utf-8")?;
                 let data_lock = data.lock().unwrap();
-                data_lock.set_data(s);
+                data_lock.set_data(bytes);
                 drop(data_lock);
             }
             EventKind::Remove(_) => bail!("the file {} was removed by user", path.display()),

@@ -9,8 +9,7 @@ use crate::parse::ContentType;
 #[derive(Parser, Debug)]
 #[command(disable_version_flag = true)]
 pub struct CommandArgs {
-    /// The file to read data. On non-macOS systems, this can be omitted, and data
-    /// will be read from stdin.
+    /// The file to read data. If this is empty, read from stdin.
     pub path: Option<String>,
 
     /// The config file to use. Default will try to read `~/.config/otree.toml`.
@@ -19,10 +18,14 @@ pub struct CommandArgs {
 
     #[expect(clippy::doc_link_with_quotes)] // false positive, it's just a list
     /// The data content type. If the file extension is one of
-    /// ["json", "yaml", "yml", "xml", "toml", "jsonl"], this can be automatically inferred. In other
-    /// cases, this is required.
+    /// ["json", "yaml", "yml", "xml", "toml", "hcl", "jsonl"], this can be automatically
+    // inferred. In other cases, this is required.
     #[clap(short = 't', long)]
     pub content_type: Option<ContentType>,
+
+    /// Convert data to another content type and print to stdout
+    #[clap(short = 'o', long)]
+    pub to: Option<ContentType>,
 
     /// Don't show the header.
     #[clap(long)]
