@@ -11,6 +11,10 @@ impl Parser for JsonlParser {
         "json"
     }
 
+    fn allow_array_root(&self) -> bool {
+        true
+    }
+
     fn parse(&self, data: &str) -> Result<Value> {
         // Each line of the JSONL file is a JSON object
         let lines: Vec<&str> = data.lines().collect();

@@ -60,9 +60,9 @@ pub enum FieldType {
 }
 
 impl Tree {
-    pub fn parse(cfg: Rc<Config>, data: &str, content_type: ContentType) -> Result<Self> {
+    pub fn parse(cfg: Rc<Config>, data: &[u8], content_type: ContentType) -> Result<Self> {
         let parser = content_type.new_parser();
-        let value = parser.parse(data)?;
+        let value = parser.parse_root(None, data)?;
         Ok(Self::from_value(cfg, value, Rc::new(parser)))
     }
 

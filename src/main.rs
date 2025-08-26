@@ -20,7 +20,7 @@ use live_reload::FileWatcher;
 
 use crate::cmd::CommandArgs;
 use crate::config::Config;
-use crate::parse::ContentType;
+use crate::parse::{ContentType, SyntaxToken};
 use crate::tree::Tree;
 use crate::ui::{App, HeaderContext};
 
@@ -103,12 +103,21 @@ fn run() -> Result<()> {
         }
     };
 
+    if let Some(target_type) = args.to {
+        let parser = content_type.new_parser();
+        let target_parser = target_type.new_parser();
+
+        let value = parser.parse_root(Some(target_parser.as_ref()), &data)?;
+        let tokens = target_parser.syntax_highlight("", &value);
+        let text = SyntaxToken::pure_text(&tokens);
+
+        println!("{text}");
+        return Ok(());
+    }
+
     if data.len() > max_data_size {
         bail!("the data size is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size. HINT: You can use command line arg `--max-data-size` or config option `data.max_data_size` to modify this limitation", humansize::format_size(max_data_size, humansize::BINARY));
     }
-
-    // To make sure the data is utf8 encoded.
-    let data = String::from_utf8(data).context("parse file utf8")?;
 
     let tree = Tree::parse(cfg.clone(), &data, content_type).context("parse data")?;
 

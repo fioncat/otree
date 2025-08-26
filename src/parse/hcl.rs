@@ -12,6 +12,10 @@ impl Parser for HclParser {
         "hcl"
     }
 
+    fn allow_array_root(&self) -> bool {
+        false
+    }
+
     fn parse(&self, data: &str) -> Result<Value> {
         hcl::from_str(data).context("parse HCL")
     }

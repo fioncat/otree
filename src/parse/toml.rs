@@ -13,6 +13,10 @@ impl Parser for TomlParser {
         "toml"
     }
 
+    fn allow_array_root(&self) -> bool {
+        false
+    }
+
     fn parse(&self, data: &str) -> Result<Value> {
         let toml_value: TomlValue = toml::from_str(data).context("parse TOML")?;
         Ok(toml_value_to_json(toml_value))
