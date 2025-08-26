@@ -1,0 +1,23 @@
+{
+  "user": {
+    "alice": {
+      "id": 1,
+      "name": "Alice"
+    },
+    "bob": {
+      "id": 2,
+      "name": "Bob",
+      "profile": {
+        "age": 30,
+        "email": "bob@example.com"
+      }
+    }
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "username": "admin",
+    "password": "secret",
+    "ssl": true
+  }
+} 

@@ -74,6 +74,7 @@ fn run() -> Result<()> {
                 "yaml" | "yml" => ContentType::Yaml,
                 "toml" => ContentType::Toml,
                 "xml" => ContentType::Xml,
+                "hcl" => ContentType::Hcl,
                 "jsonl" => ContentType::Jsonl,
                 _ => bail!("unsupported file type, please specify content type manually"),
             }

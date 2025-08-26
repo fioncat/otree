@@ -26,7 +26,7 @@ impl Parser for XmlParser {
     }
 
     fn syntax_highlight(&self, name: &str, value: &Value) -> Vec<SyntaxToken> {
-        highlight(value.clone(), name, 0)
+        highlight(name, value.clone(), 0)
     }
 }
 
@@ -245,7 +245,7 @@ fn read<R: BufRead>(reader: &mut Reader<R>, depth: u64) -> Result<Value> {
     Ok(nodes.get_value())
 }
 
-fn highlight(value: Value, field_name: &str, indent: usize) -> Vec<SyntaxToken> {
+fn highlight(name: &str, value: Value, indent: usize) -> Vec<SyntaxToken> {
     let mut tokens = Vec::new();
 
     if let Value::Object(obj) = value {
@@ -274,12 +274,12 @@ fn highlight(value: Value, field_name: &str, indent: usize) -> Vec<SyntaxToken> 
             child_obj.insert(child_key, child_value);
         }
 
-        if !field_name.is_empty() {
+        if !name.is_empty() {
             tokens.push(SyntaxToken::Indent(indent));
             if attrs.is_empty() {
-                tokens.push(SyntaxToken::Tag(format!("<{field_name}>")));
+                tokens.push(SyntaxToken::Tag(format!("<{name}>")));
             } else {
-                tokens.push(SyntaxToken::Tag(format!("<{field_name}")));
+                tokens.push(SyntaxToken::Tag(format!("<{name}")));
                 for (attr, value) in attrs {
                     tokens.push(SyntaxToken::Symbol(" "));
                     tokens.push(SyntaxToken::Name(attr));
@@ -293,25 +293,21 @@ fn highlight(value: Value, field_name: &str, indent: usize) -> Vec<SyntaxToken> 
         if let Some(text) = text {
             tokens.push(SyntaxToken::String(text));
         } else if !child_obj.is_empty() {
-            if !field_name.is_empty() {
+            if !name.is_empty() {
                 tokens.push(SyntaxToken::Break);
             }
             for (child_key, child_value) in child_obj {
-                let child_indent = if field_name.is_empty() {
-                    indent
-                } else {
-                    indent + 1
-                };
-                let child_tokens = highlight(child_value, &child_key, child_indent);
+                let child_indent = if name.is_empty() { indent } else { indent + 1 };
+                let child_tokens = highlight(&child_key, child_value, child_indent);
                 tokens.extend(child_tokens);
             }
-            if !field_name.is_empty() {
+            if !name.is_empty() {
                 tokens.push(SyntaxToken::Indent(indent));
             }
         }
 
-        if !field_name.is_empty() {
-            tokens.push(SyntaxToken::Tag(format!("</{field_name}>")));
+        if !name.is_empty() {
+            tokens.push(SyntaxToken::Tag(format!("</{name}>")));
             tokens.push(SyntaxToken::Break);
         }
 
@@ -321,20 +317,20 @@ fn highlight(value: Value, field_name: &str, indent: usize) -> Vec<SyntaxToken> 
     match value {
         Value::String(s) => {
             tokens.push(SyntaxToken::Indent(indent));
-            tokens.push(SyntaxToken::Tag(format!("<{field_name}>")));
+            tokens.push(SyntaxToken::Tag(format!("<{name}>")));
             tokens.push(SyntaxToken::String(s));
-            tokens.push(SyntaxToken::Tag(format!("</{field_name}>")));
+            tokens.push(SyntaxToken::Tag(format!("</{name}>")));
             tokens.push(SyntaxToken::Break);
         }
         Value::Array(arr) => {
             for child_item in arr {
-                let child_tokens = highlight(child_item, field_name, indent);
+                let child_tokens = highlight(name, child_item, indent);
                 tokens.extend(child_tokens);
             }
         }
         Value::Null => {
             tokens.push(SyntaxToken::Indent(indent));
-            tokens.push(SyntaxToken::Tag(format!("<{field_name}></{field_name}>")));
+            tokens.push(SyntaxToken::Tag(format!("<{name}></{name}>")));
             tokens.push(SyntaxToken::Break);
         }
         _ => {}
