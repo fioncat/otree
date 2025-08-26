@@ -1,0 +1,24 @@
+{
+  "fruits": [
+    "Apple",
+    "Banana",
+    "Orange"
+  ],
+  "ports": [
+    80,
+    443,
+    8080,
+    3000
+  ],
+  "flags": [
+    true,
+    false,
+    true
+  ],
+  "mixed": [
+    "string",
+    123,
+    true,
+    null
+  ]
+}

@@ -25,6 +25,7 @@ impl HeaderContext {
             ContentType::Yaml => "yaml",
             ContentType::Json => "json",
             ContentType::Xml => "xml",
+            ContentType::Hcl => "hcl",
             ContentType::Jsonl => "jsonl",
         };
 

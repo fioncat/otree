@@ -36,7 +36,9 @@ impl Parser for TomlParser {
                 }
             }
             Value::Object(_) => {
-                section = Some(name);
+                if !name.is_empty() {
+                    section = Some(name);
+                }
             }
             _ => {}
         }
@@ -134,7 +136,7 @@ fn highlight(
 
             let mut complex_fields = Vec::new();
             for (field, value) in obj {
-                let is_complex = is_value_complex(value);
+                let is_complex = syntax::is_value_complex(value);
                 if is_complex {
                     complex_fields.push((field, value));
                     continue;
@@ -184,21 +186,6 @@ fn highlight(
 
     tokens.push(SyntaxToken::Break);
     tokens
-}
-
-fn is_value_complex(value: &Value) -> bool {
-    match value {
-        Value::Object(_) => true,
-        Value::Array(arr) => {
-            for value in arr {
-                if is_value_complex(value) {
-                    return true;
-                }
-            }
-            false
-        }
-        _ => false,
-    }
 }
 
 #[cfg(test)]

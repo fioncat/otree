@@ -15,6 +15,7 @@ anyhow = "^1"
 clap = { version = "^4", features = ["derive"] }
 crossterm = { version = "^0", features = ["use-dev-tty"] }
 dirs = "^6"
+hcl-rs = "^0"
 humansize = "^2"
 notify = "^8"
 paste = "^1"

@@ -1,3 +1,4 @@
+mod hcl;
 mod json;
 mod jsonl;
 mod syntax;
@@ -17,6 +18,9 @@ pub enum ContentType {
     Yaml,
     Toml,
     Xml,
+
+    /// See: <https://github.com/hashicorp/hcl>
+    Hcl,
 
     /// Useful for some logs file: <https://jsonlines.org/>
     Jsonl,
@@ -39,6 +43,7 @@ impl ContentType {
             Self::Yaml => Box::new(yaml::YamlParser {}),
             Self::Toml => Box::new(toml::TomlParser {}),
             Self::Xml => Box::new(xml::XmlParser {}),
+            Self::Hcl => Box::new(hcl::HclParser {}),
             Self::Jsonl => Box::new(jsonl::JsonlParser {}),
         }
     }

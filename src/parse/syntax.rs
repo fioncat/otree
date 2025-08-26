@@ -2,6 +2,7 @@ use std::sync::LazyLock;
 
 use ratatui::text::{Line, Span, Text};
 use regex::Regex;
+use serde_json::Value;
 
 use crate::config::Config;
 
@@ -185,5 +186,20 @@ impl StringValue {
 
     fn is_numeric(s: &str) -> bool {
         s.parse::<f64>().is_ok()
+    }
+}
+
+pub fn is_value_complex(value: &Value) -> bool {
+    match value {
+        Value::Object(_) => true,
+        Value::Array(arr) => {
+            for value in arr {
+                if is_value_complex(value) {
+                    return true;
+                }
+            }
+            false
+        }
+        _ => false,
     }
 }
