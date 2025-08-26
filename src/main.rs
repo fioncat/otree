@@ -111,7 +111,7 @@ fn run() -> Result<()> {
         let tokens = target_parser.syntax_highlight("", &value);
         let text = SyntaxToken::pure_text(&tokens);
 
-        println!("{text}");
+        print!("{text}");
         return Ok(());
     }
 
