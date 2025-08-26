@@ -21,18 +21,24 @@ impl Parser for TomlParser {
     fn syntax_highlight(&self, name: &str, value: &Value) -> Vec<SyntaxToken> {
         let mut section = None;
         let mut arr_complex = false;
-        if let Value::Array(arr) = value {
-            section = Some(name);
+        match value {
+            Value::Array(arr) => {
+                section = Some(name);
 
-            for value in arr {
-                match value {
-                    Value::Object(_) | Value::Array(_) => {
-                        arr_complex = true;
-                        break;
+                for value in arr {
+                    match value {
+                        Value::Object(_) | Value::Array(_) => {
+                            arr_complex = true;
+                            break;
+                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
             }
+            Value::Object(_) => {
+                section = Some(name);
+            }
+            _ => {}
         }
         let mut tokens = highlight(value, section, false, arr_complex);
         if !tokens.is_empty() {
