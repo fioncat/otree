@@ -25,6 +25,7 @@ max_data_size = 30
 [filter]
 disable = false
 ignore_case = false
+exclude_mode = false
 
 [keys]
 move_up = ["k", "<up>"]
