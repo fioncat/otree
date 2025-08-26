@@ -18,11 +18,23 @@ impl Parser for TomlParser {
         Ok(toml_value_to_json(toml_value))
     }
 
-    fn syntax_highlight(&self, _name: &str, value: &Value) -> Vec<SyntaxToken> {
-        if let Value::Array(_) = value {
-            return json_highlight(value, 0, false);
+    fn syntax_highlight(&self, name: &str, value: &Value) -> Vec<SyntaxToken> {
+        let mut section = None;
+        let mut arr_complex = false;
+        if let Value::Array(arr) = value {
+            section = Some(name);
+
+            for value in arr {
+                match value {
+                    Value::Object(_) | Value::Array(_) => {
+                        arr_complex = true;
+                        break;
+                    }
+                    _ => {}
+                }
+            }
         }
-        let mut tokens = highlight(value, None, false, false);
+        let mut tokens = highlight(value, section, false, arr_complex);
         if !tokens.is_empty() {
             // Trim the first break line
             let first_token = tokens.remove(0);
