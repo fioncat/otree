@@ -1,3 +1,11 @@
+## v0.6.1
+
+### Features
+
+- Improve footer display when the terminal width is narrow. (#96)
+- Show section name when using toml objects and arrays. (#98)
+- Upgrade various dependencies.
+
 ## v0.6.0
 
 ### Features
