@@ -60,7 +60,7 @@ impl TreeOverview {
         self.root_identifies.as_ref()
     }
 
-    pub fn get_value(&self, id: &str) -> Option<Rc<ItemValue>> {
+    pub fn get_value(&self, id: &str) -> Option<&ItemValue> {
         self.tree().get_value(id)
     }
 
@@ -373,7 +373,7 @@ impl TreeOverview {
         let item_value = self.tree().get_value(&key).unwrap();
         let text = item_value.build_highlighted_text(&self.cfg, &opts.text, opts.ignore_case);
 
-        let mut matched = opts.filter(&item_value);
+        let mut matched = opts.filter(item_value);
         if matched {
             Self::open_parent(&id, state);
             *count += 1;

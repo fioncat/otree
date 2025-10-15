@@ -15,7 +15,7 @@ pub struct Tree {
     pub parser: Rc<Box<dyn Parser>>,
 
     pub items: Vec<TreeItem<'static, String>>,
-    pub values: HashMap<String, Rc<ItemValue>>,
+    pub values: HashMap<String, ItemValue>,
 
     pub identifies: Vec<String>,
 
@@ -29,24 +29,13 @@ pub struct ItemValue {
     pub field_type: FieldType,
     pub description: Cow<'static, str>,
 
-    pub data: Data,
+    pub tokens: Vec<SyntaxToken>,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct HighlightKeyword<'a> {
     pub text: &'a str,
     pub ignore_case: bool,
-}
-
-pub struct Data {
-    pub display: Display,
-    pub columns: usize,
-    pub rows: usize,
-}
-
-pub enum Display {
-    Raw(Cow<'static, str>),
-    Highlight(Vec<SyntaxToken>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -102,8 +91,8 @@ impl Tree {
         tree
     }
 
-    pub fn get_value(&self, path: &str) -> Option<Rc<ItemValue>> {
-        self.values.get(path).cloned()
+    pub fn get_value(&self, path: &str) -> Option<&ItemValue> {
+        self.values.get(path)
     }
 
     pub fn get_parser(&self) -> Rc<Box<dyn Parser>> {
@@ -143,7 +132,7 @@ impl Tree {
                     value: raw_value,
                     field_type: FieldType::Null,
                     description: Cow::Borrowed("null"),
-                    data: Data::null(self.cfg.as_ref()),
+                    tokens: vec![SyntaxToken::Null("null")],
                 },
             ),
             Value::String(s) => {
@@ -162,7 +151,7 @@ impl Tree {
                         value: raw_value,
                         field_type: FieldType::Str,
                         description: Cow::Owned(description),
-                        data: Data::string(self.cfg.as_ref(), s),
+                        tokens: Self::string_tokens(s),
                     },
                 )
             }
@@ -182,7 +171,7 @@ impl Tree {
                         value: raw_value,
                         field_type: FieldType::Num,
                         description: Cow::Owned(description),
-                        data: Data::number(self.cfg.as_ref(), num.to_string()),
+                        tokens: vec![SyntaxToken::Number(num.to_string())],
                     },
                 )
             }
@@ -195,6 +184,7 @@ impl Tree {
                     Cow::Borrowed(description),
                     None,
                 );
+                let b = if b { "true" } else { "false" };
                 (
                     TreeItem::new_leaf(raw_name.clone(), text),
                     ItemValue {
@@ -202,7 +192,7 @@ impl Tree {
                         value: raw_value,
                         field_type: FieldType::Bool,
                         description: Cow::Borrowed(description),
-                        data: Data::bool(self.cfg.as_ref(), b),
+                        tokens: vec![SyntaxToken::Bool(b)],
                     },
                 )
             }
@@ -214,11 +204,6 @@ impl Tree {
                 );
                 let data_name = arr_name.unwrap_or(&name);
                 let tokens = self.parser.syntax_highlight(data_name, &raw_value);
-                let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(SyntaxToken::pure_text(&tokens)))
-                } else {
-                    Data::highlight(tokens)
-                };
                 let arr_name = Some(name.clone());
                 let text = Self::build_item_text(
                     &self.cfg,
@@ -245,7 +230,7 @@ impl Tree {
                         value: raw_value,
                         field_type: FieldType::Arr,
                         description: Cow::Owned(description),
-                        data,
+                        tokens,
                     },
                 )
             }
@@ -257,11 +242,6 @@ impl Tree {
                 );
                 let data_name = arr_name.unwrap_or(&name);
                 let tokens = self.parser.syntax_highlight(data_name, &raw_value);
-                let data = if self.cfg.data.disable_highlight {
-                    Data::raw(Cow::Owned(SyntaxToken::pure_text(&tokens)))
-                } else {
-                    Data::highlight(tokens)
-                };
                 let text = Self::build_item_text(
                     &self.cfg,
                     name,
@@ -285,13 +265,12 @@ impl Tree {
                         value: raw_value,
                         field_type: FieldType::Obj,
                         description: Cow::Owned(description),
-                        data,
+                        tokens,
                     },
                 )
             }
         };
 
-        let value = Rc::new(value);
         self.values.insert(path, value);
         item
     }
@@ -385,17 +364,31 @@ impl Tree {
 
         spans
     }
+
+    fn string_tokens(s: String) -> Vec<SyntaxToken> {
+        let lines = s.lines().collect::<Vec<_>>();
+        if lines.len() > 1 {
+            let mut tokens = Vec::with_capacity(lines.len() * 2);
+            for (idx, line) in lines.iter().enumerate() {
+                tokens.push(SyntaxToken::String(line.to_string()));
+                if idx != lines.len() - 1 {
+                    tokens.push(SyntaxToken::Break);
+                }
+            }
+            return tokens;
+        }
+
+        vec![SyntaxToken::String(s)]
+    }
 }
 
 impl ItemValue {
-    pub fn plain_text(&self) -> Cow<'_, str> {
-        match self.data.display {
-            Display::Raw(ref text) => Cow::Borrowed(text.as_ref()),
-            Display::Highlight(ref tokens) => {
-                let text = SyntaxToken::pure_text(tokens);
-                Cow::Owned(text)
-            }
-        }
+    pub fn plain_text(&self) -> String {
+        SyntaxToken::pure_text(&self.tokens)
+    }
+
+    pub fn render(&self, cfg: &Config, width: usize) -> (Text<'_>, usize, usize) {
+        SyntaxToken::render(cfg, &self.tokens, width)
     }
 
     pub fn build_highlighted_text(
@@ -414,80 +407,5 @@ impl ItemValue {
                 ignore_case,
             }),
         )
-    }
-}
-
-impl Data {
-    pub fn render(&self, cfg: &Config) -> Text<'_> {
-        match &self.display {
-            Display::Highlight(tokens) => SyntaxToken::render(cfg, tokens),
-            Display::Raw(text) => Text::from(text.as_ref()),
-        }
-    }
-
-    fn raw(text: Cow<'static, str>) -> Self {
-        let lines: Vec<_> = text.lines().collect();
-        let long_line = lines.iter().max_by_key(|line| line.len());
-        let rows = lines.len();
-        let columns = long_line.map_or(0, |line| line.len());
-        Self {
-            display: Display::Raw(text),
-            rows,
-            columns,
-        }
-    }
-
-    fn highlight(tokens: Vec<SyntaxToken>) -> Self {
-        let (rows, columns) = SyntaxToken::get_size(&tokens);
-        Self {
-            display: Display::Highlight(tokens),
-            rows,
-            columns,
-        }
-    }
-
-    fn null(cfg: &Config) -> Self {
-        if cfg.data.disable_highlight {
-            Self::raw(Cow::Borrowed(""))
-        } else {
-            Self::highlight(vec![SyntaxToken::Null("null")])
-        }
-    }
-
-    fn string(cfg: &Config, s: String) -> Self {
-        if cfg.data.disable_highlight {
-            Self::raw(Cow::Owned(s))
-        } else {
-            let lines = s.lines().collect::<Vec<_>>();
-            if lines.len() > 1 {
-                let mut tokens = Vec::with_capacity(lines.len() * 2);
-                for (idx, line) in lines.iter().enumerate() {
-                    tokens.push(SyntaxToken::String(line.to_string()));
-                    if idx != lines.len() - 1 {
-                        tokens.push(SyntaxToken::Break);
-                    }
-                }
-                return Self::highlight(tokens);
-            }
-
-            Self::highlight(vec![SyntaxToken::String(s)])
-        }
-    }
-
-    fn number(cfg: &Config, num: String) -> Self {
-        if cfg.data.disable_highlight {
-            Self::raw(Cow::Owned(num))
-        } else {
-            Self::highlight(vec![SyntaxToken::Number(num)])
-        }
-    }
-
-    fn bool(cfg: &Config, b: bool) -> Self {
-        let b = if b { "true" } else { "false" };
-        if cfg.data.disable_highlight {
-            Self::raw(Cow::Borrowed(b))
-        } else {
-            Self::highlight(vec![SyntaxToken::Bool(b)])
-        }
     }
 }

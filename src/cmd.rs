@@ -75,6 +75,10 @@ pub struct CommandArgs {
     #[clap(long)]
     pub disable_highlight: bool,
 
+    /// Enable wrap mode in data block.
+    #[clap(short, long)]
+    pub wrap: bool,
+
     /// Print loaded config.
     #[clap(long)]
     pub show_config: bool,
@@ -180,6 +184,10 @@ impl CommandArgs {
 
         if self.disable_highlight {
             cfg.data.disable_highlight = true;
+        }
+
+        if self.wrap {
+            cfg.data.wrap = true;
         }
 
         if let Some(format) = self.header_format.as_ref() {

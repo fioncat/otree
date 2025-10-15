@@ -1,6 +1,6 @@
 [package]
 name = "otree"
-version = "0.6.1"
+version = "0.6.2"
 edition = "2021"
 build = "build.rs"
 license = "MIT"
@@ -13,6 +13,7 @@ description = "A command line tool to view objects (json/yaml/toml) in TUI tree 
 [dependencies]
 anyhow = "^1"
 clap = { version = "^4", features = ["derive"] }
+console = "^0"
 crossterm = { version = "^0", features = ["use-dev-tty"] }
 dirs = "^6"
 hcl-rs = "^0"
