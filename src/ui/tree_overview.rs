@@ -60,10 +60,6 @@ impl TreeOverview {
         self.root_identifies.as_ref()
     }
 
-    pub fn wrap_data(&mut self, id: &str, width: usize) {
-        self.tree_mut().wrap_data(id, width);
-    }
-
     pub fn get_value(&self, id: &str) -> Option<&ItemValue> {
         self.tree().get_value(id)
     }

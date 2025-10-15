@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::sync::LazyLock;
 
 use ratatui::text::{Line, Span, Text};
@@ -21,7 +22,6 @@ pub enum SyntaxToken {
     Section(String),
 
     Break,
-    Wrap,
     Indent(usize),
 }
 
@@ -29,104 +29,64 @@ impl SyntaxToken {
     const WRAP_SYMBOL: &str = "⤷ ";
     pub const WRAP_SYMBOL_LEN: usize = Self::WRAP_SYMBOL.len();
 
-    pub fn render<'a>(cfg: &Config, tokens: &'a [SyntaxToken]) -> Text<'a> {
+    pub fn render<'a>(
+        cfg: &Config,
+        tokens: &'a [SyntaxToken],
+        width: usize,
+    ) -> (Text<'a>, usize, usize) {
         let mut lines: Vec<Line> = vec![];
         let mut current_line = Some(Line::default());
+        let mut rows = 0;
+        let mut cols = 0;
+        let mut max_cols = 0;
         for token in tokens {
-            let (token, style) = match token {
-                Self::Symbol(sym) => (*sym, cfg.colors.data.symbol.style),
-                Self::Name(name) => (name.as_str(), cfg.colors.data.name.style),
-                Self::Tag(tag) => (tag.as_str(), cfg.colors.data.tag.style),
-                Self::String(str) => (str.as_str(), cfg.colors.data.str.style),
-                Self::Number(num) => (num.as_str(), cfg.colors.data.num.style),
-                Self::Null(null) => (*null, cfg.colors.data.null.style),
-                Self::Bool(b) => (*b, cfg.colors.data.bool.style),
-                Self::Section(sec) => (sec.as_str(), cfg.colors.data.section.style),
-                Self::Break | Self::Wrap => {
+            let (token, mut style) = match token {
+                Self::Symbol(sym) => (Cow::Borrowed(*sym), Some(cfg.colors.data.symbol.style)),
+                Self::Name(name) => (
+                    Cow::Borrowed(name.as_str()),
+                    Some(cfg.colors.data.name.style),
+                ),
+                Self::Tag(tag) => (Cow::Borrowed(tag.as_str()), Some(cfg.colors.data.tag.style)),
+                Self::String(str) => (Cow::Borrowed(str.as_str()), Some(cfg.colors.data.str.style)),
+                Self::Number(num) => (Cow::Borrowed(num.as_str()), Some(cfg.colors.data.num.style)),
+                Self::Null(null) => (Cow::Borrowed(*null), Some(cfg.colors.data.null.style)),
+                Self::Bool(b) => (Cow::Borrowed(*b), Some(cfg.colors.data.bool.style)),
+                Self::Section(sec) => (
+                    Cow::Borrowed(sec.as_str()),
+                    Some(cfg.colors.data.section.style),
+                ),
+                Self::Break => {
                     let line = current_line.take().unwrap();
                     lines.push(line);
-                    let mut line = Line::default();
-                    if matches!(token, Self::Wrap) {
-                        line.push_span(Span::styled(
-                            Self::WRAP_SYMBOL,
-                            cfg.colors.data.symbol.style,
-                        ));
+                    current_line = Some(Line::default());
+                    rows += 1;
+                    if cols > max_cols {
+                        max_cols = cols;
                     }
-                    current_line = Some(line);
+                    cols = 0;
                     continue;
                 }
                 Self::Indent(indent) => {
                     let indent = "  ".repeat(*indent);
-                    current_line.as_mut().unwrap().push_span(Span::raw(indent));
-                    continue;
+                    (indent.into(), None)
                 }
             };
-            current_line
-                .as_mut()
-                .unwrap()
-                .push_span(Span::styled(token, style));
+            if cfg.data.disable_highlight {
+                style = None;
+            }
+            cols += console::measure_text_width(token.as_ref());
+            let current_line = current_line.as_mut().unwrap();
+            match style {
+                Some(style) => current_line.push_span(Span::styled(token, style)),
+                None => current_line.push_span(Span::raw(token)),
+            }
         }
         if current_line.as_ref().unwrap().width() > 0 {
             let line = current_line.take().unwrap();
             lines.push(line);
         }
 
-        Text::from(lines)
-    }
-
-    pub fn get_size(tokens: &[SyntaxToken]) -> (usize, usize) {
-        let mut rows: usize = 0;
-        let mut current_columns: usize = 0;
-        let mut max_columns: usize = 0;
-        for token in tokens {
-            match token {
-                Self::Symbol(sym) => current_columns += sym.len(),
-                Self::Name(name) => current_columns += name.len(),
-                Self::Tag(tag) => current_columns += tag.len(),
-                Self::String(str) => current_columns += str.len(),
-                Self::Number(num) => current_columns += num.len(),
-                Self::Null(null) => current_columns += null.len(),
-                Self::Bool(b) => current_columns += b.len(),
-                Self::Section(sec) => current_columns += sec.len(),
-                Self::Break | Self::Wrap => {
-                    if current_columns > max_columns {
-                        max_columns = current_columns;
-                    }
-                    current_columns = if matches!(token, Self::Wrap) {
-                        Self::WRAP_SYMBOL_LEN
-                    } else {
-                        0
-                    };
-                    rows += 1;
-                }
-                Self::Indent(indent) => current_columns += 2 * indent,
-            }
-        }
-
-        if current_columns > 0 {
-            if current_columns > max_columns {
-                max_columns = current_columns;
-            }
-            rows += 1;
-        }
-
-        (rows, max_columns)
-    }
-
-    pub fn width(&self) -> usize {
-        match self {
-            Self::Symbol(sym) => sym.len(),
-            Self::Name(name) => name.len(),
-            Self::Tag(tag) => tag.len(),
-            Self::String(str) => str.len(),
-            Self::Number(num) => num.len(),
-            Self::Null(null) => null.len(),
-            Self::Bool(b) => b.len(),
-            Self::Section(sec) => sec.len(),
-            Self::Break => 1,
-            Self::Wrap => Self::WRAP_SYMBOL_LEN,
-            Self::Indent(indent) => 2 * indent,
-        }
+        (Text::from(lines), rows, max_cols)
     }
 
     pub fn pure_text(tokens: &[SyntaxToken]) -> String {
@@ -142,7 +102,6 @@ impl SyntaxToken {
                 Self::Bool(b) => b,
                 Self::Section(sec) => sec.as_str(),
                 Self::Break => "\n",
-                Self::Wrap => continue,
                 Self::Indent(indent) => {
                     for _ in 0..*indent {
                         text.push_str("  ");

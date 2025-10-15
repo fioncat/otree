@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use ratatui::layout::{Alignment, Margin, Rect};
 use ratatui::symbols::scrollbar;
+use ratatui::text::Text;
 use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
 };
@@ -25,8 +26,7 @@ pub struct DataBlock {
     horizontal_scroll_last: usize,
     horizontal_scroll_state: ScrollbarState,
 
-    last_identify: String,
-    last_area: Rect,
+    identify: String,
 }
 
 impl DataBlock {
@@ -43,8 +43,7 @@ impl DataBlock {
             horizontal_scroll: 0,
             horizontal_scroll_last: 0,
             horizontal_scroll_state: ScrollbarState::default(),
-            last_identify: String::default(),
-            last_area: Rect::default(),
+            identify: String::default(),
         }
     }
 
@@ -152,14 +151,15 @@ impl DataBlock {
         area: Rect,
         focus: bool,
     ) {
-        let item = match item {
+        let text = match item {
             Some((identify, item)) => {
-                self.update_item(identify, item, area);
-                Some(item)
+                let (text, rows, cols) = item.render(self.cfg.as_ref(), area.width as usize);
+                self.update_scroll(identify, rows, cols, area);
+                text
             }
             None => {
                 self.reset();
-                None
+                Text::default()
             }
         };
         let (border_style, border_type) = super::get_border_style(
@@ -174,11 +174,6 @@ impl DataBlock {
             .border_style(border_style)
             .title_alignment(Alignment::Center)
             .title("Data Block");
-
-        let text = item
-            .as_ref()
-            .map(|item| item.data.render(self.cfg.as_ref()))
-            .unwrap_or_default();
 
         let widget = Paragraph::new(text)
             .style(self.cfg.colors.data.text.style)
@@ -228,48 +223,54 @@ impl DataBlock {
         }
     }
 
-    fn update_item(&mut self, identify: String, item: &ItemValue, area: Rect) {
-        if self.last_identify == identify {
-            return;
+    fn update_scroll(&mut self, identify: String, rows: usize, cols: usize, area: Rect) {
+        if self.identify != identify {
+            self.reset_scroll();
+            self.identify = identify;
         }
 
-        self.reset_scroll();
-
-        let rows = item.data.rows + Self::SCROLL_RETAIN;
+        let rows = rows + Self::SCROLL_RETAIN;
         if rows > area.height as usize {
             self.can_vertical_scroll = true;
             self.vertical_scroll_last = rows.saturating_sub(area.height as usize);
             self.vertical_scroll_state = self
                 .vertical_scroll_state
                 .content_length(self.vertical_scroll_last);
+        } else {
+            self.reset_scroll_vertical();
         }
 
-        let columns = item.data.columns + Self::SCROLL_RETAIN;
+        let columns = cols + Self::SCROLL_RETAIN;
         if columns > area.width as usize {
             self.can_horizontal_scroll = true;
             self.horizontal_scroll_last = columns.saturating_sub(area.width as usize);
             self.horizontal_scroll_state = self
                 .horizontal_scroll_state
                 .content_length(self.horizontal_scroll_last);
+        } else {
+            self.reset_scroll_horizontal();
         }
-
-        self.last_identify = identify;
-        self.last_area = area;
     }
 
     fn reset(&mut self) {
         self.reset_scroll();
-        self.last_identify = String::default();
-        self.last_area = Rect::default();
+        self.identify.clear();
     }
 
     fn reset_scroll(&mut self) {
+        self.reset_scroll_vertical();
+        self.reset_scroll_horizontal();
+    }
+
+    fn reset_scroll_vertical(&mut self) {
         // Reset all vertical scroll state.
         self.can_vertical_scroll = false;
         self.vertical_scroll_state = ScrollbarState::default();
         self.vertical_scroll = 0;
         self.vertical_scroll_last = 0;
+    }
 
+    fn reset_scroll_horizontal(&mut self) {
         // Reset all horizontal scroll state.
         self.can_horizontal_scroll = false;
         self.horizontal_scroll_state = ScrollbarState::default();

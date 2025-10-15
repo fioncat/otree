@@ -263,10 +263,6 @@ impl App {
 
         let data_focus = matches!(self.focus, ElementInFocus::DataBlock);
         let item = self.tree_overview.get_selected().and_then(|id| {
-            if self.cfg.data.wrap {
-                self.tree_overview
-                    .wrap_data(&id, self.data_block_area.width as usize);
-            }
             self.tree_overview
                 .get_value(id.as_str())
                 .map(|item| (id, item))
@@ -693,7 +689,7 @@ impl App {
         }
 
         let parser = self.tree_overview.get_parser();
-        let data = item.plain_text().into_owned();
+        let data = item.plain_text();
         let extension = parser.extension();
         Some(Edit::new(self.cfg.as_ref(), &identify, data, extension))
     }
@@ -710,7 +706,7 @@ impl App {
             Value::String(s) => s.clone(),
             Value::Number(n) => n.to_string(),
             Value::Bool(b) => b.to_string(),
-            _ => item.plain_text().into_owned(),
+            _ => item.plain_text(),
         };
 
         Some(data)
