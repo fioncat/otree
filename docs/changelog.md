@@ -1,3 +1,11 @@
+## v0.6.2
+
+### Features
+
+- Data block now support wrap mode, this will disable horizontal scrolling, and
+  long text will be split to a new line. You can enable this by `--wrap` or
+  `-w` command line option. To change the default behavior, add `data.wrap = true` in config file. (#104)
+
 ## v0.6.1
 
 ### Features

@@ -1,10 +1,8 @@
 use std::borrow::Cow;
 use std::sync::LazyLock;
 
-use ratatui::{
-    style::Style,
-    text::{Line, Span, Text},
-};
+use ratatui::style::Style;
+use ratatui::text::{Line, Span, Text};
 use regex::Regex;
 use serde_json::Value;
 
