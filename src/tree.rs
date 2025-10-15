@@ -15,7 +15,7 @@ pub struct Tree {
     pub parser: Rc<Box<dyn Parser>>,
 
     pub items: Vec<TreeItem<'static, String>>,
-    pub values: HashMap<String, Rc<ItemValue>>,
+    pub values: HashMap<String, ItemValue>,
 
     pub identifies: Vec<String>,
 
@@ -102,8 +102,8 @@ impl Tree {
         tree
     }
 
-    pub fn get_value(&self, path: &str) -> Option<Rc<ItemValue>> {
-        self.values.get(path).cloned()
+    pub fn get_value(&self, path: &str) -> Option<&ItemValue> {
+        self.values.get(path)
     }
 
     pub fn get_parser(&self) -> Rc<Box<dyn Parser>> {
@@ -291,7 +291,6 @@ impl Tree {
             }
         };
 
-        let value = Rc::new(value);
         self.values.insert(path, value);
         item
     }

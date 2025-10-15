@@ -60,7 +60,7 @@ impl TreeOverview {
         self.root_identifies.as_ref()
     }
 
-    pub fn get_value(&self, id: &str) -> Option<Rc<ItemValue>> {
+    pub fn get_value(&self, id: &str) -> Option<&ItemValue> {
         self.tree().get_value(id)
     }
 

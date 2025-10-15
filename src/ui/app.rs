@@ -221,17 +221,6 @@ impl App {
     fn draw(&mut self, frame: &mut Frame) {
         self.refresh_area(frame);
 
-        let selected = self.tree_overview.get_selected();
-        if let Some(id) = selected {
-            if let Some(item) = self.tree_overview.get_value(id.as_str()) {
-                self.data_block.update_item(id, item, self.data_block_area);
-            } else {
-                self.popup_error(format!("Cannot find data for '{id}'"));
-            }
-        } else {
-            self.data_block.reset();
-        }
-
         if let Some(header) = self.header.as_ref() {
             if !self.skip_header {
                 header.draw(frame, self.header_area);
@@ -273,8 +262,13 @@ impl App {
             .draw(frame, self.tree_overview_area, tree_focus);
 
         let data_focus = matches!(self.focus, ElementInFocus::DataBlock);
+        let item = self.tree_overview.get_selected().and_then(|id| {
+            self.tree_overview
+                .get_value(id.as_str())
+                .map(|item| (id, item))
+        });
         self.data_block
-            .draw(frame, self.data_block_area, data_focus);
+            .draw(item, frame, self.data_block_area, data_focus);
 
         if matches!(self.focus, ElementInFocus::Popup) {
             self.popup.draw(frame);
