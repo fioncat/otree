@@ -263,6 +263,10 @@ impl App {
 
         let data_focus = matches!(self.focus, ElementInFocus::DataBlock);
         let item = self.tree_overview.get_selected().and_then(|id| {
+            if self.cfg.data.wrap {
+                self.tree_overview
+                    .wrap_data(&id, self.data_block_area.width as usize);
+            }
             self.tree_overview
                 .get_value(id.as_str())
                 .map(|item| (id, item))

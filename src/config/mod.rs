@@ -120,6 +120,8 @@ pub struct Data {
     pub disable_highlight: bool,
     #[serde(default = "Config::default_max_data_size")]
     pub max_data_size: usize,
+    #[serde(default = "Config::disable")]
+    pub wrap: bool,
 }
 
 impl Config {
@@ -321,6 +323,7 @@ impl Data {
         Self {
             disable_highlight: Config::disable(),
             max_data_size: Config::default_max_data_size(),
+            wrap: Config::disable(),
         }
     }
 }

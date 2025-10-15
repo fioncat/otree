@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::mem::take;
 use std::rc::Rc;
 
 use anyhow::Result;
@@ -42,6 +43,7 @@ pub struct Data {
     pub display: Display,
     pub columns: usize,
     pub rows: usize,
+    pub wrap_width: Option<usize>,
 }
 
 pub enum Display {
@@ -384,9 +386,17 @@ impl Tree {
 
         spans
     }
+
+    pub fn wrap_data(&mut self, id: &str, width: usize) {
+        if let Some(item) = self.values.get_mut(id) {
+            item.wrap_data(width);
+        }
+    }
 }
 
 impl ItemValue {
+    const RESERVED_WIDTH: usize = 2;
+
     pub fn plain_text(&self) -> Cow<'_, str> {
         match self.data.display {
             Display::Raw(ref text) => Cow::Borrowed(text.as_ref()),
@@ -414,6 +424,62 @@ impl ItemValue {
             }),
         )
     }
+
+    fn wrap_data(&mut self, width: usize) {
+        let width = width.saturating_sub(Self::RESERVED_WIDTH);
+        if self.data.wrap_width == Some(width) {
+            // Width not changed, do nothing.
+            return;
+        }
+
+        let tokens = match self.data.display {
+            Display::Raw(_) => {
+                // Wrapping is currently not handled in raw mode. The use of raw mode
+                // implies that users want to view data in its most unprocessed form.
+                // As such, data presentation transformations like wrapping should be
+                // disabled.
+                return;
+            }
+            Display::Highlight(ref mut tokens) => take(tokens),
+        };
+
+        let mut wrapped_tokens = Vec::new();
+        let mut row = Vec::new();
+        let mut row_width = 0;
+        for token in tokens {
+            if matches!(token, SyntaxToken::Wrap) {
+                // Skip all last wrap tokens.
+                continue;
+            }
+            if matches!(token, SyntaxToken::Break) {
+                let row = take(&mut row);
+                row_width = 0;
+
+                wrapped_tokens.extend(row);
+                wrapped_tokens.push(SyntaxToken::Break);
+
+                continue;
+            }
+            let token_width = token.width();
+            if row_width + token_width >= width {
+                let row = take(&mut row);
+                row_width = SyntaxToken::WRAP_SYMBOL_LEN;
+
+                wrapped_tokens.extend(row);
+                wrapped_tokens.push(SyntaxToken::Wrap);
+            }
+            row_width += token_width;
+            row.push(token);
+        }
+
+        let (rows, cols) = SyntaxToken::get_size(&wrapped_tokens);
+        self.data = Data {
+            display: Display::Highlight(wrapped_tokens),
+            columns: cols,
+            rows,
+            wrap_width: Some(width),
+        };
+    }
 }
 
 impl Data {
@@ -433,6 +499,7 @@ impl Data {
             display: Display::Raw(text),
             rows,
             columns,
+            wrap_width: None,
         }
     }
 
@@ -442,6 +509,7 @@ impl Data {
             display: Display::Highlight(tokens),
             rows,
             columns,
+            wrap_width: None,
         }
     }
 

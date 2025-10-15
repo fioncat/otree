@@ -21,10 +21,14 @@ pub enum SyntaxToken {
     Section(String),
 
     Break,
+    Wrap,
     Indent(usize),
 }
 
 impl SyntaxToken {
+    const WRAP_SYMBOL: &str = "⤷ ";
+    pub const WRAP_SYMBOL_LEN: usize = Self::WRAP_SYMBOL.len();
+
     pub fn render<'a>(cfg: &Config, tokens: &'a [SyntaxToken]) -> Text<'a> {
         let mut lines: Vec<Line> = vec![];
         let mut current_line = Some(Line::default());
@@ -38,10 +42,17 @@ impl SyntaxToken {
                 Self::Null(null) => (*null, cfg.colors.data.null.style),
                 Self::Bool(b) => (*b, cfg.colors.data.bool.style),
                 Self::Section(sec) => (sec.as_str(), cfg.colors.data.section.style),
-                Self::Break => {
+                Self::Break | Self::Wrap => {
                     let line = current_line.take().unwrap();
                     lines.push(line);
-                    current_line = Some(Line::default());
+                    let mut line = Line::default();
+                    if matches!(token, Self::Wrap) {
+                        line.push_span(Span::styled(
+                            Self::WRAP_SYMBOL,
+                            cfg.colors.data.symbol.style,
+                        ));
+                    }
+                    current_line = Some(line);
                     continue;
                 }
                 Self::Indent(indent) => {
@@ -77,11 +88,15 @@ impl SyntaxToken {
                 Self::Null(null) => current_columns += null.len(),
                 Self::Bool(b) => current_columns += b.len(),
                 Self::Section(sec) => current_columns += sec.len(),
-                Self::Break => {
+                Self::Break | Self::Wrap => {
                     if current_columns > max_columns {
                         max_columns = current_columns;
                     }
-                    current_columns = 0;
+                    current_columns = if matches!(token, Self::Wrap) {
+                        Self::WRAP_SYMBOL_LEN
+                    } else {
+                        0
+                    };
                     rows += 1;
                 }
                 Self::Indent(indent) => current_columns += 2 * indent,
@@ -98,6 +113,22 @@ impl SyntaxToken {
         (rows, max_columns)
     }
 
+    pub fn width(&self) -> usize {
+        match self {
+            Self::Symbol(sym) => sym.len(),
+            Self::Name(name) => name.len(),
+            Self::Tag(tag) => tag.len(),
+            Self::String(str) => str.len(),
+            Self::Number(num) => num.len(),
+            Self::Null(null) => null.len(),
+            Self::Bool(b) => b.len(),
+            Self::Section(sec) => sec.len(),
+            Self::Break => 1,
+            Self::Wrap => Self::WRAP_SYMBOL_LEN,
+            Self::Indent(indent) => 2 * indent,
+        }
+    }
+
     pub fn pure_text(tokens: &[SyntaxToken]) -> String {
         let mut text = String::new();
         for token in tokens {
@@ -111,6 +142,7 @@ impl SyntaxToken {
                 Self::Bool(b) => b,
                 Self::Section(sec) => sec.as_str(),
                 Self::Break => "\n",
+                Self::Wrap => continue,
                 Self::Indent(indent) => {
                     for _ in 0..*indent {
                         text.push_str("  ");
