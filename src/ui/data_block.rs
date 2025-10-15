@@ -241,7 +241,7 @@ impl DataBlock {
         }
 
         let columns = cols + Self::SCROLL_RETAIN;
-        if columns > area.width as usize {
+        if !self.cfg.data.wrap && columns > area.width as usize {
             self.can_horizontal_scroll = true;
             self.horizontal_scroll_last = columns.saturating_sub(area.width as usize);
             self.horizontal_scroll_state = self

@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 use std::sync::LazyLock;
 
-use ratatui::text::{Line, Span, Text};
+use ratatui::{
+    style::Style,
+    text::{Line, Span, Text},
+};
 use regex::Regex;
 use serde_json::Value;
 
@@ -26,19 +29,20 @@ pub enum SyntaxToken {
 }
 
 impl SyntaxToken {
-    const WRAP_SYMBOL: &str = "⤷ ";
-    pub const WRAP_SYMBOL_LEN: usize = Self::WRAP_SYMBOL.len();
+    const WRAP_WIDTH_RESERVED: usize = 3;
 
     pub fn render<'a>(
         cfg: &Config,
         tokens: &'a [SyntaxToken],
         width: usize,
     ) -> (Text<'a>, usize, usize) {
+        let width = width.saturating_sub(Self::WRAP_WIDTH_RESERVED);
+
         let mut lines: Vec<Line> = vec![];
         let mut current_line = Some(Line::default());
+        let mut current_width = 0;
         let mut rows = 0;
-        let mut cols = 0;
-        let mut max_cols = 0;
+        let mut max_width = 0;
         for token in tokens {
             let (token, mut style) = match token {
                 Self::Symbol(sym) => (Cow::Borrowed(*sym), Some(cfg.colors.data.symbol.style)),
@@ -60,10 +64,10 @@ impl SyntaxToken {
                     lines.push(line);
                     current_line = Some(Line::default());
                     rows += 1;
-                    if cols > max_cols {
-                        max_cols = cols;
+                    if current_width > max_width {
+                        max_width = current_width;
                     }
-                    cols = 0;
+                    current_width = 0;
                     continue;
                 }
                 Self::Indent(indent) => {
@@ -74,7 +78,23 @@ impl SyntaxToken {
             if cfg.data.disable_highlight {
                 style = None;
             }
-            cols += console::measure_text_width(token.as_ref());
+
+            if cfg.data.wrap {
+                let wrapper = TextWrapper {
+                    lines: &mut lines,
+                    current_line: &mut current_line,
+                    current_width: &mut current_width,
+                    text: token,
+                    style,
+                    max_area_width: width,
+                    rows: &mut rows,
+                    max_text_width: &mut max_width,
+                };
+                wrapper.add_text_with_wrap(cfg);
+                continue;
+            }
+
+            current_width += console::measure_text_width(token.as_ref());
             let current_line = current_line.as_mut().unwrap();
             match style {
                 Some(style) => current_line.push_span(Span::styled(token, style)),
@@ -86,7 +106,7 @@ impl SyntaxToken {
             lines.push(line);
         }
 
-        (Text::from(lines), rows, max_cols)
+        (Text::from(lines), rows, max_width)
     }
 
     pub fn pure_text(tokens: &[SyntaxToken]) -> String {
@@ -192,6 +212,100 @@ pub fn is_value_complex(value: &Value) -> bool {
             false
         }
         _ => false,
+    }
+}
+
+struct TextWrapper<'a, 'this> {
+    lines: &'this mut Vec<Line<'a>>,
+    current_line: &'this mut Option<Line<'a>>,
+    current_width: &'this mut usize,
+    text: Cow<'a, str>,
+    style: Option<Style>,
+    max_area_width: usize,
+
+    rows: &'this mut usize,
+    max_text_width: &'this mut usize,
+}
+
+impl TextWrapper<'_, '_> {
+    const WRAP_SYMBOL: &'static str = "⤷ ";
+    const WRAP_SYMBOL_LEN: usize = Self::WRAP_SYMBOL.len();
+
+    const WRAP_RESERVED: usize = 5;
+
+    fn add_text_with_wrap(mut self, cfg: &Config) {
+        if self.text.is_empty() {
+            return;
+        }
+        if self.max_area_width == 0 {
+            return;
+        }
+
+        while !self.text.is_empty() {
+            let available_width = if *self.current_width == 0 {
+                self.max_area_width
+            } else {
+                self.max_area_width.saturating_sub(*self.current_width)
+            };
+
+            if available_width == 0 {
+                // Need to wrap to a new line
+                self.wrap_new_line(cfg);
+                continue;
+            }
+
+            let remaining_width = console::measure_text_width(&self.text);
+            if remaining_width <= available_width {
+                // Entire remaining text fits in the available width
+                let span = if let Some(style) = self.style {
+                    Span::styled(self.text, style)
+                } else {
+                    Span::raw(self.text)
+                };
+                self.current_line.as_mut().unwrap().push_span(span);
+                *self.current_width += remaining_width;
+                break;
+            }
+
+            // Need to split the text
+            let split_pos = find_split_position(&self.text, available_width);
+            let (current_part, rest) = self.text.split_at(split_pos);
+            let current_part_width = console::measure_text_width(current_part);
+
+            let span = if let Some(style) = self.style {
+                Span::styled(current_part.to_string(), style)
+            } else {
+                Span::raw(current_part.to_string())
+            };
+            self.current_line.as_mut().unwrap().push_span(span);
+            *self.current_width += current_part_width;
+
+            // Prepare for the next iteration
+            self.text = Cow::Owned(rest.to_string());
+
+            if !self.text.is_empty() {
+                self.wrap_new_line(cfg);
+            }
+        }
+    }
+
+    fn wrap_new_line(&mut self, cfg: &Config) {
+        let line = self.current_line.take().unwrap();
+        self.lines.push(line);
+        *self.current_line = Some(Line::default());
+        *self.rows += 1;
+        if *self.current_width > *self.max_text_width {
+            *self.max_text_width = *self.current_width;
+        }
+        if Self::WRAP_SYMBOL_LEN + Self::WRAP_RESERVED < self.max_area_width {
+            self.current_line.as_mut().unwrap().push_span(Span::styled(
+                Self::WRAP_SYMBOL,
+                cfg.colors.data.symbol.style,
+            ));
+            *self.current_width = Self::WRAP_SYMBOL_LEN;
+        } else {
+            *self.current_width = 0;
+        }
     }
 }
 

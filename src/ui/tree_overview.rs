@@ -483,10 +483,6 @@ impl TreeOverview {
         self.tree.as_ref().unwrap()
     }
 
-    fn tree_mut(&mut self) -> &mut Tree {
-        self.tree.as_mut().unwrap()
-    }
-
     fn state(&self) -> &TreeState<String> {
         self.state.as_ref().unwrap()
     }
