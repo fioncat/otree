@@ -194,3 +194,126 @@ pub fn is_value_complex(value: &Value) -> bool {
         _ => false,
     }
 }
+
+fn find_split_position(text: &str, max_width: usize) -> usize {
+    if text.len() <= max_width {
+        return text.len();
+    }
+
+    // Try to find a good break point (space and table)
+    let bytes = text.as_bytes();
+    let mut best_pos = max_width;
+
+    // Look backwards from max_width to find a good break point
+    for i in (max_width.saturating_sub(10)..max_width).rev() {
+        if i >= bytes.len() {
+            continue;
+        }
+
+        match bytes[i] {
+            b' ' | b'\t' => {
+                best_pos = i + 1; // Include the separator in the current part
+                break;
+            }
+            _ => {}
+        }
+    }
+
+    // Ensure we don't split in the middle of a UTF-8 character
+    while best_pos > 0 && !text.is_char_boundary(best_pos) {
+        best_pos -= 1;
+    }
+
+    // Ensure we make progress (don't return 0 unless the text is empty)
+    if best_pos == 0 && !text.is_empty() {
+        // Find the next character boundary after position 1
+        best_pos = 1;
+        while best_pos < text.len() && !text.is_char_boundary(best_pos) {
+            best_pos += 1;
+        }
+    }
+
+    best_pos
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_split_position() {
+        let cases = [
+            ("short text", 20, 10),
+            ("", 10, 0),
+            ("a", 10, 1),
+            ("hello", 5, 5),
+            ("hi", 10, 2),
+            ("hello world", 8, 6),
+            ("verylongword", 5, 5),
+            ("测试中文", 4, 3),
+            ("🚀rocket", 4, 4),
+            ("café", 3, 3),
+            ("naïve", 3, 2),
+        ];
+
+        for (text, max_width, expected) in cases {
+            let pos = find_split_position(text, max_width);
+            assert_eq!(pos, expected, "Failed for text: {text:?}");
+        }
+    }
+
+    #[test]
+    fn test_split() {
+        let cases = [
+            ("short text", 20, vec!["short text"]),
+            ("", 10, vec![]),
+            ("a", 10, vec!["a"]),
+            ("hello", 5, vec!["hello"]),
+            ("hi", 10, vec!["hi"]),
+            ("hello world", 8, vec!["hello ", "world"]),
+            ("verylongword", 5, vec!["veryl", "ongwo", "rd"]),
+            ("测试中文", 7, vec!["测试", "中文"]),
+            ("🚀rocket", 4, vec!["🚀", "rock", "et"]),
+            ("café", 3, vec!["caf", "é"]),
+            ("naïve", 3, vec!["na", "ïv", "e"]),
+            ("abcdefghijklmnop", 5, vec!["abcde", "fghij", "klmno", "p"]),
+            ("test with spaces", 6, vec!["test ", "with ", "spaces"]),
+            (
+                "test with spaces",
+                3,
+                vec!["tes", "t ", "wit", "h ", "spa", "ces"],
+            ),
+        ];
+
+        for (text, max_width, expected) in cases {
+            let mut parts = Vec::new();
+            let mut remaining = text;
+
+            while !remaining.is_empty() {
+                let pos = find_split_position(remaining, max_width);
+                let (current, rest) = remaining.split_at(pos);
+                parts.push(current);
+                remaining = rest;
+            }
+
+            assert_eq!(
+                parts, expected,
+                "Split failed for text: {text:?}, max_width: {max_width}"
+            );
+
+            let rejoined = parts.join("");
+            assert_eq!(
+                rejoined, text,
+                "Rejoined text doesn't match original for: {text:?}"
+            );
+
+            for part in &parts {
+                assert!(
+                    part.len() <= max_width || part.chars().count() == 1,
+                    "Part too long: {part:?} (len: {}, max: {max_width})",
+                    part.len()
+                );
+            }
+        }
+    }
+}
