@@ -1,3 +1,17 @@
+## v0.6.3
+
+### Features
+
+Enhanced automatic Content Type detection. Even when users don't provide file extensions, otree can now automatically detect the ContentType based on the data content.
+
+For example, the following command is now available:
+
+```bash
+echo '{"key": "value"}' | otree
+```
+
+Now otree will try invoking all parsers in order for unknown content, and whichever parser succeeds determines the format.
+
 ## v0.6.2
 
 ### Features
