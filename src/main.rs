@@ -20,7 +20,7 @@ use live_reload::FileWatcher;
 
 use crate::cmd::CommandArgs;
 use crate::config::Config;
-use crate::parse::{ContentType, SyntaxToken};
+use crate::parse::SyntaxToken;
 use crate::tree::Tree;
 use crate::ui::{App, HeaderContext};
 
@@ -49,37 +49,10 @@ fn run() -> Result<()> {
     }
 
     // The user can specify the content type manually, or we can determine it based on the
-    // file extension. Another approach is to use file content (for example, if the file
-    // content starts with '{', we can assume it is JSON). But this approach is not reliable
-    // since the YAML is the superset of JSON, and the TOML is not easy to determine.
-    let content_type = match args.content_type {
-        Some(content_type) => content_type,
-        None => {
-            if args.path.is_none() {
-                bail!("you must specify content type when reading data from stdin");
-            }
-            let path = PathBuf::from(args.path.as_ref().unwrap());
-
-            let ext = path.extension();
-            if ext.is_none() {
-                bail!("cannot determine content type, missing extension in file path, you can specify it manually");
-            }
-            let ext = ext.unwrap().to_str();
-            if ext.is_none() {
-                bail!("invalid extension in file path");
-            }
-
-            match ext.unwrap() {
-                "json" => ContentType::Json,
-                "yaml" | "yml" => ContentType::Yaml,
-                "toml" => ContentType::Toml,
-                "xml" => ContentType::Xml,
-                "hcl" => ContentType::Hcl,
-                "jsonl" => ContentType::Jsonl,
-                _ => bail!("unsupported file type, please specify content type manually"),
-            }
-        }
-    };
+    // file extension.
+    // If the content type cannot be determined here, use `ContentType::Any` as default, let
+    // parser to detect it.
+    let content_type = args.get_content_type();
 
     let max_data_size = args.max_data_size.unwrap_or(cfg.data.max_data_size) * 1024 * 1024;
     let mut fw = None;
@@ -120,11 +93,12 @@ fn run() -> Result<()> {
     }
 
     let tree = Tree::parse(cfg.clone(), &data, content_type).context("parse data")?;
+    let extension = tree.parser.extension();
 
     let mut app = App::new(cfg.clone(), tree, fw);
 
     if !cfg.header.disable {
-        let header_ctx = HeaderContext::new(args.path, content_type, data.len());
+        let header_ctx = HeaderContext::new(args.path, extension, data.len());
         app.set_header(&header_ctx);
     }
 

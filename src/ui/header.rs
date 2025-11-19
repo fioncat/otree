@@ -7,7 +7,6 @@ use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
 use crate::config::Config;
-use crate::parse::ContentType;
 
 pub struct HeaderContext {
     version: String,
@@ -17,17 +16,9 @@ pub struct HeaderContext {
 }
 
 impl HeaderContext {
-    pub fn new(source: Option<String>, content_type: ContentType, size: usize) -> Self {
+    pub fn new(source: Option<String>, content_type: &'static str, size: usize) -> Self {
         let version = format!("otree {}", env!("CARGO_PKG_VERSION"));
         let source = source.map_or(Cow::Borrowed("stdin"), Cow::Owned);
-        let content_type = match content_type {
-            ContentType::Toml => "toml",
-            ContentType::Yaml => "yaml",
-            ContentType::Json => "json",
-            ContentType::Xml => "xml",
-            ContentType::Hcl => "hcl",
-            ContentType::Jsonl => "jsonl",
-        };
 
         let data_size = humansize::format_size(size, humansize::BINARY);
 
