@@ -1,3 +1,4 @@
+mod any;
 mod hcl;
 mod json;
 mod jsonl;
@@ -11,8 +12,9 @@ pub use syntax::SyntaxToken;
 use anyhow::{bail, Context, Result};
 use clap::ValueEnum;
 use serde_json::Value;
+use strum::EnumIter;
 
-#[derive(Debug, Clone, Copy, ValueEnum)]
+#[derive(Debug, Clone, Copy, ValueEnum, EnumIter)]
 pub enum ContentType {
     Json,
     Yaml,
@@ -26,6 +28,7 @@ pub enum ContentType {
     Jsonl,
     // TODO: check out json-seq as specified in RFC7464 (https://datatracker.ietf.org/doc/html/rfc7464)?
     // basically jsonl but every json object is prefixed with 0x1e
+    Any,
 }
 
 pub trait Parser {
@@ -67,6 +70,7 @@ impl ContentType {
             Self::Xml => Box::new(xml::XmlParser {}),
             Self::Hcl => Box::new(hcl::HclParser {}),
             Self::Jsonl => Box::new(jsonl::JsonlParser {}),
+            Self::Any => Box::new(any::AnyParser::new()),
         }
     }
 }

@@ -828,6 +828,7 @@ dependencies = [
  "serde_json",
  "serde_yml",
  "simple-error",
+ "strum",
  "toml",
  "tui-textarea",
  "tui-tree-widget",

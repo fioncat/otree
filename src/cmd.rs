@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::{bail, Result};
 use clap::error::ErrorKind as ArgsErrorKind;
 use clap::Parser;
@@ -16,10 +18,8 @@ pub struct CommandArgs {
     #[clap(long)]
     pub config: Option<String>,
 
-    #[expect(clippy::doc_link_with_quotes)] // false positive, it's just a list
-    /// The data content type. If the file extension is one of
-    /// ["json", "yaml", "yml", "xml", "toml", "hcl", "jsonl"], this can be automatically
-    // inferred. In other cases, this is required.
+    /// The data content type. This can be automatically inferred by file extension or
+    /// content format.
     #[clap(short = 't', long)]
     pub content_type: Option<ContentType>,
 
@@ -196,6 +196,34 @@ impl CommandArgs {
 
         if let Some(size) = self.size {
             cfg.layout.tree_size = size;
+        }
+    }
+
+    pub fn get_content_type(&self) -> ContentType {
+        if let Some(content_type) = self.content_type {
+            return content_type;
+        }
+
+        let Some(path) = self.path.as_ref() else {
+            return ContentType::Any;
+        };
+        let path = PathBuf::from(path);
+
+        let Some(ext) = path.extension() else {
+            return ContentType::Any;
+        };
+        let Some(ext) = ext.to_str() else {
+            return ContentType::Any;
+        };
+
+        match ext {
+            "json" => ContentType::Json,
+            "yaml" | "yml" => ContentType::Yaml,
+            "toml" => ContentType::Toml,
+            "xml" => ContentType::Xml,
+            "hcl" => ContentType::Hcl,
+            "jsonl" => ContentType::Jsonl,
+            _ => ContentType::Any,
         }
     }
 
