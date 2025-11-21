@@ -20,7 +20,7 @@ use live_reload::FileWatcher;
 
 use crate::cmd::CommandArgs;
 use crate::config::Config;
-use crate::parse::SyntaxToken;
+use crate::parse::{ContentType, SyntaxToken};
 use crate::tree::Tree;
 use crate::ui::{App, HeaderContext};
 
@@ -77,6 +77,9 @@ fn run() -> Result<()> {
     };
 
     if let Some(target_type) = args.to {
+        if matches!(target_type, ContentType::Any) {
+            bail!("target content type cannot be 'any' when using '--to' option");
+        }
         let parser = content_type.new_parser();
         let target_parser = target_type.new_parser();
 

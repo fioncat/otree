@@ -25,9 +25,11 @@ pub enum ContentType {
     Hcl,
 
     /// Useful for some logs file: <https://jsonlines.org/>
-    Jsonl,
     // TODO: check out json-seq as specified in RFC7464 (https://datatracker.ietf.org/doc/html/rfc7464)?
     // basically jsonl but every json object is prefixed with 0x1e
+    Jsonl,
+
+    #[clap(skip)]
     Any,
 }
 
