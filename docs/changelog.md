@@ -1,3 +1,9 @@
+## v0.6.4
+
+### Fixes
+
+- Remove `any` in command line options.
+
 ## v0.6.3
 
 ### Features
