@@ -195,6 +195,12 @@ fn read<R: BufRead>(reader: &mut Reader<R>, depth: u64) -> Result<Value> {
                     })
                     .collect::<Result<_>>()?;
 
+                if child.is_null() && !attrs.is_empty() {
+                    // Handle empty node with fields
+                    // Like: <node field1="value1" field2="value2"/>
+                    child = Value::Object(Map::new());
+                }
+
                 // If the child is already an object, that's where attributes should end up in
                 if child.is_object() {
                     // We want to have them at the start though, while still being listed
