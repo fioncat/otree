@@ -53,6 +53,8 @@ impl DataBlock {
             Action::MoveUp => self.scroll_up(1),
             Action::MoveRight => self.scroll_right(1),
             Action::MoveLeft => self.scroll_left(1),
+            Action::PageUp => self.scroll_up(5),
+            Action::PageDown => self.scroll_down(5),
             Action::SelectFirst => self.scroll_first(),
             Action::SelectLast => self.scroll_last(),
             _ => false,
