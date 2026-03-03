@@ -1,37 +1,37 @@
 # All Available Actions
 
-| Action                    | Default Keys              | Description                                                  |
-| ------------------------- | ------------------------- | ------------------------------------------------------------ |
-| move_up                   | `k`, `<up>`               | Move cursor up                                               |
-| move_down                 | `j`, `<down>`             | Move cursor down                                             |
-| move_left                 | `h`, `<left>`             | Move cursor left<br />*In filter mode: move cursor back*     |
-| move_right                | `l`, `<right>`            | Move cursor right<br />*In filter mode: move cursor forward* |
-| select_focus              | `<enter>`                 | Toggle select current item<br />*In filter mode: confirm filtering* |
-| select_parent             | `p`                       | Move cursor to the parent item                               |
-| select_first              | `g`                       | Move cursor to the top<br />*In filter mode: move cursor to the head* |
-| select_last               | `G`                       | Move cursor to the bottom<br />*In filter mode: move cursor to the end* |
-| close_parent              | `<backspace>`             | Move cursor to the parent and close<br />*In filter mode: delete a character* |
-| change_root               | `r`                       | Change current item as root<br/>Use `reset` action to recover |
-| reset                     | `<esc>`                   | Reset cursor and items<br />*In filter mode: cancel filtering* |
-| page_up                   | `<page-up>`, `<ctrl-y>`   | Scroll up                                                    |
-| page_down                 | `<page-down>`, `<ctrl-e>` | Scroll down                                                  |
-| change_layout             | `v`                       | Change current layout                                        |
-| tree_scale_up             | `[`                       | Scale up tree widget                                         |
-| tree_scale_down           | `]`                       | Scale down tree widget                                       |
-| switch                    | `<tab>`                   | Switch focus widget                                          |
-| edit                      | `e`                       | Open current item in editor<br />**(ReadOnly)**              |
-| copy_name                 | `y`                       | Copy current selected item's name                            |
-| copy_value                | `Y`                       | Copy current selected item's value                           |
-| filter                    | `/`                       | Enter the filter mode (key and value)                        |
-| filter_key                | `?`                       | Enter the filter mode (key)                                  |
-| filter_value              | `*`                       | Enter the filter mode (value)                                |
-| filter_next_match         | `n`                       | Navigate to the next match item<br />*Filter mode only*      |
-| filter_prev_match         | `N`                       | Navigate to the previous match item<br />*Filter mode only*  |
-| filter_switch_ignore_case | `I`                       | Change the filter's ignore case mode<br />*Filter mode only* |
-| expand_children           | `x`                       | Expand all selected item's children                          |
-| expand_all                | `X`                       | Expand all items                                             |
-| show_help                 | `H`                       | Show help message                                            |
-| quit                      | `<ctrl-c>`, `q`           | Quit program                                                 |
+| Action                    | Default Keys              | Description                                                                   |
+| ------------------------- | ------------------------- | ----------------------------------------------------------------------------- |
+| move_up                   | `k`, `<up>`               | Move cursor up                                                                |
+| move_down                 | `j`, `<down>`             | Move cursor down                                                              |
+| move_left                 | `h`, `<left>`             | Move cursor left<br />_In filter mode: move cursor back_                      |
+| move_right                | `l`, `<right>`            | Move cursor right<br />_In filter mode: move cursor forward_                  |
+| select_focus              | `<enter>`                 | Toggle select current item<br />_In filter mode: confirm filtering_           |
+| select_parent             | `p`                       | Move cursor to the parent item                                                |
+| select_first              | `g`, `<home>`             | Move cursor to the top<br />_In filter mode: move cursor to the head_         |
+| select_last               | `G`, `<end>`              | Move cursor to the bottom<br />_In filter mode: move cursor to the end_       |
+| close_parent              | `<backspace>`             | Move cursor to the parent and close<br />_In filter mode: delete a character_ |
+| change_root               | `r`                       | Change current item as root<br/>Use `reset` action to recover                 |
+| reset                     | `<esc>`                   | Reset cursor and items<br />_In filter mode: cancel filtering_                |
+| page_up                   | `<page-up>`, `<ctrl-y>`   | Scroll up                                                                     |
+| page_down                 | `<page-down>`, `<ctrl-e>` | Scroll down                                                                   |
+| change_layout             | `v`                       | Change current layout                                                         |
+| tree_scale_up             | `[`                       | Scale up tree widget                                                          |
+| tree_scale_down           | `]`                       | Scale down tree widget                                                        |
+| switch                    | `<tab>`                   | Switch focus widget                                                           |
+| edit                      | `e`                       | Open current item in editor<br />**(ReadOnly)**                               |
+| copy_name                 | `y`                       | Copy current selected item's name                                             |
+| copy_value                | `Y`                       | Copy current selected item's value                                            |
+| filter                    | `/`                       | Enter the filter mode (key and value)                                         |
+| filter_key                | `?`                       | Enter the filter mode (key)                                                   |
+| filter_value              | `*`                       | Enter the filter mode (value)                                                 |
+| filter_next_match         | `n`                       | Navigate to the next match item<br />_Filter mode only_                       |
+| filter_prev_match         | `N`                       | Navigate to the previous match item<br />_Filter mode only_                   |
+| filter_switch_ignore_case | `I`                       | Change the filter's ignore case mode<br />_Filter mode only_                  |
+| expand_children           | `x`                       | Expand all selected item's children                                           |
+| expand_all                | `X`                       | Expand all items                                                              |
+| show_help                 | `H`                       | Show help message                                                             |
+| quit                      | `<ctrl-c>`, `q`           | Quit program                                                                  |
 
 All available keys:
 

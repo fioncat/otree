@@ -1,3 +1,11 @@
+## v0.6.5
+
+### Features
+
+- Add `home` and `end` keys and map them to scroll\_{first,last}. (#126)
+- Add PageUp/PageDown support for Data Block view. (#125)
+- Add clipboard functionality with terminal multiplexer support. (#123)
+
 ## v0.6.4
 
 ### Fixes
