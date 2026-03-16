@@ -28,7 +28,7 @@ serde = { version = "^1", features = ["derive"] }
 serde_json = { version = "^1", features = ["preserve_order"] }
 serde_yml = "^0"
 strum = { version = "^0", features = ["derive"] }
-toml = { version = "^0", features = ["preserve_order"] }
+toml = { version = "^1", features = ["preserve_order"] }
 tui-textarea = "^0"
 tui-tree-widget = "^0"
 
