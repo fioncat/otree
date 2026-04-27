@@ -15,14 +15,14 @@ anyhow = "^1"
 base64 = "^0"
 clap = { version = "^4", features = ["derive"] }
 console = "^0"
-crossterm = { version = "0.28", features = ["use-dev-tty"] }
+crossterm = { version = "0.29", features = ["use-dev-tty"] }
 dirs = "^6"
 hcl-rs = "^0"
 humansize = "^2"
 notify = "^8"
 paste = "^1"
 quick-xml = { version = "^0", features = ["serialize"] }
-ratatui = "0.29"
+ratatui = "0.30"
 regex = "^1"
 serde = { version = "^1", features = ["derive"] }
 serde_json = { version = "^1", features = ["preserve_order"] }
@@ -30,7 +30,7 @@ serde_yml = "^0"
 strum = { version = "^0", features = ["derive"] }
 toml = { version = "^1", features = ["preserve_order"] }
 tui-textarea = "0.7"
-tui-tree-widget = "0.23"
+tui-tree-widget = "0.24"
 
 [build-dependencies]
 simple-error = "^0"
