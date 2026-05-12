@@ -62,8 +62,8 @@ fn run() -> Result<()> {
 
             // Check file size before reading to prevent OOM on very large files
             let metadata = fs::metadata(&path).context("get file metadata")?;
-            let file_size = metadata.len() as usize;
-            if file_size > max_data_size {
+            let file_size = metadata.len();
+            if file_size > max_data_size as u64 {
                 bail!("the file size ({}) is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size. HINT: You can use command line arg `--max-data-size` or config option `data.max_data_size` to modify this limitation", humansize::format_size(file_size, humansize::BINARY), humansize::format_size(max_data_size, humansize::BINARY));
             }
 
