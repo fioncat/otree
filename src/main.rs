@@ -59,6 +59,14 @@ fn run() -> Result<()> {
     let data = match args.path.as_ref() {
         Some(path) => {
             let path = PathBuf::from(path);
+
+            // Check file size before reading to prevent OOM on very large files
+            let metadata = fs::metadata(&path).context("get file metadata")?;
+            let file_size = metadata.len() as usize;
+            if file_size > max_data_size {
+                bail!("the file size ({}) is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size. HINT: You can use command line arg `--max-data-size` or config option `data.max_data_size` to modify this limitation", humansize::format_size(file_size, humansize::BINARY), humansize::format_size(max_data_size, humansize::BINARY));
+            }
+
             if args.live_reload {
                 fw = Some(FileWatcher::new(
                     path.clone(),
@@ -72,6 +80,12 @@ fn run() -> Result<()> {
         None => {
             let mut data = Vec::new();
             io::stdin().read_to_end(&mut data).context("read stdin")?;
+
+            // Check stdin data size after reading (unavoidable for stdin)
+            if data.len() > max_data_size {
+                bail!("the data size is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size. HINT: You can use command line arg `--max-data-size` or config option `data.max_data_size` to modify this limitation", humansize::format_size(max_data_size, humansize::BINARY));
+            }
+
             data
         }
     };
@@ -89,10 +103,6 @@ fn run() -> Result<()> {
 
         print!("{text}");
         return Ok(());
-    }
-
-    if data.len() > max_data_size {
-        bail!("the data size is too large, we limit the maximum size to {} to ensure TUI performance, you should try to reduce the read size. HINT: You can use command line arg `--max-data-size` or config option `data.max_data_size` to modify this limitation", humansize::format_size(max_data_size, humansize::BINARY));
     }
 
     let tree = Tree::parse(cfg.clone(), &data, content_type).context("parse data")?;

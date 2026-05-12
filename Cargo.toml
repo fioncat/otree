@@ -36,6 +36,9 @@ tui-tree-widget = "0.23"
 simple-error = "^0"
 vergen = { version = "^9", features = ["build", "rustc", "cargo", "si"] }
 
+[dev-dependencies]
+tempfile = "^3"
+
 [profile.release]
 lto = true
 strip = true
