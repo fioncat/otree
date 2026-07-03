@@ -47,6 +47,11 @@ pub struct CommandArgs {
     #[clap(long)]
     pub tree_selected_symbol: Option<String>,
 
+    /// A minijinja template rendered against each object node and appended to its
+    /// description, docker `--format` style. E.g. `--tree-format '{{ id }}'`.
+    #[clap(long)]
+    pub tree_format: Option<String>,
+
     /// Ignore case when filtering.
     #[clap(long)]
     pub filter_ignore_case: bool,
@@ -172,6 +177,10 @@ impl CommandArgs {
 
         if let Some(ref symbol) = self.tree_selected_symbol {
             cfg.tree.selected_symbol.clone_from(symbol);
+        }
+
+        if let Some(ref format) = self.tree_format {
+            cfg.tree.format.clone_from(format);
         }
 
         if self.filter_ignore_case {
