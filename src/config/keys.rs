@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use anyhow::{bail, Context, Result};
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use serde::{Deserialize, Serialize};
 
 macro_rules! generate_keys_default {
@@ -361,6 +361,12 @@ pub struct KeyAction {
 
 impl Keys {
     pub fn get_key_action(&self, event: KeyEvent) -> Option<KeyAction> {
+        // Windows emits both press and release key events. Treating release as
+        // an action would make each key press run twice.
+        if matches!(event.kind, KeyEventKind::Release) {
+            return None;
+        }
+
         let event_key = Key::from_event(event)?;
         let mut current_action = None;
         for (keys, action) in &self.actions {
@@ -374,5 +380,46 @@ impl Keys {
             key: event_key,
             action: current_action,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parsed_keys() -> Keys {
+        let mut keys = Keys::default();
+        keys.parse().unwrap();
+        keys
+    }
+
+    #[test]
+    fn key_press_events_are_mapped() {
+        let keys = parsed_keys();
+        let event = KeyEvent::new_with_kind(KeyCode::Up, KeyModifiers::NONE, KeyEventKind::Press);
+
+        let action = keys.get_key_action(event).unwrap();
+
+        assert_eq!(action.key, Key::Up);
+        assert!(matches!(action.action, Some(Action::MoveUp)));
+    }
+
+    #[test]
+    fn key_repeat_events_are_mapped() {
+        let keys = parsed_keys();
+        let event = KeyEvent::new_with_kind(KeyCode::Up, KeyModifiers::NONE, KeyEventKind::Repeat);
+
+        let action = keys.get_key_action(event).unwrap();
+
+        assert_eq!(action.key, Key::Up);
+        assert!(matches!(action.action, Some(Action::MoveUp)));
+    }
+
+    #[test]
+    fn key_release_events_are_ignored() {
+        let keys = parsed_keys();
+        let event = KeyEvent::new_with_kind(KeyCode::Up, KeyModifiers::NONE, KeyEventKind::Release);
+
+        assert!(keys.get_key_action(event).is_none());
     }
 }
