@@ -1,3 +1,9 @@
+## v0.7.1
+
+### Fixes
+
+- Fix doubles keypresses in Windows. (#144)
+
 ## v0.7.0
 
 ### Features
