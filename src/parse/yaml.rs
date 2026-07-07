@@ -1,5 +1,4 @@
 use anyhow::{bail, Context, Result};
-use serde::Deserialize;
 use serde_json::Value;
 
 use super::syntax::{self, StringValue};
@@ -17,9 +16,13 @@ impl Parser for YamlParser {
     }
 
     fn parse(&self, data: &str) -> Result<Value> {
+        // Use noyalib's document loader for multi-document YAML
+        let documents = noyalib::document::load_all(data).context("parse YAML")?;
         let mut values = Vec::with_capacity(1);
-        for document in serde_yml::Deserializer::from_str(data) {
-            let value = Value::deserialize(document).context("parse YAML")?;
+
+        for doc_result in documents {
+            let doc_value = doc_result.context("parse YAML document")?;
+            let value: Value = noyalib::from_value(&doc_value).context("convert YAML to JSON")?;
             values.push(value);
         }
 

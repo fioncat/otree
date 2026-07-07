@@ -39,10 +39,8 @@ impl Parser for TomlParser {
                     }
                 }
             }
-            Value::Object(_) => {
-                if !name.is_empty() {
-                    section = Some(name);
-                }
+            Value::Object(_) if !name.is_empty() => {
+                section = Some(name);
             }
             _ => {}
         }

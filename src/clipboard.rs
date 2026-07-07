@@ -135,7 +135,7 @@ fn write_clipboard_cmd(text: &str) -> Result<()> {
         let code = status
             .code()
             .map_or("<unknown>".to_string(), |code| code.to_string());
-        bail!("clipboard program exited with bad status {code}",);
+        bail!("clipboard program exited with bad status {code}");
     }
 
     Ok(())

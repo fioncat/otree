@@ -1,10 +1,10 @@
 use std::rc::Rc;
 
-use ratatui::layout::{Alignment, Rect};
-use ratatui::widgets::{Block, Borders};
+use ratatui::layout::{Alignment, Position, Rect};
+use ratatui::text::Text;
+use ratatui::widgets::{Block, Borders, Paragraph};
 use ratatui::Frame;
 use serde_json::Value;
-use tui_textarea::{CursorMove, TextArea};
 
 use crate::config::keys::{Action, Key, KeyAction};
 use crate::config::Config;
@@ -12,7 +12,8 @@ use crate::tree::ItemValue;
 
 pub struct Filter {
     cfg: Rc<Config>,
-    text_area: TextArea<'static>,
+    text: String,
+    cursor: usize,
     target: FilterTarget,
     ignore_case: bool,
 }
@@ -39,11 +40,11 @@ pub enum FilterTarget {
 
 impl Filter {
     pub fn new(cfg: Rc<Config>, target: FilterTarget) -> Self {
-        let text_area = TextArea::default();
         let ignore_case = cfg.filter.ignore_case;
         Self {
             cfg,
-            text_area,
+            text: String::new(),
+            cursor: 0,
             target,
             ignore_case,
         }
@@ -51,7 +52,7 @@ impl Filter {
 
     pub fn on_key(&mut self, ka: KeyAction) -> FilterAction {
         if let Key::Char(c) = ka.key {
-            self.text_area.insert_char(c);
+            self.insert_char(c);
             return FilterAction::Edit;
         }
 
@@ -67,23 +68,23 @@ impl Filter {
                 FilterAction::Confirm
             }
             Action::CloseParent => {
-                self.text_area.delete_char();
+                self.delete_char();
                 FilterAction::Edit
             }
             Action::MoveLeft => {
-                self.text_area.move_cursor(CursorMove::Back);
+                self.move_left();
                 FilterAction::Edit
             }
             Action::MoveRight => {
-                self.text_area.move_cursor(CursorMove::Forward);
+                self.move_right();
                 FilterAction::Edit
             }
             Action::SelectFirst => {
-                self.text_area.move_cursor(CursorMove::Head);
+                self.cursor = 0;
                 FilterAction::Edit
             }
             Action::SelectLast => {
-                self.text_area.move_cursor(CursorMove::End);
+                self.cursor = self.text.chars().count();
                 FilterAction::Edit
             }
             Action::Reset => FilterAction::Quit,
@@ -108,12 +109,7 @@ impl Filter {
     }
 
     fn get_text(&self) -> String {
-        let lines = self.text_area.lines();
-        if lines.is_empty() {
-            return String::new();
-        }
-        // There won't be more than one line
-        lines[0].trim().to_string()
+        self.text.trim().to_string()
     }
 
     pub fn draw(&mut self, frame: &mut Frame, area: Rect, focus: bool) {
@@ -143,9 +139,49 @@ impl Filter {
             .border_style(border_style)
             .title_alignment(Alignment::Center)
             .title(title);
-        self.text_area.set_block(block);
 
-        frame.render_widget(&self.text_area, area);
+        let widget = Paragraph::new(Text::from(self.text.as_str())).block(block);
+        frame.render_widget(widget, area);
+
+        if focus {
+            let inner_width = area.width.saturating_sub(2);
+            let cursor = u16::try_from(self.cursor)
+                .unwrap_or(u16::MAX)
+                .min(inner_width);
+            frame.set_cursor_position(Position {
+                x: area.x.saturating_add(1 + cursor),
+                y: area.y.saturating_add(1),
+            });
+        }
+    }
+
+    fn insert_char(&mut self, c: char) {
+        let byte_idx = Self::char_to_byte_idx(&self.text, self.cursor);
+        self.text.insert(byte_idx, c);
+        self.cursor += 1;
+    }
+
+    fn delete_char(&mut self) {
+        if self.cursor == 0 {
+            return;
+        }
+        let byte_idx = Self::char_to_byte_idx(&self.text, self.cursor - 1);
+        self.text.remove(byte_idx);
+        self.cursor -= 1;
+    }
+
+    fn move_left(&mut self) {
+        self.cursor = self.cursor.saturating_sub(1);
+    }
+
+    fn move_right(&mut self) {
+        self.cursor = self.cursor.saturating_add(1).min(self.text.chars().count());
+    }
+
+    fn char_to_byte_idx(text: &str, char_idx: usize) -> usize {
+        text.char_indices()
+            .nth(char_idx)
+            .map_or(text.len(), |(idx, _)| idx)
     }
 }
 

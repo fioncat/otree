@@ -311,7 +311,7 @@ impl TreeOverview {
             "-".to_string()
         };
         spans.push(Span::raw(" "));
-        spans.push(Span::raw(format!("[{filter_pos}/{filter_count}]",)));
+        spans.push(Span::raw(format!("[{filter_pos}/{filter_count}]")));
 
         spans
     }

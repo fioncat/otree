@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
-use ratatui::style::{Style, Stylize};
+use ratatui::style::Style;
 use serde::{Deserialize, Serialize};
 
 use super::Config;
