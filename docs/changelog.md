@@ -1,3 +1,15 @@
+## v0.7.0
+
+### Features
+
+- Add `tree.format` and `--tree-format` to append Minijinja-rendered object summaries in the tree view.
+
+For example:
+
+```bash
+otree pods.json --tree-format '{{ namespace }}/{{ name }}'
+```
+
 ## v0.6.5
 
 ### Features
