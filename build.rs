@@ -3,7 +3,7 @@ use std::error::Error;
 use std::process::Command;
 
 use simple_error::bail;
-use vergen::{BuildBuilder, CargoBuilder, Emitter, RustcBuilder, SysinfoBuilder};
+use vergen::{Build, Cargo, Emitter, Rustc, Sysinfo};
 
 fn uncommitted_count() -> Result<usize, Box<dyn Error>> {
     let output = exec_git(&["status", "-s"])?;
@@ -59,10 +59,10 @@ fn fetch_git_info() -> Result<(), Box<dyn Error>> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let build = BuildBuilder::all_build()?;
-    let cargo = CargoBuilder::all_cargo()?;
-    let rustc = RustcBuilder::all_rustc()?;
-    let si = SysinfoBuilder::all_sysinfo()?;
+    let build = Build::all_build();
+    let cargo = Cargo::all_cargo();
+    let rustc = Rustc::all_rustc();
+    let si = Sysinfo::all_sysinfo();
 
     Emitter::default()
         .add_instructions(&build)?

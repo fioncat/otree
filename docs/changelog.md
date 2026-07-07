@@ -9,6 +9,7 @@ For example:
 ```bash
 otree pods.json --tree-format '{{ namespace }}/{{ name }}'
 ```
+- Upgrade various dependencies.
 
 ## v0.6.5
 
