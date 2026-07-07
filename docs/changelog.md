@@ -2,7 +2,7 @@
 
 ### Features
 
-- Add `tree.format` and `--tree-format` to append Minijinja-rendered object summaries in the tree view.
+- Add `tree.format` and `--tree-format` to append Minijinja-rendered object summaries in the tree view. (#141)
 
 For example:
 
@@ -10,6 +10,10 @@ For example:
 otree pods.json --tree-format '{{ namespace }}/{{ name }}'
 ```
 - Upgrade various dependencies.
+
+### Fixes
+
+- check file size before reading to prevent OOM. (#134)
 
 ## v0.6.5
 
