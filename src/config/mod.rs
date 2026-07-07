@@ -56,6 +56,11 @@ pub struct Tree {
 
     #[serde(default = "String::new")]
     pub selected_symbol: String,
+
+    /// A minijinja template rendered against each object node and appended to its
+    /// `{ N fields }` description, docker `--format` style. Empty disables it.
+    #[serde(default = "String::new")]
+    pub format: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -155,6 +160,7 @@ impl Config {
         self.validate_palette()?;
         self.colors.parse(&self.palette)?;
         self.keys.parse()?;
+        self.tree.parse()?;
         Ok(())
     }
 
@@ -229,11 +235,36 @@ impl Config {
 }
 
 impl Tree {
+    /// The template name registered in the minijinja environment.
+    pub const FORMAT_TEMPLATE: &'static str = "tree_format";
+
     fn default() -> Self {
         Self {
             disable_selected_highlight: Config::disable(),
             selected_symbol: String::new(),
+            format: String::new(),
         }
+    }
+
+    fn parse(&self) -> Result<()> {
+        // Validate the format template compiles up-front so a syntax error is a
+        // clear startup failure rather than surfacing while rendering the tree.
+        self.build_env()
+            .context("parse tree format template")
+            .map(|_| ())
+    }
+
+    /// Build a minijinja environment with the tree format template registered, or
+    /// `None` when no format is configured. Missing attributes render empty
+    /// (lenient) so an absent key just omits the suffix.
+    pub fn build_env(&self) -> Result<Option<minijinja::Environment<'static>>> {
+        if self.format.is_empty() {
+            return Ok(None);
+        }
+        let mut env = minijinja::Environment::new();
+        env.set_undefined_behavior(minijinja::UndefinedBehavior::Lenient);
+        env.add_template_owned(Self::FORMAT_TEMPLATE, self.format.clone())?;
+        Ok(Some(env))
     }
 }
 
