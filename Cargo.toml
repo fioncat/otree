@@ -16,10 +16,10 @@ base64 = "^0"
 clap = { version = "^4", features = ["derive"] }
 console = "^0"
 crossterm = { version = "^0", features = ["use-dev-tty"] }
-dirs = "^6"
+dirs = "^7"
 hcl-rs = "^0"
 humansize = "^2"
-minijinja = { version = "^2", default-features = false, features = ["builtins", "serde"] }
+minijinja = { version = "^3", default-features = false, features = ["builtins", "serde"] }
 noyalib = "^0"
 notify = "^8"
 paste = "^1"
